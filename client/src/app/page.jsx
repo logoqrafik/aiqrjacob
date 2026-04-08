@@ -138,6 +138,12 @@ export default function Home() {
         </div>
       </header>
 
+      {/* FOMO: Yoğun Saat Uyarısı Top Banner */}
+      <div style={{ background: '#fef2f2', color: '#991b1b', padding: '10px 16px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', borderBottom: '1px solid #fecaca' }}>
+         <span style={{ fontSize: '1.1rem', animation: 'pulse 2s infinite' }}>⚡</span>
+         <span className="font-medium"><b>Yoğun Saat:</b> Bekleme süreleri uzamadan siparişinizi oluşturun.</span>
+      </div>
+
       <main className="container" style={{ 
         padding: '24px 16px 140px 16px',
         maxWidth: '100%',
@@ -173,15 +179,19 @@ export default function Home() {
             <p className="font-secondary">Henüz ürün bulunmamaktadır.</p>
           </div>
         ) : (
-          menuData.map(category => (
+          menuData.map((category, index) => (
             <section key={category.id} style={{ marginBottom: '32px' }}>
-              <h2 className="font-bold" style={{ fontSize: '1.15rem', marginBottom: '20px', borderLeft: '3px solid var(--primary)', paddingLeft: '12px' }}>{category.name}</h2>
+              <h2 className="font-bold" style={{ fontSize: '1.15rem', marginBottom: '20px', borderLeft: '3px solid var(--primary)', paddingLeft: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                 {category.name}
+                 {/* FOMO: Kategoriye Özel Badge */}
+                 {index === 0 && <span style={{ background: '#ef4444', color: '#fff', fontSize: '0.7rem', padding: '4px 8px', borderRadius: '8px', letterSpacing: '0.5px' }}>🚨 BUGÜNE ÖZEL KAMPANYA</span>}
+              </h2>
               <div style={{ 
                 display: 'grid', 
                 gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', 
                 gap: '24px' 
               }}>
-                {category.items.map(item => (
+                {category.items.map((item, itemIdx) => (
                   <div key={item.id} className="glass-card" style={{ 
                     overflow: 'hidden', 
                     display: 'flex', 
@@ -190,6 +200,18 @@ export default function Home() {
                     boxSizing: 'border-box'
                   }}>
                     <div style={{ position: 'relative', height: '180px', width: '100%' }}>
+                      {/* FOMO: Son 3 Adet veya Hızlı Tükeniyor Etiketi */}
+                      {(itemIdx === 0 || itemIdx === 3) && (
+                         <div style={{ position: 'absolute', top: '12px', left: '12px', background: 'rgba(239, 68, 68, 0.95)', backdropFilter: 'blur(4px)', color: '#fff', padding: '6px 12px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 800, zIndex: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>
+                            ⏳ Son {Math.floor(Math.random() * 3) + 2} Porsiyon
+                         </div>
+                      )}
+                      {(itemIdx === 1) && (
+                         <div style={{ position: 'absolute', top: '12px', left: '12px', background: 'rgba(245, 158, 11, 0.95)', backdropFilter: 'blur(4px)', color: '#fff', padding: '6px 12px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 800, zIndex: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>
+                            🔥 Hızlı Tükeniyor
+                         </div>
+                      )}
+
                       {item.image_url ? <Image src={item.image_url} alt={item.name} fill style={{ objectFit: 'cover' }} /> : <div style={{ width: '100%', height: '100%', background: '#f1f5f9' }} />}
                     </div>
                     <div style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -200,7 +222,7 @@ export default function Home() {
                       <p className="font-secondary" style={{ fontSize: '0.85rem', marginBottom: '20px', lineHeight: '1.5', flex: 1 }}>{item.description}</p>
                       
                       {cart.find(c => c.id === item.id) ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '20px', justifyContent: 'center', background: 'var(--bg-main)', padding: '6px', borderRadius: '12px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '20px', justifyContent: 'center', background: '#eff6ff', border: '1px solid #bfdbfe', padding: '6px', borderRadius: '12px' }}>
                           <button onClick={() => removeFromCart(item)} style={{ border: 'none', background: 'none', color: 'var(--primary)', fontSize: '1.4rem', cursor: 'pointer', width: '44px', height: '44px' }}>-</button>
                           <span className="font-bold" style={{ fontSize: '1rem' }}>{cart.find(c => c.id === item.id).quantity}</span>
                           <button onClick={() => addToCart(item)} style={{ border: 'none', background: 'none', color: 'var(--primary)', fontSize: '1.4rem', cursor: 'pointer', width: '44px', height: '44px' }}>+</button>
@@ -252,30 +274,31 @@ export default function Home() {
       {/* --- UPSELL MODAL (FIXED FOR MOBILE) --- */}
       {showUpsell && suggestedItems.length > 0 && (
          <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.7)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '16px' }}>
-            <div className="fade-in" style={{ background: '#fff', width: '100%', maxWidth: '400px', borderRadius: '24px', padding: '24px', textAlign: 'center', maxHeight: '90vh', overflowY: 'auto' }}>
-               <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>🍱</div>
-               <h3 className="font-bold" style={{ fontSize: '1.25rem', marginBottom: '8px' }}>Yanına ister misiniz?</h3>
+            <div className="fade-in" style={{ background: '#fff', width: '100%', maxWidth: '400px', borderRadius: '24px', padding: '24px', textAlign: 'center', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
+               <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>🔥</div>
+               <h3 className="font-bold" style={{ fontSize: '1.25rem', marginBottom: '8px', color: '#0f172a' }}>Bunu alanlar şunu da aldı:</h3>
                
-               <div style={{ background: '#fffbeb', padding: '10px', borderRadius: '12px', marginBottom: '20px' }}>
-                  <p className="font-bold" style={{ color: '#92400e', fontSize: '0.8rem' }}>✨ Menü yapınca %10 avantaj!</p>
+               <div style={{ background: 'linear-gradient(135deg, #fef3c7, #fde68a)', padding: '12px', borderRadius: '12px', marginBottom: '20px', border: '1px solid #fcd34d' }}>
+                  <p className="font-bold" style={{ color: '#b45309', fontSize: '0.85rem' }}>🎁 MENÜ YAP KAZAN!</p>
+                  <p className="font-secondary" style={{ color: '#92400e', fontSize: '0.75rem', marginTop: '2px' }}>Yanına bir ürün daha ekleyin, sepette anında <b>%10 Avantajlı</b> fiyatlardan yararlanın!</p>
                </div>
 
                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px' }}>
                   {suggestedItems.map(s => (
-                    <div key={s.id} className="glass-card" style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px', textAlign: 'left' }}>
+                    <div key={s.id} className="glass-card" style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px', textAlign: 'left', border: '1px solid #e2e8f0' }}>
                        <div style={{ width: '44px', height: '44px', position: 'relative', borderRadius: '8px', overflow: 'hidden', flexShrink: 0 }}>
                           {s.image_url ? <Image src={s.image_url} alt={s.name} fill style={{ objectFit: 'cover' }} /> : <div style={{ width: '100%', height: '100%', background: '#f1f5f9' }} />}
                        </div>
                        <div style={{ flex: 1 }}>
-                          <p className="font-bold" style={{ fontSize: '0.85rem', marginBottom: '0' }}>{s.name}</p>
-                          <p className="font-secondary" style={{ fontSize: '0.8rem' }}>₺{s.price}</p>
+                          <p className="font-bold" style={{ fontSize: '0.85rem', marginBottom: '0', color: '#0f172a' }}>{s.name}</p>
+                          <p className="font-secondary" style={{ fontSize: '0.8rem', color: 'var(--primary)', fontWeight: 600 }}>₺{s.price}</p>
                        </div>
-                       <button onClick={() => { addToCart(s); setShowUpsell(false); }} style={{ background: 'var(--primary)', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '10px', fontSize: '0.75rem', cursor: 'pointer', minHeight: '36px' }}>Ekle</button>
+                       <button onClick={() => { addToCart(s); setShowUpsell(false); }} style={{ background: 'var(--primary)', color: '#fff', border: 'none', padding: '6px 16px', borderRadius: '10px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', minHeight: '36px' }}>Kampanyaya Ekle</button>
                     </div>
                   ))}
                </div>
 
-               <button onClick={() => setShowUpsell(false)} style={{ width: '100%', padding: '12px', border: 'none', background: 'transparent', color: 'var(--text-muted)', fontSize: '0.9rem', cursor: 'pointer' }}>Gerek Yok, Devam Et</button>
+               <button onClick={() => setShowUpsell(false)} style={{ width: '100%', padding: '12px', border: 'none', background: 'transparent', color: 'var(--text-muted)', fontSize: '0.9rem', cursor: 'pointer', fontWeight: 500 }}>Gerek Yok, Sadece Seçtiğimi Alacağım</button>
             </div>
          </div>
       )}
@@ -283,9 +306,25 @@ export default function Home() {
       {isCheckoutOpen && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'flex-end', zIndex: 1600 }}>
            <div className="fade-in" style={{ background: '#fff', width: '100%', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', padding: '24px 20px 48px 20px', maxHeight: '90vh', overflowY: 'auto' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px', alignItems: 'center' }}>
                  <h3 className="font-bold" style={{ fontSize: '1.2rem' }}>Siparişi Tamamla</h3>
-                 <button onClick={() => setIsCheckoutOpen(false)} style={{ border: 'none', background: 'none', fontSize: '1.8rem', cursor: 'pointer', padding: '8px' }}>&times;</button>
+                 <button onClick={() => setIsCheckoutOpen(false)} style={{ border: 'none', background: '#f1f5f9', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', cursor: 'pointer', color: '#64748b' }}>&times;</button>
+              </div>
+
+              {/* Ekstra Sepet Önerileri (Checkout Upsell) */}
+              <div style={{ marginBottom: '24px', padding: '16px', background: '#f8fafc', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+                 <p className="font-bold" style={{ fontSize: '0.85rem', color: '#0f172a', marginBottom: '12px' }}>🥤 Sepetinize Ekleyin, Tam Olsun:</p>
+                 <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', paddingBottom: '4px' }}>
+                    {menuData.flatMap(c => c.items).filter(i => i.category === 'İçecek' || i.category === 'Tatlı').slice(0,2).map(extra => (
+                       <div key={extra.id} style={{ background: '#fff', padding: '8px 12px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '8px', border: '1px solid #e2e8f0', minWidth: '150px' }}>
+                          <div style={{ flex: 1 }}>
+                             <p className="font-bold" style={{ fontSize: '0.75rem', margin: 0 }}>{extra.name}</p>
+                             <p className="font-secondary" style={{ fontSize: '0.7rem', color: 'var(--primary)', margin: 0, fontWeight: 700 }}>+₺{extra.price}</p>
+                          </div>
+                          <button onClick={() => { addToCart({...extra, isUpsell: true}); }} style={{ background: '#eff6ff', color: 'var(--primary)', border: 'none', width: '28px', height: '28px', borderRadius: '8px', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>+</button>
+                       </div>
+                    ))}
+                 </div>
               </div>
               
               <div style={{ marginBottom: '20px' }}>

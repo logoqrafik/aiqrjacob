@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Rocket, PackageSearch, Users, LineChart, XCircle, CheckCircle, TrendingUp, Clock, MousePointer2 } from 'lucide-react';
+import { Rocket, PackageSearch, Users, LineChart, XCircle, CheckCircle, TrendingUp, Clock, MousePointer2, ShieldCheck, Activity, Building2 } from 'lucide-react';
 
 export default function LandingPage() {
 
@@ -56,12 +56,28 @@ export default function LandingPage() {
       <section style={{ padding: '100px 0', background: 'radial-gradient(circle at top right, #f1f5f9 0%, #fff 50%)' }}>
         <div className="container flex-mobile-col" style={{ display: 'flex', alignItems: 'center', gap: '64px', flexWrap: 'wrap-reverse' }}>
           <motion.div initial="hidden" animate="visible" variants={slideFromLeft} style={{ flex: '1', minWidth: '300px' }}>
-            <span style={{ background: 'var(--accent-soft)', color: 'var(--accent)', padding: '6px 16px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '700', marginBottom: '24px', display: 'inline-block' }}>RESTORANLAR İÇİN ÖZEL OLARAK GELİŞTİRİLDİ</span>
-            <h1 className="font-bold" style={{ fontSize: 'clamp(2.5rem, 5vw, 4rem)', lineHeight: '1.1', marginBottom: '24px', color: 'var(--primary)' }}>Restoranınızı Daha Karlı <span style={{ color: 'var(--accent)' }}>Hale Getirin</span></h1>
-            <p className="font-secondary" style={{ fontSize: '1.25rem', marginBottom: '40px', lineHeight: '1.5' }}>Sipariş, stok ve müşteri yönetimini tek panelden yönetin. Daha fazla kazanın, daha az uğraşın.</p>
-            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-              <Link href="/admin" className="btn-primary" style={{ padding: '18px 40px', fontSize: '1.1rem', width: '100%', textAlign: 'center' }}>Hemen Demo Gör</Link>
-              <button className="btn-outline hidden-on-mobile" style={{ padding: '18px 40px', fontSize: '1.1rem' }}>Ücretsiz Dene</button>
+            <span style={{ background: 'linear-gradient(90deg, rgba(37, 99, 235, 0.1), rgba(147, 51, 234, 0.1))', color: 'var(--primary)', padding: '8px 20px', borderRadius: '30px', fontSize: '0.85rem', fontWeight: '800', letterSpacing: '0.5px', marginBottom: '24px', display: 'inline-block', border: '1px solid rgba(37, 99, 235, 0.2)' }}>🚀 YENİ NESİL RESTORAN YÖNETİMİ</span>
+            <h1 className="font-bold" style={{ fontSize: 'clamp(2.8rem, 5vw, 4.5rem)', lineHeight: '1.05', marginBottom: '24px', color: '#0f172a', letterSpacing: '-1.5px' }}>
+              Restoranınızın siparişlerini <span style={{ background: 'linear-gradient(to right, #2563eb, #9333ea)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>%30 artırın</span>
+            </h1>
+            <p className="font-secondary" style={{ fontSize: '1.35rem', marginBottom: '48px', lineHeight: '1.6', color: '#475569', fontWeight: '500' }}>
+              QR menü + sipariş + mutfak + kasa tek sistemde. Maliyetleri düşürüp müşteri memnuniyetini zirveye taşıyın.
+            </p>
+            <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
+              <button className="btn-primary" style={{ padding: '20px 48px', fontSize: '1.15rem', borderRadius: '16px', fontWeight: '700', boxShadow: '0 20px 40px -10px rgba(37, 99, 235, 0.5)', transition: 'transform 0.2s', backgroundImage: 'linear-gradient(to right, #2563eb, #3b82f6)' }}>Ücretsiz Kurulum</button>
+              <Link href="/admin" className="btn-outline" style={{ padding: '20px 48px', fontSize: '1.15rem', borderRadius: '16px', fontWeight: '700', background: '#fff', border: '2px solid #e2e8f0', color: '#0f172a' }}>Demo Gör</Link>
+            </div>
+            
+            <div style={{ marginTop: '40px', display: 'flex', gap: '24px', alignItems: 'center' }}>
+              <div style={{ display: 'flex', position: 'relative' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#cbd5e1', border: '3px solid #fff', zIndex: 3 }}></div>
+                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#94a3b8', border: '3px solid #fff', marginLeft: '-15px', zIndex: 2 }}></div>
+                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#64748b', border: '3px solid #fff', marginLeft: '-15px', zIndex: 1 }}></div>
+              </div>
+              <div>
+                <div style={{ display: 'flex', gap: '4px', color: '#f59e0b', fontSize: '1.2rem', marginBottom: '4px' }}>★★★★★</div>
+                <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: '600' }}>500+ Mutlu Restoran Sahibi</span>
+              </div>
             </div>
           </motion.div>
           <motion.div initial="hidden" animate="visible" variants={slideFromRight} style={{ flex: '1.2', minWidth: '300px', width: '100%' }}>
@@ -82,6 +98,48 @@ export default function LandingPage() {
             </div>
           </motion.div>
         </div>
+      </section>
+
+      {/* Trust Section */}
+      <section style={{ padding: '60px 0', background: '#fff', borderTop: '1px solid #f1f5f9', borderBottom: '1px solid #f1f5f9' }}>
+         <div className="container" style={{ textAlign: 'center' }}>
+            <p className="font-secondary" style={{ fontSize: '0.9rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '32px', fontWeight: 600 }}>TÜRKİYE'NİN EN GÜVENİLİR RESTORAN ALTYAPISI</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '48px', alignItems: 'center' }}>
+               <div style={{ display: 'flex', alignItems: 'center', gap: '16px', color: '#0f172a' }}>
+                  <div style={{ background: '#eff6ff', padding: '16px', borderRadius: '16px', color: '#2563eb' }}>
+                     <Building2 size={32} strokeWidth={1.5} />
+                  </div>
+                  <div style={{ textAlign: 'left' }}>
+                     <h4 className="font-bold" style={{ fontSize: '1.5rem', marginBottom: '2px' }}>50+ Restoran</h4>
+                     <p className="font-secondary" style={{ fontSize: '0.9rem', color: '#64748b' }}>Aktif olarak kullanıyor</p>
+                  </div>
+               </div>
+               
+               <div style={{ width: '1px', height: '60px', background: '#e2e8f0' }} className="hidden-on-mobile"></div>
+
+               <div style={{ display: 'flex', alignItems: 'center', gap: '16px', color: '#0f172a' }}>
+                  <div style={{ background: '#ecfdf5', padding: '16px', borderRadius: '16px', color: '#059669' }}>
+                     <Activity size={32} strokeWidth={1.5} />
+                  </div>
+                  <div style={{ textAlign: 'left' }}>
+                     <h4 className="font-bold" style={{ fontSize: '1.5rem', marginBottom: '2px' }}>%99.9 Uptime</h4>
+                     <p className="font-secondary" style={{ fontSize: '0.9rem', color: '#64748b' }}>Kesintisiz sipariş akışı</p>
+                  </div>
+               </div>
+
+               <div style={{ width: '1px', height: '60px', background: '#e2e8f0' }} className="hidden-on-mobile"></div>
+
+               <div style={{ display: 'flex', alignItems: 'center', gap: '16px', color: '#0f172a' }}>
+                  <div style={{ background: '#fef2f2', padding: '16px', borderRadius: '16px', color: '#dc2626' }}>
+                     <ShieldCheck size={32} strokeWidth={1.5} />
+                  </div>
+                  <div style={{ textAlign: 'left' }}>
+                     <h4 className="font-bold" style={{ fontSize: '1.5rem', marginBottom: '2px' }}>Bulut Güvencesi</h4>
+                     <p className="font-secondary" style={{ fontSize: '0.9rem', color: '#64748b' }}>Verileriniz daima güvende</p>
+                  </div>
+               </div>
+            </div>
+         </div>
       </section>
 
       {/* Problem Section */}

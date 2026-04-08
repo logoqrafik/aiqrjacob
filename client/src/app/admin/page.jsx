@@ -383,43 +383,60 @@ export default function AdminDashboard() {
               {/* Statistics Grid */}
               <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '48px' }}>
                 
-                {/* Highlighted: Günlük Ciro */}
+                {/* Highlighted: Günlük Ciro (En Büyük) */}
                 <div className="glass-card" style={{ 
                   padding: '32px 24px', 
-                  background: 'linear-gradient(135deg, var(--primary), #4f46e5)', 
+                  background: 'linear-gradient(135deg, #0f172a, #1e293b)', 
                   color: '#fff', 
                   gridColumn: 'span 2',
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'center',
                   borderRadius: '24px',
-                  boxShadow: '0 20px 25px -5px rgba(67, 56, 202, 0.4)'
+                  boxShadow: '0 20px 25px -5px rgba(15, 23, 42, 0.4)',
+                  position: 'relative',
+                  overflow: 'hidden'
                 }}>
-                  <span style={{ fontSize: '0.9rem', opacity: 0.8 }} className="font-medium">Günlük Ciro (Net)</span>
-                  <p className="font-bold" style={{ fontSize: '3rem', margin: '8px 0', letterSpacing: '-2px' }}>₺{revenueToday.toFixed(2)}</p>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem' }}>
-                    <span style={{ padding: '4px 10px', background: 'rgba(255,255,255,0.2)', borderRadius: '20px' }}>Bugün</span>
+                  <div style={{ position: 'absolute', top: '-20px', right: '-20px', fontSize: '8rem', opacity: 0.05, transform: 'rotate(-15deg)' }}>💰</div>
+                  <span style={{ fontSize: '1rem', color: '#94a3b8' }} className="font-medium">Günlük Ciro</span>
+                  <p className="font-bold" style={{ fontSize: '3.5rem', margin: '8px 0', letterSpacing: '-2px', color: '#fff' }}>
+                    ₺{revenueToday.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', color: '#cbd5e1' }}>
+                    <span style={{ padding: '4px 12px', background: 'rgba(255,255,255,0.1)', borderRadius: '20px', color: '#fff' }}>Bugün</span>
                     <span style={{ fontWeight: 600 }}>Ciro Bekleyen: ₺{todayOrders.filter(o=>o.status!=='ready').reduce((t,o)=>t+Number(o.total_price),0).toFixed(2)}</span>
                   </div>
                 </div>
 
-                <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }} className="font-medium">Toplam Sipariş</span>
-                  <p className="font-bold" style={{ fontSize: '2rem', margin: '12px 0 8px 0' }}>{orders.length}</p>
-                  <span style={{ color: 'var(--accent)', fontSize: '0.8rem', fontWeight: '700' }}>Sistem Aktif</span>
+                {/* Sipariş Sayısı */}
+                <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', justifyContent: 'center', border: '1px solid #e2e8f0' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                     <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }} className="font-medium">Sipariş Sayısı</span>
+                     <span style={{ background: '#f0fdf4', color: '#16a34a', padding: '4px 8px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700 }}>Aktif</span>
+                  </div>
+                  <p className="font-bold" style={{ fontSize: '2.5rem', margin: '12px 0 8px 0', color: '#0f172a' }}>{todayOrders.length}</p>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Bugün tamamlanan ve bekleyen.</span>
                 </div>
 
-                <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }} className="font-medium">Bugünkü Siparişler</span>
-                  <p className="font-bold" style={{ fontSize: '2rem', margin: '12px 0 8px 0' }}>{todayOrders.length}</p>
-                  <span style={{ color: '#10b981', fontSize: '0.8rem', fontWeight: '700' }}>+ {todayOrders.length} Yeni</span>
+                {/* Ortalama Sipariş */}
+                <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', justifyContent: 'center', border: '1px solid #e2e8f0' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                     <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }} className="font-medium">Ortalama Sipariş</span>
+                     <span style={{ background: '#eff6ff', color: '#2563eb', padding: '4px 8px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700 }}>Değer</span>
+                  </div>
+                  <p className="font-bold" style={{ fontSize: '2.5rem', margin: '12px 0 8px 0', color: '#0f172a' }}>
+                     ₺{todayOrders.length > 0 ? (todayOrders.reduce((t, o) => t + Number(o.total_price || 0), 0) / todayOrders.length).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0,00'}
+                  </p>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Masa / sipariş başına kazanç.</span>
                 </div>
 
-                <div className="glass-card" style={{ padding: '24px', gridColumn: 'span 2', display: 'flex', alignItems: 'center', gap: '24px' }}>
-                   <div style={{ fontSize: '2.5rem' }}>🏆</div>
-                   <div>
-                      <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }} className="font-medium">En Çok Satan Ürün</span>
-                      <p className="font-bold" style={{ fontSize: '1.4rem', marginTop: '4px' }}>{bestSeller}</p>
+                {/* En Çok Satan Ürün (Genişletilmiş) */}
+                <div className="glass-card" style={{ padding: '24px', gridColumn: 'span 2', display: 'flex', alignItems: 'center', gap: '24px', background: 'linear-gradient(to right, #fff, #f8fafc)', border: '1px solid #e2e8f0' }}>
+                   <div style={{ fontSize: '3rem', width: '80px', height: '80px', background: '#fef3c7', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 10px 15px -3px rgba(251, 191, 36, 0.2)' }}>🏆</div>
+                   <div style={{ flex: 1 }}>
+                      <span style={{ fontSize: '0.9rem', color: 'var(--primary)' }} className="font-bold">ÖNE ÇIKAN</span>
+                      <p className="font-bold" style={{ fontSize: '1.8rem', marginTop: '4px', marginBottom: '8px', color: '#0f172a' }}>{bestSeller}</p>
+                      <p className="font-secondary" style={{ fontSize: '0.9rem', color: '#64748b' }}>Müşterilerin en çok tercih ettiği, vitrin ürününüz.</p>
                    </div>
                 </div>
               </div>

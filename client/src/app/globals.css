@@ -63,6 +63,11 @@ body {
 
 .btn-outline:hover {
   background: var(--bg-main);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active, .btn-outline:active {
+  transform: scale(0.96) translateY(0);
 }
 
 /* Cards */
@@ -71,6 +76,21 @@ body {
   border: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
   border-radius: var(--radius);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.1);
+}
+
+/* Image Hover Zoom (Requires hidden overflow on parent) */
+.glass-card img {
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover img {
+  transform: scale(1.08);
 }
 
 /* Skeleton Loaders */
