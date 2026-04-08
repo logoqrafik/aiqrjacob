@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Rocket, PackageSearch, Users, LineChart, XCircle, CheckCircle, TrendingUp, Clock, MousePointer2, ShieldCheck, Activity, Building2 } from 'lucide-react';
+import { Rocket, PackageSearch, Users, LineChart, XCircle, CheckCircle, TrendingUp, Clock, MousePointer2, ShieldCheck, Activity, Building2, QrCode, Utensils, ChefHat, ArrowRight, Zap, Smartphone, LayoutDashboard } from 'lucide-react';
 
 export default function LandingPage() {
 
@@ -64,8 +64,8 @@ export default function LandingPage() {
               QR menü + sipariş + mutfak + kasa tek sistemde. Maliyetleri düşürüp müşteri memnuniyetini zirveye taşıyın.
             </p>
             <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
-              <button className="btn-primary" style={{ padding: '20px 48px', fontSize: '1.15rem', borderRadius: '16px', fontWeight: '700', boxShadow: '0 20px 40px -10px rgba(37, 99, 235, 0.5)', transition: 'transform 0.2s', backgroundImage: 'linear-gradient(to right, #2563eb, #3b82f6)' }}>Ücretsiz Kurulum</button>
-              <Link href="/admin" className="btn-outline" style={{ padding: '20px 48px', fontSize: '1.15rem', borderRadius: '16px', fontWeight: '700', background: '#fff', border: '2px solid #e2e8f0', color: '#0f172a' }}>Demo Gör</Link>
+              <a href="https://wa.me/905520814796?text=Merhaba,%20sistem%20hakkında%20bilgi%20almak%20istiyorum." target="_blank" rel="noopener noreferrer" className="btn-primary" style={{ padding: '20px 48px', fontSize: '1.25rem', borderRadius: '16px', fontWeight: '800', boxShadow: '0 20px 40px -10px rgba(37, 99, 235, 0.6)', transition: 'transform 0.2s', backgroundImage: 'linear-gradient(to right, #2563eb, #4f46e5)', textDecoration: 'none', display: 'inline-block' }}>Whatsapp'tan Ulaşın</a>
+              <Link href="/admin" className="btn-outline" style={{ padding: '20px 48px', fontSize: '1.25rem', borderRadius: '16px', fontWeight: '800', background: '#fff', border: '3px solid #e2e8f0', color: '#0f172a', textDecoration: 'none', display: 'inline-block' }}>Paneli İncele →</Link>
             </div>
             
             <div style={{ marginTop: '40px', display: 'flex', gap: '24px', alignItems: 'center' }}>
@@ -142,6 +142,49 @@ export default function LandingPage() {
          </div>
       </section>
 
+      {/* How It Works Section */}
+      <section style={{ padding: '100px 0', background: '#fff' }}>
+        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} variants={containerVariants} className="container" style={{ textAlign: 'center' }}>
+          <div style={{ marginBottom: '60px' }}>
+            <span style={{ fontWeight: '800', color: 'var(--accent)', fontSize: '0.9rem', letterSpacing: '1px', textTransform: 'uppercase' }}>ÇOK BASİT</span>
+            <h2 className="font-bold" style={{ fontSize: 'clamp(2rem, 4vw, 2.5rem)', marginTop: '8px' }}>Sistem Nasıl Çalışır?</h2>
+          </div>
+          
+          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: '20px' }}>
+            {/* Step 1 */}
+            <motion.div variants={itemVariants} style={{ flex: '1', minWidth: '250px', maxWidth: '300px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+              <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px', boxShadow: '0 10px 25px -5px rgba(37,99,235,0.2)' }}>
+                 <QrCode size={40} strokeWidth={1.5} />
+              </div>
+              <h4 className="font-bold" style={{ fontSize: '1.2rem', marginBottom: '8px' }}>1. QR Okut</h4>
+              <p className="font-secondary" style={{ fontSize: '0.95rem' }}>Müşteri masadaki QR kodu okutur, saniyeler içinde dijital menüye girer.</p>
+            </motion.div>
+
+            <div className="hidden-on-mobile" style={{ color: '#cbd5e1' }}><ArrowRight size={32} strokeWidth={1} /></div>
+
+            {/* Step 2 */}
+            <motion.div variants={itemVariants} style={{ flex: '1', minWidth: '250px', maxWidth: '300px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+              <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: '#fef3c7', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px', boxShadow: '0 10px 25px -5px rgba(217,119,6,0.2)' }}>
+                 <Utensils size={40} strokeWidth={1.5} />
+              </div>
+              <h4 className="font-bold" style={{ fontSize: '1.2rem', marginBottom: '8px' }}>2. Sipariş Ver</h4>
+              <p className="font-secondary" style={{ fontSize: '0.95rem' }}>Garson beklemeden sepetini oluşturur ve siparişini onaylar.</p>
+            </motion.div>
+
+            <div className="hidden-on-mobile" style={{ color: '#cbd5e1' }}><ArrowRight size={32} strokeWidth={1} /></div>
+
+            {/* Step 3 */}
+            <motion.div variants={itemVariants} style={{ flex: '1', minWidth: '250px', maxWidth: '300px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+              <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px', boxShadow: '0 10px 25px -5px rgba(5,150,105,0.2)' }}>
+                 <ChefHat size={40} strokeWidth={1.5} />
+              </div>
+              <h4 className="font-bold" style={{ fontSize: '1.2rem', marginBottom: '8px' }}>3. Mutfağa Düşer</h4>
+              <p className="font-secondary" style={{ fontSize: '0.95rem' }}>Sipariş anında masadan mutfak paneline veya kasaya sesli uyarı ile yansır.</p>
+            </motion.div>
+          </div>
+        </motion.div>
+      </section>
+
       {/* Problem Section */}
       <section style={{ padding: '100px 0', background: '#f8f9fb' }}>
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} variants={containerVariants} className="container" style={{ textAlign: 'center' }}>
@@ -179,21 +222,24 @@ export default function LandingPage() {
         </motion.div>
       </section>
 
-      {/* How it Works */}
-      <section style={{ padding: '100px 0', background: 'var(--primary)', color: '#fff' }}>
+      {/* Why Us Section */}
+      <section style={{ padding: '100px 0', background: 'linear-gradient(to bottom right, #0f172a, #1e293b)', color: '#fff' }}>
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={containerVariants} className="container" style={{ textAlign: 'center' }}>
-          <h2 className="font-bold" style={{ fontSize: 'clamp(2rem, 4vw, 2.5rem)', marginBottom: '80px' }}>Neden Bu Sistemi Kullanmalısınız?</h2>
-          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '32px' }}>
+          <h2 className="font-bold" style={{ fontSize: 'clamp(2rem, 4vw, 2.5rem)', marginBottom: '80px' }}>Neden Biz?</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '32px', maxWidth: '1000px', margin: '0 auto' }}>
             {[
-              { icon: TrendingUp, t: 'Daha Fazla Satış', d: 'Hızlı servis ve doğru hesapla cironuzu artırın.' },
-              { icon: CheckCircle, t: 'Daha Az Hata', d: 'Manuel işlemleri azaltın, hatalara son verin.' },
-              { icon: Clock, t: 'Zaman Tasarrufu', d: 'Günde 2 saatten fazla zamanınızı geri kazanın.' },
-              { icon: MousePointer2, t: 'Kolay Kullanım', d: 'Herkesin 5 dakikada öğrenebileceği basit arayüz.' }
+              { icon: Zap, t: '1 Günde Kurulum', d: 'Saatler içinde menünüzü yükler, hemen kullanmaya başlarsınız. Beklemek yok.' },
+              { icon: Smartphone, t: 'Garsonsuz Sipariş', d: 'Müşteriler tamamen telefondan sipariş verir. İş yükü ve hatalar sıfıra iner.' },
+              { icon: LayoutDashboard, t: 'Tek Panel Yönetim', d: 'Sipariş, kasa ve stok aynı ekranda. Tüm süreci hakimiyet altına alın.' }
             ].map((b, i) => (
-              <motion.div variants={itemVariants} key={i} style={{ maxWidth: '240px', padding: '20px' }}>
-                 <div style={{ color: 'var(--accent)', marginBottom: '20px', display: 'flex', justifyContent: 'center' }}><b.icon size={48} strokeWidth={1.5} /></div>
-                 <h4 className="font-bold" style={{ fontSize: '1.3rem', marginBottom: '12px' }}>{b.t}</h4>
-                 <p style={{ opacity: '0.8', fontSize: '0.95rem' }}>{b.d}</p>
+              <motion.div variants={itemVariants} key={i} style={{ padding: '40px 20px', background: 'rgba(255,255,255,0.05)', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                 <div style={{ color: '#60a5fa', marginBottom: '24px', display: 'flex', justifyContent: 'center' }}>
+                    <div style={{ background: 'rgba(96, 165, 250, 0.2)', padding: '16px', borderRadius: '50%' }}>
+                       <b.icon size={48} strokeWidth={1.5} />
+                    </div>
+                 </div>
+                 <h4 className="font-bold" style={{ fontSize: '1.4rem', marginBottom: '16px' }}>{b.t}</h4>
+                 <p style={{ opacity: '0.8', fontSize: '1rem', lineHeight: '1.6' }}>{b.d}</p>
               </motion.div>
             ))}
           </div>
@@ -204,35 +250,38 @@ export default function LandingPage() {
       <section id="pricing" style={{ padding: '120px 0', background: '#f8f9fb' }}>
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={containerVariants} className="container">
           <div style={{ textAlign: 'center', marginBottom: '80px' }}>
-            <h2 className="font-bold" style={{ fontSize: 'clamp(2rem, 4vw, 2.5rem)', marginBottom: '20px' }}>Bütçenize Uygun Basit Planlar</h2>
-            <p className="font-secondary">Hiçbir gizli ücret yok. İhtiyacınıza göre seçin.</p>
+            <h2 className="font-bold" style={{ fontSize: 'clamp(2rem, 4vw, 2.5rem)', marginBottom: '20px', color: '#0f172a' }}>İşletmenize Uygun, Şeffaf Planlar</h2>
+            <p className="font-secondary" style={{ fontSize: '1.1rem' }}>Sürpriz ödemeler veya gizli komisyonlar yok. Kazandıkça ödeyin.</p>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '32px', maxWidth: '1000px', margin: '0 auto' }}>
             {/* Plan 1 */}
-            <motion.div variants={itemVariants} className="glass-card" style={{ padding: '40px', textAlign: 'center', border: '1px solid #e2e8f0' }}>
-               <h3 className="font-bold" style={{ fontSize: '1.25rem', marginBottom: '12px' }}>Temel</h3>
-               <p className="font-secondary" style={{ marginBottom: '32px' }}>Küçük işletmeler için</p>
-               <div className="font-bold" style={{ fontSize: '3rem', marginBottom: '40px' }}>₺499 <span style={{ fontSize: '1rem', color: '#888' }}>/ Ay</span></div>
-               <ul style={{ textAlign: 'left', listStyle: 'none', marginBottom: '40px' }}>
-                  <li style={{ marginBottom: '12px', display: 'flex', gap: '8px' }}><CheckCircle size={18} color="var(--accent)" /> Sınırsız Ürün Ekleme</li>
-                  <li style={{ marginBottom: '12px', display: 'flex', gap: '8px' }}><CheckCircle size={18} color="var(--accent)" /> Temel Stok Takibi</li>
-                  <li style={{ marginBottom: '12px', display: 'flex', gap: '8px' }}><CheckCircle size={18} color="var(--accent)" /> QR Menü Sistemi</li>
+            <motion.div variants={itemVariants} className="glass-card" style={{ padding: '40px', textAlign: 'center', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column' }}>
+               <h3 className="font-bold" style={{ fontSize: '1.5rem', marginBottom: '8px', color: '#0f172a' }}>Başlangıç</h3>
+               <p className="font-secondary" style={{ marginBottom: '32px' }}>Küçük restoran & kafeler için</p>
+               <div className="font-bold" style={{ fontSize: '3rem', marginBottom: '8px', color: '#0f172a' }}>₺999</div>
+               <div className="font-secondary" style={{ marginBottom: '40px', fontSize: '0.9rem' }}>Aylık Faturalandırılır</div>
+               <ul style={{ textAlign: 'left', listStyle: 'none', marginBottom: '40px', flex: 1 }}>
+                  <li style={{ marginBottom: '16px', display: 'flex', gap: '12px', alignItems: 'center' }}><CheckCircle size={20} color="var(--accent)" /> <span style={{ fontWeight: 500 }}>Sınırsız Ürün Ekleme</span></li>
+                  <li style={{ marginBottom: '16px', display: 'flex', gap: '12px', alignItems: 'center' }}><CheckCircle size={20} color="var(--accent)" /> <span style={{ fontWeight: 500 }}>Temel Stok Takibi</span></li>
+                  <li style={{ marginBottom: '16px', display: 'flex', gap: '12px', alignItems: 'center' }}><CheckCircle size={20} color="var(--accent)" /> <span style={{ fontWeight: 500 }}>QR Menü Sistemi</span></li>
+                  <li style={{ marginBottom: '16px', display: 'flex', gap: '12px', alignItems: 'center' }}><CheckCircle size={20} color="var(--accent)" /> <span style={{ fontWeight: 500 }}>E-posta Desteği</span></li>
                </ul>
-               <button className="btn-outline" style={{ width: '100%' }}>Hemen Başla</button>
+               <button className="btn-outline" style={{ width: '100%', padding: '16px', fontSize: '1.1rem', fontWeight: 600, border: '2px solid #cbd5e1' }}>Hemen Başla</button>
             </motion.div>
             {/* Plan 2 */}
-            <motion.div variants={itemVariants} className="glass-card" style={{ padding: '40px', textAlign: 'center', border: '2px solid var(--accent)', position: 'relative' }}>
-               <div style={{ position: 'absolute', top: '-15px', left: '50%', transform: 'translateX(-50%)', background: 'var(--accent)', color: '#fff', padding: '4px 16px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 'bold', whiteSpace: 'nowrap' }}>EN POPÜLER</div>
-               <h3 className="font-bold" style={{ fontSize: '1.25rem', marginBottom: '12px' }}>Profesyonel</h3>
-               <p className="font-secondary" style={{ marginBottom: '32px' }}>Büyüyen restoranlar için</p>
-               <div className="font-bold" style={{ fontSize: '3.5rem', marginBottom: '40px' }}>₺899 <span style={{ fontSize: '1rem', color: '#888' }}>/ Ay</span></div>
-               <ul style={{ textAlign: 'left', listStyle: 'none', marginBottom: '40px' }}>
-                  <li style={{ marginBottom: '12px', display: 'flex', gap: '8px' }}><CheckCircle size={18} color="var(--accent)" /> Gelişmiş Stok Yönetimi</li>
-                  <li style={{ marginBottom: '12px', display: 'flex', gap: '8px' }}><CheckCircle size={18} color="var(--accent)" /> Günlük Ciro Analizleri</li>
-                  <li style={{ marginBottom: '12px', display: 'flex', gap: '8px' }}><CheckCircle size={18} color="var(--accent)" /> Çoklu Masa Bildirimleri</li>
-                  <li style={{ marginBottom: '12px', display: 'flex', gap: '8px' }}><CheckCircle size={18} color="var(--accent)" /> 7/24 Teknik Destek</li>
+            <motion.div variants={itemVariants} className="glass-card" style={{ padding: '40px', textAlign: 'center', border: '2px solid var(--accent)', position: 'relative', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 50px -12px rgba(37, 99, 235, 0.15)' }}>
+               <div style={{ position: 'absolute', top: '-16px', left: '50%', transform: 'translateX(-50%)', background: 'linear-gradient(to right, #2563eb, #4f46e5)', color: '#fff', padding: '6px 20px', borderRadius: '30px', fontSize: '0.8rem', fontWeight: '800', whiteSpace: 'nowrap', boxShadow: '0 4px 10px rgba(37, 99, 235, 0.3)' }}>EN TERCİH EDİLEN</div>
+               <h3 className="font-bold" style={{ fontSize: '1.5rem', marginBottom: '8px', color: '#0f172a' }}>Standart</h3>
+               <p className="font-secondary" style={{ marginBottom: '32px' }}>Büyüyen ve yoğun işletmeler için</p>
+               <div className="font-bold" style={{ fontSize: '3.5rem', marginBottom: '8px', color: '#0f172a' }}>₺1.999</div>
+               <div className="font-secondary" style={{ marginBottom: '40px', fontSize: '0.9rem' }}>Aylık Faturalandırılır</div>
+               <ul style={{ textAlign: 'left', listStyle: 'none', marginBottom: '40px', flex: 1 }}>
+                  <li style={{ marginBottom: '16px', display: 'flex', gap: '12px', alignItems: 'center' }}><CheckCircle size={20} color="var(--accent)" /> <span style={{ fontWeight: 600 }}>Gelişmiş Stok Yönetimi</span></li>
+                  <li style={{ marginBottom: '16px', display: 'flex', gap: '12px', alignItems: 'center' }}><CheckCircle size={20} color="var(--accent)" /> <span style={{ fontWeight: 600 }}>Günlük Ciro & Kâr Analizleri</span></li>
+                  <li style={{ marginBottom: '16px', display: 'flex', gap: '12px', alignItems: 'center' }}><CheckCircle size={20} color="var(--accent)" /> <span style={{ fontWeight: 600 }}>Çoklu Masa Temsili</span></li>
+                  <li style={{ marginBottom: '16px', display: 'flex', gap: '12px', alignItems: 'center' }}><CheckCircle size={20} color="var(--accent)" /> <span style={{ fontWeight: 600 }}>7/24 Kesintisiz Teknik Destek</span></li>
                </ul>
-               <button className="btn-primary" style={{ width: '100%' }}>Hemen Başla</button>
+               <button className="btn-primary" style={{ width: '100%', padding: '16px', fontSize: '1.1rem', fontWeight: 600, background: 'linear-gradient(to right, #2563eb, #3b82f6)' }}>Hemen Başla</button>
             </motion.div>
           </div>
         </motion.div>
@@ -245,8 +294,8 @@ export default function LandingPage() {
                <h2 className="font-bold" style={{ fontSize: 'clamp(2rem, 5vw, 3rem)', marginBottom: '24px' }}>Restoranınızı Büyütmeye Hazır mısınız?</h2>
                <p style={{ opacity: '0.8', fontSize: '1.2rem', marginBottom: '48px', maxWidth: '600px', margin: '0 auto 48px auto' }}>Hemen ücretsiz hesabınızı oluşturun ve farkı yarın görmeye başlayın.</p>
                <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                  <button className="btn-primary" style={{ background: '#fff', color: 'var(--primary)', padding: '18px 40px', width: 'auto', minWidth: '200px' }}>Ücretsiz Başla</button>
-                  <Link href="/admin" className="btn-outline" style={{ color: '#fff', border: '1px solid #fff', padding: '18px 40px', width: 'auto', minWidth: '200px' }}>Demo Gör</Link>
+                  <a href="https://wa.me/905520814796?text=Merhaba,%20sistem%20hakkında%20bilgi%20almak%20istiyorum." target="_blank" rel="noopener noreferrer" className="btn-primary" style={{ background: '#fff', color: 'var(--primary)', padding: '20px 48px', width: 'auto', minWidth: '220px', fontSize: '1.2rem', fontWeight: 800, textDecoration: 'none', borderRadius: '16px' }}>Ücretsiz Başla</a>
+                  <Link href="/admin" className="btn-outline" style={{ color: '#fff', border: '2px solid #fff', padding: '20px 48px', width: 'auto', minWidth: '220px', fontSize: '1.2rem', fontWeight: 800, textDecoration: 'none', borderRadius: '16px' }}>Demoyu Gör</Link>
                </div>
             </div>
          </motion.div>
@@ -278,6 +327,36 @@ export default function LandingPage() {
            <p className="font-secondary" style={{ fontSize: '0.85rem' }}>© 2024 RestoPanel. Tüm Hakları Saklıdır.</p>
         </div>
       </footer>
+
+      {/* Floating WhatsApp Button */}
+      <a 
+        href="https://wa.me/905520814796?text=Merhaba,%20sistem%20hakkında%20bilgi%20almak%20istiyorum" 
+        target="_blank" 
+        rel="noopener noreferrer"
+        style={{
+           position: 'fixed',
+           bottom: '24px',
+           right: '24px',
+           background: '#25D366',
+           color: '#fff',
+           width: '60px',
+           height: '60px',
+           borderRadius: '50%',
+           display: 'flex',
+           alignItems: 'center',
+           justifyContent: 'center',
+           boxShadow: '0 10px 25px rgba(37, 211, 102, 0.4)',
+           zIndex: 5000,
+           transition: 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+        }}
+        onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1) translateY(-4px)'}
+        onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1) translateY(0)'}
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+           <path d="M21.16 12A9.16 9.16 0 1 0 12 21.16L3 22l.84-9A9.16 9.16 0 0 0 21.16 12z"></path>
+           <path d="M16 15.5c-1 2-3 2-4 1s-3-2-4-3 .5-3 2.5-4c0-.5-.5-1-1-1.5s-1-2-1.5-2C7.5 5 7 5 6.5 5c-1.5.5-2.5 1.5-2 3.5 1 3.5 3 6 5 8s6 4 7 3c2-.5 2.5-1.5 2.5-2.5s-2-2-2.5-2.5c-.5-.5-1-1-1-1s-1.5.5-2 1.5z"></path>
+        </svg>
+      </a>
     </div>
   );
 }
