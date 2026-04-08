@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { io } from 'socket.io-client';
+import { Zap, CheckCircle2, AlertCircle, Timer, Flame, Gift, Coffee } from 'lucide-react';
 
 export default function Home() {
   const [menuData, setMenuData] = useState([]);
@@ -107,10 +108,33 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="container" style={{paddingTop:'50px'}}>
-        <div className="skeleton" style={{height:'40px', width:'200px', marginBottom:'40px'}} />
-        <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(280px, 1fr))', gap:'24px'}}>
-           {[1,2,3,4].map(i => <div key={i} className="skeleton" style={{height:'300px', borderRadius:'16px'}} />)}
+      <div className="fade-in" style={{ width: '100vw', minHeight: '100vh', background: 'var(--bg-main)', overflowX: 'hidden' }}>
+        <header style={{ background: '#fff', borderBottom: '1px solid var(--border)', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="skeleton" style={{ height: '24px', width: '140px', borderRadius: '4px' }} />
+          <div className="skeleton" style={{ height: '36px', width: '80px', borderRadius: '8px' }} />
+        </header>
+
+        <div className="skeleton" style={{ height: '40px', width: '100%', marginBottom: '24px' }} />
+
+        <div className="container" style={{ padding: '0 16px 40px 16px' }}>
+          <div className="skeleton" style={{ height: '28px', width: '180px', borderRadius: '4px', marginBottom: '20px' }} />
+          
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px' }}>
+             {[1, 2, 3, 4, 5, 6].map(i => (
+                <div key={i} style={{ background: '#fff', borderRadius: '16px', border: '1px solid var(--border)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                   <div className="skeleton" style={{ height: '180px', width: '100%', borderRadius: '0' }} />
+                   <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                         <div className="skeleton" style={{ height: '20px', width: '60%', borderRadius: '4px' }} />
+                         <div className="skeleton" style={{ height: '20px', width: '20%', borderRadius: '4px' }} />
+                      </div>
+                      <div className="skeleton" style={{ height: '12px', width: '100%', borderRadius: '4px' }} />
+                      <div className="skeleton" style={{ height: '12px', width: '80%', borderRadius: '4px', marginBottom: '12px' }} />
+                      <div className="skeleton" style={{ height: '44px', width: '100%', borderRadius: '12px', marginTop: 'auto' }} />
+                   </div>
+                </div>
+             ))}
+          </div>
         </div>
       </div>
     );
@@ -140,7 +164,7 @@ export default function Home() {
 
       {/* FOMO: Yoğun Saat Uyarısı Top Banner */}
       <div style={{ background: '#fef2f2', color: '#991b1b', padding: '10px 16px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', borderBottom: '1px solid #fecaca' }}>
-         <span style={{ fontSize: '1.1rem', animation: 'pulse 2s infinite' }}>⚡</span>
+         <span style={{ display: 'flex', alignItems: 'center', animation: 'pulse 2s infinite', color: '#dc2626' }}><Zap size={20} fill="#dc2626" /></span>
          <span className="font-medium"><b>Yoğun Saat:</b> Bekleme süreleri uzamadan siparişinizi oluşturun.</span>
       </div>
 
@@ -156,7 +180,7 @@ export default function Home() {
                <div>
                   <p className="font-secondary" style={{ fontSize: '0.75rem', marginBottom: '4px' }}>Sipariş Durumu</p>
                   <h3 className="font-bold" style={{ fontSize: '1rem' }}>
-                    {activeOrder.status === 'pending' ? 'Hazırlık Bekleniyor' : activeOrder.status === 'preparing' ? 'Mutfakta Hazırlanıyor' : 'Sipariş Hazır ✨'}
+                    {activeOrder.status === 'pending' ? 'Hazırlık Bekleniyor' : activeOrder.status === 'preparing' ? 'Mutfakta Hazırlanıyor' : <span style={{display: 'flex', alignItems: 'center', gap: '4px'}}>Sipariş Hazır <CheckCircle2 size={18} color="#10b981" /></span>}
                   </h3>
                </div>
                <div style={{ textAlign: 'right' }}>
@@ -184,7 +208,7 @@ export default function Home() {
               <h2 className="font-bold" style={{ fontSize: '1.15rem', marginBottom: '20px', borderLeft: '3px solid var(--primary)', paddingLeft: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                  {category.name}
                  {/* FOMO: Kategoriye Özel Badge */}
-                 {index === 0 && <span style={{ background: '#ef4444', color: '#fff', fontSize: '0.7rem', padding: '4px 8px', borderRadius: '8px', letterSpacing: '0.5px' }}>🚨 BUGÜNE ÖZEL KAMPANYA</span>}
+                 {index === 0 && <span style={{ background: '#ef4444', color: '#fff', fontSize: '0.7rem', padding: '4px 8px', borderRadius: '8px', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '4px' }}><AlertCircle size={12} strokeWidth={3} /> BUGÜNE ÖZEL KAMPANYA</span>}
               </h2>
               <div style={{ 
                 display: 'grid', 
@@ -202,13 +226,13 @@ export default function Home() {
                     <div style={{ position: 'relative', height: '180px', width: '100%' }}>
                       {/* FOMO: Son 3 Adet veya Hızlı Tükeniyor Etiketi */}
                       {(itemIdx === 0 || itemIdx === 3) && (
-                         <div style={{ position: 'absolute', top: '12px', left: '12px', background: 'rgba(239, 68, 68, 0.95)', backdropFilter: 'blur(4px)', color: '#fff', padding: '6px 12px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 800, zIndex: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>
-                            ⏳ Son {Math.floor(Math.random() * 3) + 2} Porsiyon
+                         <div style={{ position: 'absolute', top: '12px', left: '12px', background: 'rgba(239, 68, 68, 0.95)', backdropFilter: 'blur(4px)', color: '#fff', padding: '6px 12px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 800, zIndex: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.2)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <Timer size={14} /> Son {Math.floor(Math.random() * 3) + 2} Porsiyon
                          </div>
                       )}
                       {(itemIdx === 1) && (
-                         <div style={{ position: 'absolute', top: '12px', left: '12px', background: 'rgba(245, 158, 11, 0.95)', backdropFilter: 'blur(4px)', color: '#fff', padding: '6px 12px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 800, zIndex: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>
-                            🔥 Hızlı Tükeniyor
+                         <div style={{ position: 'absolute', top: '12px', left: '12px', background: 'rgba(245, 158, 11, 0.95)', backdropFilter: 'blur(4px)', color: '#fff', padding: '6px 12px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 800, zIndex: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.2)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <Flame size={14} fill="#fff" /> Hızlı Tükeniyor
                          </div>
                       )}
 
@@ -275,11 +299,11 @@ export default function Home() {
       {showUpsell && suggestedItems.length > 0 && (
          <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.7)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '16px' }}>
             <div className="fade-in" style={{ background: '#fff', width: '100%', maxWidth: '400px', borderRadius: '24px', padding: '24px', textAlign: 'center', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
-               <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>🔥</div>
+               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px', color: '#ea580c' }}><Flame size={48} fill="#ea580c" /></div>
                <h3 className="font-bold" style={{ fontSize: '1.25rem', marginBottom: '8px', color: '#0f172a' }}>Bunu alanlar şunu da aldı:</h3>
                
                <div style={{ background: 'linear-gradient(135deg, #fef3c7, #fde68a)', padding: '12px', borderRadius: '12px', marginBottom: '20px', border: '1px solid #fcd34d' }}>
-                  <p className="font-bold" style={{ color: '#b45309', fontSize: '0.85rem' }}>🎁 MENÜ YAP KAZAN!</p>
+                  <p className="font-bold" style={{ color: '#b45309', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}><Gift size={16} /> MENÜ YAP KAZAN!</p>
                   <p className="font-secondary" style={{ color: '#92400e', fontSize: '0.75rem', marginTop: '2px' }}>Yanına bir ürün daha ekleyin, sepette anında <b>%10 Avantajlı</b> fiyatlardan yararlanın!</p>
                </div>
 
@@ -313,7 +337,9 @@ export default function Home() {
 
               {/* Ekstra Sepet Önerileri (Checkout Upsell) */}
               <div style={{ marginBottom: '24px', padding: '16px', background: '#f8fafc', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
-                 <p className="font-bold" style={{ fontSize: '0.85rem', color: '#0f172a', marginBottom: '12px' }}>🥤 Sepetinize Ekleyin, Tam Olsun:</p>
+                 <p className="font-bold" style={{ fontSize: '0.85rem', color: '#0f172a', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                   <Coffee size={18} color="var(--primary)" /> Sepetinize Ekleyin, Tam Olsun:
+                 </p>
                  <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', paddingBottom: '4px' }}>
                     {menuData.flatMap(c => c.items).filter(i => i.category === 'İçecek' || i.category === 'Tatlı').slice(0,2).map(extra => (
                        <div key={extra.id} style={{ background: '#fff', padding: '8px 12px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '8px', border: '1px solid #e2e8f0', minWidth: '150px' }}>

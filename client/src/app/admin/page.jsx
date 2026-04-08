@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client'; 
+import { Bell, BellOff, Building2, LayoutDashboard, ShoppingCart, Utensils, TrendingDown, Users, AlertCircle, AlertTriangle, Clock as ClockIcon, Activity, Medal, X, Menu } from 'lucide-react';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -134,7 +135,7 @@ export default function AdminDashboard() {
     return (
        <div style={{minHeight:'100vh', display:'flex', justifyContent:'center', alignItems:'center', background:'#f8f9fb', color:'#0f172a', flexDirection:'column', textAlign:'center', padding:'20px'}}>
            <div className="glass-card fade-in" style={{padding:'64px', borderRadius:'32px', boxShadow:'0 20px 40px rgba(0,0,0,0.05)', maxWidth:'600px'}}>
-             <div style={{fontSize:'4rem', marginBottom:'24px'}}>🏢</div>
+             <div style={{color:'var(--accent)', marginBottom:'24px', display:'flex', justifyContent:'center'}}><Building2 size={64} strokeWidth={1.2} /></div>
              <h1 style={{fontSize:'2.5rem', marginBottom:'20px', letterSpacing:'-1px'}} className="font-bold">RestoPanel Yönetici Girişi</h1>
              <p className="font-secondary" style={{marginBottom:'40px', lineHeight:'1.6', fontSize:'1.1rem'}}>
                Canlı sipariş akışı ve mutfak bildirim sistemini aktif etmek için paneli başlatın.
@@ -152,7 +153,7 @@ export default function AdminDashboard() {
         color: activeTab === id ? '#fff' : 'var(--text-muted)',
         boxShadow: activeTab === id ? '0 8px 16px -4px rgba(15, 23, 42, 0.3)' : 'none'
       }} className="font-medium hover:bg-gray-50">
-      <span style={{fontSize:'1.2rem'}}>{icon}</span>
+      <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>{icon}</div>
       <span style={{fontSize:'0.95rem'}}>{label}</span>
       {id === 'orders' && orders.filter(o=>o.status==='pending').length > 0 && 
         <span style={{marginLeft:'auto', background:'#ef4444', color:'#fff', fontSize:'0.7rem', padding:'2px 8px', borderRadius:'20px', fontWeight:'900'}}>{orders.filter(o=>o.status==='pending').length}</span>
@@ -223,14 +224,14 @@ export default function AdminDashboard() {
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', padding: '10px' }}
           >
-            {isSidebarOpen ? '✕' : '☰'}
+            {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
           <button 
             onClick={() => setSoundEnabled(!soundEnabled)}
             style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', padding: '5px' }}
             title={soundEnabled ? "Sesi Kapat" : "Sesi Aç"}
           >
-            {soundEnabled ? '🔔' : '🔕'}
+            {soundEnabled ? <Bell size={20} /> : <BellOff size={20} />}
           </button>
         </div>
         <h2 className="font-bold" style={{ fontSize: '1.1rem', color: 'var(--primary)' }}>RestoPanel</h2>
@@ -259,11 +260,11 @@ export default function AdminDashboard() {
         </div>
         
         <nav style={{ flex: 1, padding: '10px 0' }}>
-          <SidebarItem id="dashboard" label="Genel Bakış" icon="📊" />
-          <SidebarItem id="orders" label="Canlı Siparişler" icon="🛒" />
-          <SidebarItem id="products" label="Ürün Yönetimi" icon="🍔" />
-          <SidebarItem id="stock" label="Stok Takibi" icon="📉" />
-          <SidebarItem id="customers" label="Müşteri Listesi" icon="👥" />
+          <SidebarItem id="dashboard" label="Genel Bakış" icon={<LayoutDashboard size={20} strokeWidth={1.5} />} />
+          <SidebarItem id="orders" label="Canlı Siparişler" icon={<ShoppingCart size={20} strokeWidth={1.5} />} />
+          <SidebarItem id="products" label="Ürün Yönetimi" icon={<Utensils size={20} strokeWidth={1.5} />} />
+          <SidebarItem id="stock" label="Stok Takibi" icon={<TrendingDown size={20} strokeWidth={1.5} />} />
+          <SidebarItem id="customers" label="Müşteri Listesi" icon={<Users size={20} strokeWidth={1.5} />} />
         </nav>
 
         <div style={{ padding: '24px 32px', borderTop: '1px solid var(--border)' }}>
@@ -300,7 +301,7 @@ export default function AdminDashboard() {
                 onClick={() => setSoundEnabled(!soundEnabled)}
                 style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: '12px', padding: '10px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', boxShadow: 'var(--shadow-sm)' }}
              >
-                <span style={{ fontSize: '1.1rem' }}>{soundEnabled ? '🔔' : '🔕'}</span>
+                <span style={{ display: 'flex', alignItems: 'center' }}>{soundEnabled ? <Bell size={18} /> : <BellOff size={18} />}</span>
                 <span className="font-medium" style={{ fontSize: '0.85rem' }}>{soundEnabled ? 'Ses Açık' : 'Ses Kapalı'}</span>
              </button>
              <div style={{background:'#fff', padding:'10px 18px', borderRadius:'12px', border:'1px solid var(--border)', boxShadow:'var(--shadow-sm)', display:'flex', alignItems:'center', gap:'8px'}}>
@@ -339,7 +340,7 @@ export default function AdminDashboard() {
                 {todayOrders.length === 0 && (
                    <div style={{ padding: '20px', background: '#fff7ed', border: '1px solid #fdba74', borderRadius: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
                       <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                         <span style={{ fontSize: '1.5rem' }}>📢</span>
+                         <span style={{ color: '#c2410c' }}><AlertCircle size={28} strokeWidth={1.5} /></span>
                          <div>
                             <p className="font-bold" style={{ color: '#9a3412', marginBottom: '2px' }}>Bugün henüz sipariş gelmedi!</p>
                             <p className="font-secondary" style={{ fontSize: '0.85rem' }}>Satışları artırmak için menüde öne çıkan ürünleri düzenleyebilirsiniz.</p>
@@ -352,7 +353,7 @@ export default function AdminDashboard() {
                 {stockItems.filter(i => Number(i.quantity) <= Number(i.min_stock)).length > 0 && (
                    <div style={{ padding: '20px', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
                       <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                         <span style={{ fontSize: '1.5rem' }}>🏮</span>
+                         <span style={{ color: '#b91c1c' }}><AlertTriangle size={28} strokeWidth={1.5} /></span>
                          <div>
                             <p className="font-bold" style={{ color: '#991b1b', marginBottom: '2px' }}>{stockItems.filter(i => Number(i.quantity) <= Number(i.min_stock)).length} ürün stokta azalıyor!</p>
                             <p className="font-secondary" style={{ fontSize: '0.85rem' }}>Eksik malzemeler mutfak operasyonunu durdurabilir.</p>
@@ -368,7 +369,7 @@ export default function AdminDashboard() {
                    if (isPeak) return (
                     <div style={{ padding: '20px', background: '#eff6ff', border: '1px solid #93c5fd', borderRadius: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
                        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                          <span style={{ fontSize: '1.5rem' }}>🔥</span>
+                          <span style={{ color: '#1d4ed8' }}><ClockIcon size={28} strokeWidth={1.5} /></span>
                           <div>
                              <p className="font-bold" style={{ color: '#1e40af', marginBottom: '2px' }}>Yoğun saat yaklaşıyor!</p>
                              <p className="font-secondary" style={{ fontSize: '0.85rem' }}>Mutfak ekibini hazırlayın ve sipariş panelini açık tutun.</p>
@@ -397,9 +398,9 @@ export default function AdminDashboard() {
                   position: 'relative',
                   overflow: 'hidden'
                 }}>
-                  <div style={{ position: 'absolute', top: '-20px', right: '-20px', fontSize: '8rem', opacity: 0.05, transform: 'rotate(-15deg)' }}>💰</div>
-                  <span style={{ fontSize: '1rem', color: '#94a3b8' }} className="font-medium">Günlük Ciro</span>
-                  <p className="font-bold" style={{ fontSize: '3.5rem', margin: '8px 0', letterSpacing: '-2px', color: '#fff' }}>
+                  <Activity size={120} strokeWidth={1} style={{ position: 'absolute', top: '-10px', right: '-10px', opacity: 0.1, transform: 'rotate(-10deg)', color: '#fff' }} />
+                  <span style={{ fontSize: '1rem', color: '#94a3b8', zIndex: 1 }} className="font-medium">Günlük Ciro</span>
+                  <p className="font-bold" style={{ fontSize: '3.5rem', margin: '8px 0', letterSpacing: '-2px', color: '#fff', zIndex: 1 }}>
                     ₺{revenueToday.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', color: '#cbd5e1' }}>
@@ -432,7 +433,9 @@ export default function AdminDashboard() {
 
                 {/* En Çok Satan Ürün (Genişletilmiş) */}
                 <div className="glass-card" style={{ padding: '24px', gridColumn: 'span 2', display: 'flex', alignItems: 'center', gap: '24px', background: 'linear-gradient(to right, #fff, #f8fafc)', border: '1px solid #e2e8f0' }}>
-                   <div style={{ fontSize: '3rem', width: '80px', height: '80px', background: '#fef3c7', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 10px 15px -3px rgba(251, 191, 36, 0.2)' }}>🏆</div>
+                   <div style={{ width: '80px', height: '80px', background: '#fef3c7', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 10px 15px -3px rgba(251, 191, 36, 0.2)' }}>
+                      <Medal size={40} color="#b45309" strokeWidth={1.5} />
+                   </div>
                    <div style={{ flex: 1 }}>
                       <span style={{ fontSize: '0.9rem', color: 'var(--primary)' }} className="font-bold">ÖNE ÇIKAN</span>
                       <p className="font-bold" style={{ fontSize: '1.8rem', marginTop: '4px', marginBottom: '8px', color: '#0f172a' }}>{bestSeller}</p>
