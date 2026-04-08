@@ -6,7 +6,6 @@ import { motion } from 'framer-motion';
 import { Rocket, PackageSearch, Users, LineChart, XCircle, CheckCircle, TrendingUp, Clock, MousePointer2 } from 'lucide-react';
 
 export default function LandingPage() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const containerVariants = {
     hidden: { opacity: 0 },
