@@ -142,17 +142,33 @@ app.post('/api/stock', async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'Stok eklenemedi' }); }
 });
 
-// 7. Stok Miktarı Güncelleme
+// 7. Stok Miktarı Güncelleme (RACE CONDITION GÜVENLİ)
 app.put('/api/stock/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { quantity } = req.body;
-        const result = await pool.query(
-            'UPDATE stock_items SET quantity = $1 WHERE id = $2 RETURNING *',
-            [quantity, id]
-        );
+        const { quantity, adjustment } = req.body;
+        
+        let result;
+        if (adjustment !== undefined) {
+          // Eğer değişim miktarı geldiyse (+1 veya -1 gibi) direkt DB üzerinde topla
+          result = await pool.query(
+              'UPDATE stock_items SET quantity = quantity + $1 WHERE id = $2 RETURNING *',
+              [adjustment, id]
+          );
+        } else {
+          // Eğer direkt değer geldiyse onu set et
+          result = await pool.query(
+              'UPDATE stock_items SET quantity = $1 WHERE id = $2 RETURNING *',
+              [quantity, id]
+          );
+        }
+
+        if (result.rows.length === 0) return res.status(404).json({ error: 'Ürün bulunamadı' });
         res.json(result.rows[0]);
-    } catch (err) { res.status(500).json({ error: 'Stok güncellenemedi' }); }
+    } catch (err) { 
+        console.error("Stok hatası:", err.message);
+        res.status(500).json({ error: 'Stok güncellenemedi' }); 
+    }
 });
 
 // 8. Stok Ürünü Silme

@@ -16,10 +16,22 @@ export default function Home() {
   const [activeOrder, setActiveOrder] = useState(null); 
   const [cancelRemaining, setCancelRemaining] = useState(45);  
   const [prepareRemaining, setPrepareRemaining] = useState(300); 
-  const [showUpsell, setShowUpsell] = useState(false);
   const [suggestedItems, setSuggestedItems] = useState([]);
+  const [isOnline, setIsOnline] = useState(true);
 
   const timerRef = useRef(null);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    setIsOnline(navigator.onLine);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   useEffect(() => {
     const socket = io((process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'));
@@ -88,14 +100,18 @@ export default function Home() {
 
   const handleFinalCheckout = async () => {
       if(!customerInfo.trim()) return alert("Lütfen Masa bilginizi girin.");
+      if(!isOnline) return alert("İnternet bağlantınız yok. Lütfen kontrol edip tekrar deneyin.");
       setIsSubmitting(true);
       try {
           const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/orders`, {
              method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ customer_name: customerInfo, items: cart, total_price: cart.reduce((t, i) => t + (Number(i.price) * i.quantity), 0), note: customerNote })
           });
+          if (!res.ok) throw new Error("Sipariş gönderilemedi");
           const resultOrder = await res.json();
           setCart([]); setIsCheckoutOpen(false); setCancelRemaining(45); setPrepareRemaining(300); setActiveOrder(resultOrder);
-      } catch(e) {} finally { setIsSubmitting(false); }
+      } catch(e) {
+          alert("Bir hata oluştu: " + e.message);
+      } finally { setIsSubmitting(false); }
   }
 
   const cancelOrder = async () => {
@@ -142,6 +158,11 @@ export default function Home() {
 
   return (
     <div className="fade-in" style={{ maxWidth: '100vw', overflowX: 'hidden' }}>
+      {!isOnline && (
+        <div style={{ background: '#ef4444', color: '#fff', padding: '8px', textAlign: 'center', fontSize: '0.8rem', fontWeight: 'bold', position: 'sticky', top: 0, zIndex: 1001 }}>
+          ⚠️ İnternet Bağlantısı Yok - Sipariş veremezsiniz
+        </div>
+      )}
       <header style={{ 
         background: '#fff', 
         borderBottom: '1px solid var(--border)', 
@@ -157,7 +178,13 @@ export default function Home() {
           alignItems: 'center',
           padding: '0 16px'
         }}>
-          <h1 className="font-bold" style={{ fontSize: '1.25rem', letterSpacing: '-0.5px' }}>Lezzet Durağı</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+             <svg width="30" height="30" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="32" height="32" rx="8" fill="var(--primary)" fillOpacity="0.1"/>
+                <path d="M10 22V10H16C18.2091 10 20 11.7909 20 14C20 16.2091 18.2091 18 16 18H10M10 18L22 22" stroke="var(--primary)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+             </svg>
+             <h1 className="font-bold" style={{ fontSize: '1.25rem', letterSpacing: '-0.5px' }}>Lezzet Durağı</h1>
+          </div>
           <button className="btn-outline" style={{ padding: '8px 12px', fontSize: '0.85rem', minHeight: '40px' }}>Giriş Yap</button>
         </div>
       </header>

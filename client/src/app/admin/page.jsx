@@ -19,6 +19,20 @@ export default function AdminDashboard() {
 
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [alarmActive, setAlarmActive] = useState(false);
+  const [isOnline, setIsOnline] = useState(true);
+  const [actionLoading, setActionLoading] = useState(null); 
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    setIsOnline(navigator.onLine);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
   const alarmIntervalRef = useRef(null);
   const alarmTimeoutRef = useRef(null);
   const audioRef = useRef(null);
@@ -119,24 +133,43 @@ export default function AdminDashboard() {
   };
 
   const updateOrderStatus = async (id, status) => {
+    if(!isOnline) return alert("Bağlantı yok!");
     const endpoint = status === 'preparing' ? 'accept' : 'ready';
+    setActionLoading(id);
     try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/orders/${id}/${endpoint}`, { method: 'PUT' });
         if(res.ok) { 
-           // If no more pending orders, stop the alarm
            const remainingPending = orders.filter(o => o.id !== id && o.status === 'pending').length;
            if(remainingPending === 0) stopAlarm();
            fetchData(); 
         }
-    } catch (e) {}
+    } catch (e) { console.error(e); } finally { setActionLoading(null); }
+  };
+
+  const handleStockAdjust = async (id, adj) => {
+    if(!isOnline) return;
+    setActionLoading(`stock-${id}-${adj}`);
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/stock/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adjustment: adj })
+      });
+      fetchData();
+    } catch(e) {} finally { setActionLoading(null); }
   };
 
   if(!systemEnabled) {
     return (
        <div style={{minHeight:'100vh', display:'flex', justifyContent:'center', alignItems:'center', background:'#f8f9fb', color:'#0f172a', flexDirection:'column', textAlign:'center', padding:'20px'}}>
            <div className="glass-card fade-in" style={{padding:'64px', borderRadius:'32px', boxShadow:'0 20px 40px rgba(0,0,0,0.05)', maxWidth:'600px'}}>
-             <div style={{color:'var(--accent)', marginBottom:'24px', display:'flex', justifyContent:'center'}}><Building2 size={64} strokeWidth={1.2} /></div>
-             <h1 style={{fontSize:'2.5rem', marginBottom:'20px', letterSpacing:'-1px'}} className="font-bold">RestoPanel Yönetici Girişi</h1>
+             <div style={{color:'var(--accent)', marginBottom: '32px', display:'flex', justifyContent:'center', alignItems: 'center', gap: '16px'}}>
+                <svg width="64" height="64" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                   <rect width="32" height="32" rx="10" fill="currentColor" fillOpacity="0.1"/>
+                   <path d="M10 22V10H16C18.2091 10 20 11.7909 20 14C20 16.2091 18.2091 18 16 18H10M10 18L22 22" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+             </div>
+             <h1 style={{fontSize:'2.5rem', marginBottom:'20px', letterSpacing:'-1px'}} className="font-bold">RestoPanel</h1>
              <p className="font-secondary" style={{marginBottom:'40px', lineHeight:'1.6', fontSize:'1.1rem'}}>
                Canlı sipariş akışı ve mutfak bildirim sistemini aktif etmek için paneli başlatın.
              </p>
@@ -171,15 +204,33 @@ export default function AdminDashboard() {
       position: 'relative',
       overflowX: 'hidden'
     }}>
+      {!isOnline && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, background: '#ef4444', color: '#fff', textAlign: 'center', padding: '12px', zIndex: 9999, fontWeight: 'bold', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+          ⚠️ BAĞLANTI KESİLDİ - Canlı sipariş akışı durdu. Lütfen internetinizi kontrol edin.
+        </div>
+      )}
       <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes pulse-border {
-          0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
-          70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
-          100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+        @keyframes order-glow {
+          0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4), 0 0 20px rgba(245, 158, 11, 0.1); }
+          50% { box-shadow: 0 0 0 15px rgba(245, 158, 11, 0), 0 0 40px rgba(245, 158, 11, 0.3); }
+          100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0), 0 0 20px rgba(245, 158, 11, 0.1); }
         }
         .pulse-pending {
-          animation: pulse-border 2s infinite;
+          animation: order-glow 2.5s infinite ease-in-out;
           border-left: 6px solid #f59e0b !important;
+          background: linear-gradient(to right, #fffbf2, #fff) !important;
+        }
+        .status-ready-fade {
+          opacity: 0.7;
+          filter: grayscale(0.5);
+          transition: all 0.5s ease;
+        }
+        .order-card-transition {
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .order-card-transition:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
         }
         @media (max-width: 1024px) {
           .sidebar-container {
@@ -254,8 +305,14 @@ export default function AdminDashboard() {
         zIndex: 1800
       }}>
         <div style={{ padding: '30px 32px', borderBottom: '1px solid var(--border)', marginBottom:'10px' }}>
-          <h2 className="font-bold" style={{ fontSize: '1.3rem', letterSpacing: '-1px', color:'var(--primary)', display:'flex', alignItems:'center', gap:'8px' }}>
-             RestoPanel <span style={{fontSize:'0.6rem', background:'var(--accent)', color:'#fff', padding:'2px 6px', borderRadius:'6px', letterSpacing:'0'}}>PRO</span>
+          <h2 className="font-bold" style={{ fontSize: '1.3rem', letterSpacing: '-1px', color:'var(--primary)', display:'flex', alignItems:'center', gap:'10px' }}>
+             <div style={{ display: 'flex' }}>
+                <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                   <rect width="32" height="32" rx="8" fill="currentColor" fillOpacity="0.1"/>
+                   <path d="M10 22V10H16C18.2091 10 20 11.7909 20 14C20 16.2091 18.2091 18 16 18H10M10 18L22 22" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+             </div>
+             RestoPanel <span style={{fontSize:'0.6rem', background:'var(--accent)', color:'#fff', padding:'2px 6px', borderRadius:'6px', letterSpacing:'0', verticalAlign: 'middle'}}>PRO</span>
           </h2>
         </div>
         
@@ -564,9 +621,17 @@ export default function AdminDashboard() {
 
         {/* --- ORDERS TAB --- */}
         {activeTab === 'orders' && (
-           <div className="fade-in" style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(350px, 1fr))', gap:'24px'}}>
+           <div className="fade-in">
+              <div style={{ background: 'rgba(56, 189, 248, 0.1)', border: '1px solid rgba(56, 189, 248, 0.2)', padding: '16px 20px', borderRadius: '16px', marginBottom: '24px', display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                 <div style={{ color: 'var(--primary)', marginTop: '2px' }}><AlertCircle size={24} strokeWidth={1.5} /></div>
+                 <div>
+                    <h4 className="font-bold" style={{ fontSize: '1rem', color: '#0f172a', marginBottom: '4px' }}>Yeni siparişleri buradan yönetin</h4>
+                    <p className="font-secondary" style={{ fontSize: '0.9rem', color: '#475569' }}>Panel açık kaldığı sürece yeni siparişler anında ekrana düşer. Sipariş içeriğini görmek ve mutfak durumunu değiştirmek için <b>masa detayına tıklayın</b> ve butonları kullanın.</p>
+                 </div>
+              </div>
+              <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(350px, 1fr))', gap:'24px'}}>
               {orders.map(o => (
-                <div key={o.id} className={`glass-card ${o.status === 'pending' ? 'pulse-pending' : ''}`} style={{padding:'24px'}}>
+                <div key={o.id} className={`glass-card order-card-transition ${o.status === 'pending' ? 'pulse-pending' : ''} ${o.status === 'ready' ? 'status-ready-fade' : ''}`} style={{padding:'24px'}}>
                    <div style={{display:'flex', justifyContent:'space-between', marginBottom:'16px', alignItems:'center'}}>
                       <h4 className="font-bold" style={{fontSize:'1.2rem', display:'flex', alignItems:'center', gap:'8px'}}>
                          {o.status === 'pending' && <span style={{background:'#f59e0b', color:'#fff', fontSize:'0.65rem', padding:'2px 8px', borderRadius:'6px', fontWeight:'900', boxShadow: '0 2px 4px rgba(0,0,0,0.1)'}}>YENİ!</span>}
@@ -589,13 +654,14 @@ export default function AdminDashboard() {
                          } catch(e) { return null; }
                       })()}
                    </div>
-                   {o.status === 'pending' && <button onClick={()=>updateOrderStatus(o.id, 'preparing')} className="btn-primary" style={{width:'100%', background:'#10b981', minHeight: '44px'}}>Siparişi Onayla</button>}
-                   {o.status === 'preparing' && <button onClick={()=>updateOrderStatus(o.id, 'ready')} className="btn-primary" style={{width:'100%', background:'var(--accent)', minHeight: '44px'}}>Hazır Bildir</button>}
+                   {o.status === 'pending' && <button disabled={actionLoading === o.id} onClick={()=>updateOrderStatus(o.id, 'preparing')} className="btn-primary" style={{width:'100%', background:'#10b981', minHeight: '44px'}}>Siparişi Onayla</button>}
+                   {o.status === 'preparing' && <button disabled={actionLoading === o.id} onClick={()=>updateOrderStatus(o.id, 'ready')} className="btn-primary" style={{width:'100%', background:'var(--accent)', minHeight: '44px'}}>Hazır Bildir</button>}
                    {o.status === 'ready' && <div style={{textAlign:'center', padding:'10px', color:'#10b981', fontWeight:'800', background:'#dcfce7', borderRadius:'8px', fontSize:'0.85rem'}}>Hazır & Teslim Edildi ✓</div>}
                 </div>
               ))}
               {orders.length === 0 && <div className="font-secondary" style={{gridColumn:'1/-1', textAlign:'center', marginTop:'100px'}}>Şu an aktif siparişiniz yok.</div>}
-           </div>
+            </div>
+         </div>
         )}
 
         {/* --- PRODUCTS TAB --- */}
@@ -671,8 +737,8 @@ export default function AdminDashboard() {
                                 </td>
                                 <td style={{padding:'16px 24px'}}>
                                    <div style={{display:'flex', gap:'8px'}}>
-                                      <button onClick={()=>fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/stock/${item.id}`,{method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({quantity:Number(item.quantity)+1})}).then(fetchData)} style={{padding:'4px 10px', borderRadius:'6px', border:'1px solid var(--border)', cursor:'pointer', minWidth: '40px', minHeight: '40px'}}>+</button>
-                                      <button onClick={()=>fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/stock/${item.id}`,{method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({quantity:Number(item.quantity)-1})}).then(fetchData)} style={{padding:'4px 10px', borderRadius:'6px', border:'1px solid var(--border)', cursor:'pointer', minWidth: '40px', minHeight: '40px'}}>-</button>
+                                      <button disabled={!!actionLoading} onClick={()=>handleStockAdjust(item.id, 1)} style={{padding:'4px 10px', borderRadius:'6px', border:'1px solid var(--border)', cursor:'pointer', minWidth: '40px', minHeight: '40px'}}>+</button>
+                                      <button disabled={!!actionLoading} onClick={()=>handleStockAdjust(item.id, -1)} style={{padding:'4px 10px', borderRadius:'6px', border:'1px solid var(--border)', cursor:'pointer', minWidth: '40px', minHeight: '40px'}}>-</button>
                                    </div>
                                 </td>
                              </tr>

@@ -40,10 +40,36 @@ export default function LandingPage() {
 
   return (
     <div style={{ background: '#fff', overflowX: 'hidden' }}>
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes pulse-whatsapp {
+          0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.5); }
+          70% { box-shadow: 0 0 0 20px rgba(37, 99, 235, 0); }
+          100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+        }
+        .whatsapp-btn-pulse {
+          animation: pulse-whatsapp 2s infinite;
+        }
+        @keyframes pulse-badge {
+          0% { transform: translateX(-50%) scale(1); }
+          50% { transform: translateX(-50%) scale(1.08); }
+          100% { transform: translateX(-50%) scale(1); }
+        }
+        .badge-pulse {
+          animation: pulse-badge 2s infinite ease-in-out;
+        }
+      `}} />
       {/* Navbar */}
       <nav style={{ position: 'sticky', top: 0, background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(10px)', zIndex: 1000, borderBottom: '1px solid var(--border)' }}>
         <div className="container" style={{ height: '80px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div className="font-bold" style={{ fontSize: '1.5rem', letterSpacing: '-1px' }}>RestoPanel</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ color: 'var(--primary)', display: 'flex' }}>
+              <svg width="34" height="34" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="32" height="32" rx="10" fill="currentColor" fillOpacity="0.1"/>
+                <path d="M10 22V10H16C18.2091 10 20 11.7909 20 14C20 16.2091 18.2091 18 16 18H10M10 18L22 22" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <div className="font-bold" style={{ fontSize: '1.5rem', letterSpacing: '-1.2px', color: '#0f172a' }}>RestoPanel</div>
+          </div>
           <div style={{ display: 'flex', gap: '32px', alignItems: 'center' }} className="hidden md:flex">
             <a href="#features" className="font-medium hidden-on-mobile" style={{ fontSize: '0.9rem', color: 'var(--text-muted)', textDecoration: 'none' }}>Özellikler</a>
             <a href="#pricing" className="font-medium hidden-on-mobile" style={{ fontSize: '0.9rem', color: 'var(--text-muted)', textDecoration: 'none' }}>Fiyatlandırma</a>
@@ -61,10 +87,30 @@ export default function LandingPage() {
               Restoranınızın siparişlerini <span style={{ background: 'linear-gradient(to right, #2563eb, #9333ea)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>%30 artırın</span>
             </h1>
             <p className="font-secondary" style={{ fontSize: '1.35rem', marginBottom: '48px', lineHeight: '1.6', color: '#475569', fontWeight: '500' }}>
-              QR menü + sipariş + mutfak + kasa tek sistemde. Maliyetleri düşürüp müşteri memnuniyetini zirveye taşıyın.
+              Garsonsuz sipariş, maksimum kazanç! Personel maliyetlerini %40'a kadar düşürün, sipariş hızınızı ve kârınızı anında katlayın.
             </p>
             <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
-              <a href="https://wa.me/905520814796?text=Merhaba,%20sistem%20hakkında%20bilgi%20almak%20istiyorum." target="_blank" rel="noopener noreferrer" className="btn-primary" style={{ padding: '20px 48px', fontSize: '1.25rem', borderRadius: '16px', fontWeight: '800', boxShadow: '0 20px 40px -10px rgba(37, 99, 235, 0.6)', transition: 'transform 0.2s', backgroundImage: 'linear-gradient(to right, #2563eb, #4f46e5)', textDecoration: 'none', display: 'inline-block' }}>Whatsapp'tan Ulaşın</a>
+              <motion.a 
+                href="https://wa.me/905520814796?text=Merhaba,%20sistem%20hakkında%20bilgi%20almak%20istiyorum." 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="btn-primary whatsapp-btn-pulse" 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.98 }}
+                style={{ 
+                  padding: '20px 48px', 
+                  fontSize: '1.25rem', 
+                  borderRadius: '16px', 
+                  fontWeight: '800', 
+                  boxShadow: '0 20px 40px -10px rgba(37, 99, 235, 0.6)', 
+                  transition: 'background 0.3s, box-shadow 0.3s', 
+                  backgroundImage: 'linear-gradient(to right, #2563eb, #4f46e5)', 
+                  textDecoration: 'none', 
+                  display: 'inline-block' 
+                }}
+              >
+                Whatsapp'tan Ulaşın
+              </motion.a>
               <Link href="/admin" className="btn-outline" style={{ padding: '20px 48px', fontSize: '1.25rem', borderRadius: '16px', fontWeight: '800', background: '#fff', border: '3px solid #e2e8f0', color: '#0f172a', textDecoration: 'none', display: 'inline-block' }}>Paneli İncele →</Link>
             </div>
             
@@ -269,8 +315,24 @@ export default function LandingPage() {
                <button className="btn-outline" style={{ width: '100%', padding: '16px', fontSize: '1.1rem', fontWeight: 600, border: '2px solid #cbd5e1' }}>Hemen Başla</button>
             </motion.div>
             {/* Plan 2 */}
-            <motion.div variants={itemVariants} className="glass-card" style={{ padding: '40px', textAlign: 'center', border: '2px solid var(--accent)', position: 'relative', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 50px -12px rgba(37, 99, 235, 0.15)' }}>
-               <div style={{ position: 'absolute', top: '-16px', left: '50%', transform: 'translateX(-50%)', background: 'linear-gradient(to right, #2563eb, #4f46e5)', color: '#fff', padding: '6px 20px', borderRadius: '30px', fontSize: '0.8rem', fontWeight: '800', whiteSpace: 'nowrap', boxShadow: '0 4px 10px rgba(37, 99, 235, 0.3)' }}>EN TERCİH EDİLEN</div>
+            <motion.div 
+               variants={itemVariants} 
+               whileInView={{ scale: 1.05 }} 
+               viewport={{ once: true }}
+               className="glass-card" 
+               style={{ 
+                  padding: '40px', 
+                  textAlign: 'center', 
+                  border: '2px solid var(--accent)', 
+                  position: 'relative', 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  boxShadow: '0 30px 60px -12px rgba(37, 99, 235, 0.25)',
+                  zIndex: 2,
+                  background: '#fff' 
+               }}
+            >
+               <div className="badge-pulse" style={{ position: 'absolute', top: '-18px', left: '50%', background: 'linear-gradient(to right, #ea580c, #ef4444)', color: '#fff', padding: '8px 24px', borderRadius: '30px', fontSize: '0.9rem', fontWeight: '900', whiteSpace: 'nowrap', boxShadow: '0 8px 20px rgba(234, 88, 12, 0.4)', display: 'flex', alignItems: 'center', gap: '6px' }}>En çok tercih edilen 🔥</div>
                <h3 className="font-bold" style={{ fontSize: '1.5rem', marginBottom: '8px', color: '#0f172a' }}>Standart</h3>
                <p className="font-secondary" style={{ marginBottom: '32px' }}>Büyüyen ve yoğun işletmeler için</p>
                <div className="font-bold" style={{ fontSize: '3.5rem', marginBottom: '8px', color: '#0f172a' }}>₺1.999</div>
@@ -305,7 +367,12 @@ export default function LandingPage() {
       <footer style={{ padding: '64px 20px', borderTop: '1px solid var(--border)' }}>
         <div className="container flex-mobile-col" style={{ display: 'flex', justifyContent: 'space-between', gap: '48px' }}>
           <div>
-            <h4 className="font-bold" style={{ fontSize: '1.5rem', marginBottom: '16px' }}>RestoPanel</h4>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+               <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M10 22V10H16C18.2091 10 20 11.7909 20 14C20 16.2091 18.2091 18 16 18H10M10 18L22 22" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+               </svg>
+               <h4 className="font-bold" style={{ fontSize: '1.4rem' }}>RestoPanel</h4>
+            </div>
             <p className="font-secondary" style={{ maxWidth: '300px' }}>Yeni nesil restoran yönetim SaaS platformu. Teknolojiyle karlılığınızı artırın.</p>
           </div>
           <div style={{ display: 'flex', gap: '64px', flexWrap: 'wrap' }}>
