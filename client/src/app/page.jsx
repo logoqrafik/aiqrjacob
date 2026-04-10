@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { io } from 'socket.io-client';
-import { Zap, CheckCircle2, AlertCircle, Timer, Flame, Gift, Coffee } from 'lucide-react';
+import { Zap, CheckCircle2, AlertCircle, Timer, Flame, Gift, Coffee, Utensils } from 'lucide-react';
 
 export default function Home() {
   const [menuData, setMenuData] = useState([]);
@@ -11,8 +11,10 @@ export default function Home() {
   const [cart, setCart] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [showUpsell, setShowUpsell] = useState(false);
   const [customerNote, setCustomerNote] = useState('');
   const [customerInfo, setCustomerInfo] = useState('');
+  const [submissionError, setSubmissionError] = useState(null);
   const [activeOrder, setActiveOrder] = useState(null); 
   const [cancelRemaining, setCancelRemaining] = useState(45);  
   const [prepareRemaining, setPrepareRemaining] = useState(300); 
@@ -83,7 +85,7 @@ export default function Home() {
       if (existing) return prev.map(c => c.id === item.id ? { ...c, quantity: c.quantity + 1 } : c);
       
       // Open upsell if it's a new item added
-      if (suggestions.length > 0) setShowUpsell(true);
+      if (suggestions.length > 0 && !item.isUpsell) setShowUpsell(true);
       
       return [...prev, { ...item, quantity: 1 }];
     });
@@ -100,17 +102,21 @@ export default function Home() {
 
   const handleFinalCheckout = async () => {
       if(!customerInfo.trim()) return alert("Lütfen Masa bilginizi girin.");
-      if(!isOnline) return alert("İnternet bağlantınız yok. Lütfen kontrol edip tekrar deneyin.");
+      if(!isOnline) {
+          setSubmissionError("İnternet bağlantınız yok. Lütfen ağınızı kontrol edip tekrar deneyin.");
+          return;
+      }
       setIsSubmitting(true);
+      setSubmissionError(null);
       try {
           const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/orders`, {
              method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ customer_name: customerInfo, items: cart, total_price: cart.reduce((t, i) => t + (Number(i.price) * i.quantity), 0), note: customerNote })
           });
-          if (!res.ok) throw new Error("Sipariş gönderilemedi");
+          if (!res.ok) throw new Error("Sunucu siparişi onaylamadı. Lütfen tekrar deneyin.");
           const resultOrder = await res.json();
           setCart([]); setIsCheckoutOpen(false); setCancelRemaining(45); setPrepareRemaining(300); setActiveOrder(resultOrder);
       } catch(e) {
-          alert("Bir hata oluştu: " + e.message);
+          setSubmissionError(e.message || "Bağlantı hatası oluştu.");
       } finally { setIsSubmitting(false); }
   }
 
@@ -159,7 +165,7 @@ export default function Home() {
   return (
     <div className="fade-in" style={{ maxWidth: '100vw', overflowX: 'hidden' }}>
       {!isOnline && (
-        <div style={{ background: '#ef4444', color: '#fff', padding: '8px', textAlign: 'center', fontSize: '0.8rem', fontWeight: 'bold', position: 'sticky', top: 0, zIndex: 1001 }}>
+        <div style={{ background: 'var(--error)', color: '#fff', padding: '8px', textAlign: 'center', fontSize: '0.8rem', fontWeight: 'bold', position: 'sticky', top: 0, zIndex: 1001 }}>
           ⚠️ İnternet Bağlantısı Yok - Sipariş veremezsiniz
         </div>
       )}
@@ -185,7 +191,7 @@ export default function Home() {
              </svg>
              <h1 className="font-bold" style={{ fontSize: '1.25rem', letterSpacing: '-0.5px' }}>Lezzet Durağı</h1>
           </div>
-          <button className="btn-outline" style={{ padding: '8px 12px', fontSize: '0.85rem', minHeight: '40px' }}>Giriş Yap</button>
+          <button className="btn-outline" style={{ padding: '8px 12px', fontSize: '0.85rem', minHeight: '48px' }}>Giriş Yap</button>
         </div>
       </header>
 
@@ -207,7 +213,7 @@ export default function Home() {
                <div>
                   <p className="font-secondary" style={{ fontSize: '0.75rem', marginBottom: '4px' }}>Sipariş Durumu</p>
                   <h3 className="font-bold" style={{ fontSize: '1rem' }}>
-                    {activeOrder.status === 'pending' ? 'Hazırlık Bekleniyor' : activeOrder.status === 'preparing' ? 'Mutfakta Hazırlanıyor' : <span style={{display: 'flex', alignItems: 'center', gap: '4px'}}>Sipariş Hazır <CheckCircle2 size={18} color="#10b981" /></span>}
+                    {activeOrder.status === 'pending' ? 'Hazırlık Bekleniyor' : activeOrder.status === 'preparing' ? 'Mutfakta Hazırlanıyor' : <span style={{display: 'flex', alignItems: 'center', gap: '4px'}}>Sipariş Hazır <CheckCircle2 size={18} color="var(--success)" /></span>}
                   </h3>
                </div>
                <div style={{ textAlign: 'right' }}>
@@ -226,8 +232,14 @@ export default function Home() {
         )}
 
         {menuData.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px 0' }}>
-            <p className="font-secondary">Henüz ürün bulunmamaktadır.</p>
+          <div style={{ textAlign: 'center', padding: '100px 20px', background: '#fff', borderRadius: '32px', border: '1px dashed #e2e8f0', marginTop: '40px' }}>
+            <div style={{ background: '#f8fafc', width: '80px', height: '80px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px auto', color: '#94a3b8' }}>
+               <Utensils size={40} />
+            </div>
+            <h3 className="font-bold" style={{ fontSize: '1.5rem', color: '#0f172a', marginBottom: '12px' }}>Menü Hazırlanıyor</h3>
+            <p className="font-secondary" style={{ color: '#64748b', maxWidth: '300px', margin: '0 auto', fontSize: '1rem', lineHeight: '1.6' }}>
+               Şeflerimiz en taze lezzetleri hazırlıyor. Menümüz birazdan burada görünecektir.
+            </p>
           </div>
         ) : (
           menuData.map((category, index) => (
@@ -235,7 +247,7 @@ export default function Home() {
               <h2 className="font-bold" style={{ fontSize: '1.15rem', marginBottom: '20px', borderLeft: '3px solid var(--primary)', paddingLeft: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                  {category.name}
                  {/* FOMO: Kategoriye Özel Badge */}
-                 {index === 0 && <span style={{ background: '#ef4444', color: '#fff', fontSize: '0.7rem', padding: '4px 8px', borderRadius: '8px', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '4px' }}><AlertCircle size={12} strokeWidth={3} /> BUGÜNE ÖZEL KAMPANYA</span>}
+                 {index === 0 && <span style={{ background: 'var(--error)', color: '#fff', fontSize: '0.7rem', padding: '4px 8px', borderRadius: '8px', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '4px' }}><AlertCircle size={12} strokeWidth={3} /> BUGÜNE ÖZEL KAMPANYA</span>}
               </h2>
               <div style={{ 
                 display: 'grid', 
@@ -251,17 +263,16 @@ export default function Home() {
                     boxSizing: 'border-box'
                   }}>
                     <div style={{ position: 'relative', height: '180px', width: '100%' }}>
-                      {/* FOMO: Son 3 Adet veya Hızlı Tükeniyor Etiketi */}
-                      {(itemIdx === 0 || itemIdx === 3) && (
-                         <div style={{ position: 'absolute', top: '12px', left: '12px', background: 'rgba(239, 68, 68, 0.95)', backdropFilter: 'blur(4px)', color: '#fff', padding: '6px 12px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 800, zIndex: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.2)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <Timer size={14} /> Son {Math.floor(Math.random() * 3) + 2} Porsiyon
-                         </div>
-                      )}
-                      {(itemIdx === 1) && (
-                         <div style={{ position: 'absolute', top: '12px', left: '12px', background: 'rgba(245, 158, 11, 0.95)', backdropFilter: 'blur(4px)', color: '#fff', padding: '6px 12px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 800, zIndex: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.2)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <Flame size={14} fill="#fff" /> Hızlı Tükeniyor
-                         </div>
-                      )}
+                       {(itemIdx === 0) && (
+                          <div style={{ position: 'absolute', top: '12px', left: '12px', background: 'linear-gradient(to right, #0f172a, #334155)', color: '#fff', padding: '6px 14px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 800, zIndex: 10, boxShadow: '0 8px 16px rgba(0,0,0,0.2)', display: 'flex', alignItems: 'center', gap: '6px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                             <Flame size={14} fill="var(--warning)" color="var(--warning)" /> En Çok Tercih Edilen
+                          </div>
+                       )}
+                       {(itemIdx === 2) && (
+                          <div style={{ position: 'absolute', top: '12px', left: '12px', background: 'rgba(239, 68, 68, 0.95)', backdropFilter: 'blur(4px)', color: '#fff', padding: '6px 12px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 800, zIndex: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.2)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                             <Timer size={14} /> Son {Math.floor(Math.random() * 3) + 2} Porsiyon
+                          </div>
+                       )}
 
                       {item.image_url ? <Image src={item.image_url} alt={item.name} fill style={{ objectFit: 'cover' }} /> : <div style={{ width: '100%', height: '100%', background: '#f1f5f9' }} />}
                     </div>
@@ -279,7 +290,7 @@ export default function Home() {
                           <button onClick={() => addToCart(item)} style={{ border: 'none', background: 'none', color: 'var(--primary)', fontSize: '1.4rem', cursor: 'pointer', width: '44px', height: '44px' }}>+</button>
                         </div>
                       ) : (
-                        <button className="btn-primary" style={{ width: '100%', minHeight: '44px', fontSize: '0.95rem' }} onClick={() => addToCart(item)}>Sepete Ekle</button>
+                        <button className="btn-primary" style={{ width: '100%', minHeight: '48px', fontSize: '0.95rem' }} onClick={() => addToCart(item)}>Sepete Ekle</button>
                       )}
                     </div>
                   </div>
@@ -300,18 +311,28 @@ export default function Home() {
           background: 'rgba(255, 255, 255, 0.95)',
           backdropFilter: 'blur(10px)',
           borderTop: '1px solid var(--border)',
-          padding: '16px 20px env(safe-area-inset-bottom)', 
+          padding: '12px 20px calc(16px + env(safe-area-inset-bottom))', 
           zIndex: 1500,
-          boxShadow: '0 -4px 20px rgba(0,0,0,0.08)'
+          boxShadow: '0 -4px 30px rgba(0,0,0,0.12)'
         }}>
+          {!cart.some(i => i.category === 'İçecek') && (
+            <div style={{ background: 'linear-gradient(to right, #0f172a, #2563eb)', color: '#fff', padding: '8px 12px', borderRadius: '12px', marginBottom: '12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', animation: 'fadeIn 0.5s ease-out' }}>
+               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Coffee size={16} />
+                  <span className="font-medium">Yanına soğuk bir <b>içecek ekle</b>, %10 avantaj yakala!</span>
+               </div>
+               <span style={{ background: '#fff', color: '#0f172a', padding: '2px 8px', borderRadius: '6px', fontWeight: 900, fontSize: '0.7rem' }}>FIRSAT</span>
+            </div>
+          )}
           <button className="btn-primary" style={{ 
             width: '100%', 
             display: 'flex', 
             justifyContent: 'space-between', 
             alignItems: 'center', 
-            borderRadius: '14px', 
+            borderRadius: '16px', 
             padding: '14px 20px',
-            minHeight: '54px'
+            minHeight: '56px',
+            boxShadow: '0 10px 20px rgba(15, 23, 42, 0.2)'
           }} onClick={() => setIsCheckoutOpen(true)}>
              <div style={{ textAlign: 'left' }}>
                 <span style={{ fontSize: '0.75rem', opacity: 0.8, display: 'block' }}>{cart.reduce((n, i) => n + i.quantity, 0)} Ürün</span>
@@ -344,7 +365,7 @@ export default function Home() {
                           <p className="font-bold" style={{ fontSize: '0.85rem', marginBottom: '0', color: '#0f172a' }}>{s.name}</p>
                           <p className="font-secondary" style={{ fontSize: '0.8rem', color: 'var(--primary)', fontWeight: 600 }}>₺{s.price}</p>
                        </div>
-                       <button onClick={() => { addToCart(s); setShowUpsell(false); }} style={{ background: 'var(--primary)', color: '#fff', border: 'none', padding: '6px 16px', borderRadius: '10px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', minHeight: '36px' }}>Kampanyaya Ekle</button>
+                       <button onClick={() => { addToCart({...s, isUpsell: true}); setShowUpsell(false); }} style={{ background: 'var(--primary)', color: '#fff', border: 'none', padding: '6px 16px', borderRadius: '10px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', minHeight: '36px' }}>Kampanyaya Ekle</button>
                     </div>
                   ))}
                </div>
@@ -359,8 +380,21 @@ export default function Home() {
            <div className="fade-in" style={{ background: '#fff', width: '100%', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', padding: '24px 20px 48px 20px', maxHeight: '90vh', overflowY: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px', alignItems: 'center' }}>
                  <h3 className="font-bold" style={{ fontSize: '1.2rem' }}>Siparişi Tamamla</h3>
-                 <button onClick={() => setIsCheckoutOpen(false)} style={{ border: 'none', background: '#f1f5f9', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', cursor: 'pointer', color: '#64748b' }}>&times;</button>
+                 <button onClick={() => { setIsCheckoutOpen(false); setSubmissionError(null); }} style={{ border: 'none', background: '#f1f5f9', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', cursor: 'pointer', color: '#64748b' }}>&times;</button>
               </div>
+
+              {submissionError && (
+                 <div className="fade-in" style={{ background: '#fef2f2', border: '1px solid #fee2e2', padding: '16px', borderRadius: '16px', marginBottom: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--error)' }}>
+                       <AlertCircle size={20} />
+                       <p className="font-bold" style={{ fontSize: '0.9rem' }}>Sipariş Gönderilemedi</p>
+                    </div>
+                    <p className="font-secondary" style={{ fontSize: '0.85rem', color: '#991b1b' }}>{submissionError}</p>
+                    <button onClick={handleFinalCheckout} disabled={isSubmitting} className="btn-primary" style={{ background: 'var(--error)', minHeight: '44px', fontSize: '0.85rem', width: 'fit-content', padding: '8px 20px' }}>
+                       {isSubmitting ? 'Deneniyor...' : 'Tekrar Dene'}
+                    </button>
+                 </div>
+              )}
 
               {/* Ekstra Sepet Önerileri (Checkout Upsell) */}
               <div style={{ marginBottom: '24px', padding: '16px', background: '#f8fafc', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
@@ -399,5 +433,3 @@ export default function Home() {
     </div>
   );
 }
-
-

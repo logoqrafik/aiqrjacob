@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client'; 
-import { Bell, BellOff, Building2, LayoutDashboard, ShoppingCart, Utensils, TrendingDown, Users, AlertCircle, AlertTriangle, Clock as ClockIcon, Activity, Medal, X, Menu } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Bell, BellOff, Building2, LayoutDashboard, ShoppingCart, Utensils, TrendingDown, Users, AlertCircle, AlertTriangle, Clock as ClockIcon, Activity, Medal, X, Menu, Check, Trash2, ChevronRight, ChevronLeft } from 'lucide-react';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -20,6 +21,7 @@ export default function AdminDashboard() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [alarmActive, setAlarmActive] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null); 
 
   useEffect(() => {
@@ -70,7 +72,7 @@ export default function AdminDashboard() {
      }
   };
 
-  const fetchData = async () => {
+   const fetchData = async () => {
     try {
         const [oRes, sRes, cRes, pRes] = await Promise.all([
           fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/orders`),
@@ -83,7 +85,7 @@ export default function AdminDashboard() {
         setStockItems(await sRes.json());
         setCustomers(await cRes.json());
         setProducts(await pRes.json());
-    } catch (e) { console.error("Veri çekme hatası:", e); }
+    } catch (e) { console.error("Veri çekme hatası:", e); } finally { setLoading(false); }
   };
 
   useEffect(() => {
@@ -134,10 +136,19 @@ export default function AdminDashboard() {
 
   const updateOrderStatus = async (id, status) => {
     if(!isOnline) return alert("Bağlantı yok!");
-    const endpoint = status === 'preparing' ? 'accept' : 'ready';
+    let endpoint = 'accept';
+    if(status === 'ready') endpoint = 'ready';
+    if(status === 'cancelled') {
+        if(!window.confirm("Siparişi iptal etmek istediğinize emin misiniz?")) return;
+        endpoint = 'cancel';
+    }
+    
     setActionLoading(id);
     try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/orders/${id}/${endpoint}`, { method: 'PUT' });
+        const url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/orders/${id}/${endpoint}`;
+        const res = await fetch(url, { 
+           method: status === 'cancelled' ? 'PUT' : 'PUT' 
+        });
         if(res.ok) { 
            const remainingPending = orders.filter(o => o.id !== id && o.status === 'pending').length;
            if(remainingPending === 0) stopAlarm();
@@ -158,6 +169,42 @@ export default function AdminDashboard() {
       fetchData();
     } catch(e) {} finally { setActionLoading(null); }
   };
+
+   if (systemEnabled && loading) {
+    return (
+      <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-main)' }}>
+        {/* Skeleton Sidebar */}
+        <div style={{ width: '280px', background: '#fff', borderRight: '1px solid var(--border)', padding: '40px 24px' }}>
+          <div className="skeleton" style={{ height: '32px', width: '160px', marginBottom: '40px' }} />
+          {[1,2,3,4,5].map(i => (
+            <div key={i} className="skeleton" style={{ height: '48px', width: '100%', marginBottom: '12px', borderRadius: '12px' }} />
+          ))}
+        </div>
+        {/* Skeleton Content */}
+        <div style={{ flex: 1, padding: '48px 64px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '40px' }}>
+             <div>
+                <div className="skeleton" style={{ height: '20px', width: '120px', marginBottom: '8px' }} />
+                <div className="skeleton" style={{ height: '40px', width: '240px' }} />
+             </div>
+             <div style={{ display: 'flex', gap: '16px' }}>
+                <div className="skeleton" style={{ height: '48px', width: '140px', borderRadius: '12px' }} />
+                <div className="skeleton" style={{ height: '48px', width: '140px', borderRadius: '12px' }} />
+             </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '48px' }}>
+             <div className="skeleton" style={{ height: '160px', gridColumn: 'span 2', borderRadius: '24px' }} />
+             <div className="skeleton" style={{ height: '160px', borderRadius: '24px' }} />
+             <div className="skeleton" style={{ height: '160px', borderRadius: '24px' }} />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '32px' }}>
+             <div className="skeleton" style={{ height: '350px', borderRadius: '24px' }} />
+             <div className="skeleton" style={{ height: '350px', borderRadius: '24px' }} />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if(!systemEnabled) {
     return (
@@ -189,7 +236,7 @@ export default function AdminDashboard() {
       <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>{icon}</div>
       <span style={{fontSize:'0.95rem'}}>{label}</span>
       {id === 'orders' && orders.filter(o=>o.status==='pending').length > 0 && 
-        <span style={{marginLeft:'auto', background:'#ef4444', color:'#fff', fontSize:'0.7rem', padding:'2px 8px', borderRadius:'20px', fontWeight:'900'}}>{orders.filter(o=>o.status==='pending').length}</span>
+        <span style={{marginLeft:'auto', background:'var(--error)', color:'#fff', fontSize:'0.7rem', padding:'2px 8px', borderRadius:'20px', fontWeight:'900'}}>{orders.filter(o=>o.status==='pending').length}</span>
       }
     </div>
   );
@@ -205,20 +252,26 @@ export default function AdminDashboard() {
       overflowX: 'hidden'
     }}>
       {!isOnline && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, background: '#ef4444', color: '#fff', textAlign: 'center', padding: '12px', zIndex: 9999, fontWeight: 'bold', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, background: 'var(--error)', color: '#fff', textAlign: 'center', padding: '12px', zIndex: 9999, fontWeight: 'bold', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
           ⚠️ BAĞLANTI KESİLDİ - Canlı sipariş akışı durdu. Lütfen internetinizi kontrol edin.
         </div>
       )}
       <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes order-glow {
-          0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4), 0 0 20px rgba(245, 158, 11, 0.1); }
-          50% { box-shadow: 0 0 0 15px rgba(245, 158, 11, 0), 0 0 40px rgba(245, 158, 11, 0.3); }
-          100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0), 0 0 20px rgba(245, 158, 11, 0.1); }
+        @keyframes urgent-shake {
+          0%, 100% { transform: translateX(0) scale(1.02); }
+          10%, 30%, 50%, 70%, 90% { transform: translateX(-4px) scale(1.02); }
+          20%, 40%, 60%, 80% { transform: translateX(4px) scale(1.02); }
+        }
+        @keyframes red-strobe {
+          0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7), 0 0 20px rgba(239, 68, 68, 0.3); border-color: var(--error); }
+          50% { box-shadow: 0 0 0 20px rgba(239, 68, 68, 0), 0 0 50px rgba(239, 68, 68, 0.5); border-color: #dc2626; }
+          100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0), 0 0 20px rgba(239, 68, 68, 0.3); border-color: var(--error); }
         }
         .pulse-pending {
-          animation: order-glow 2.5s infinite ease-in-out;
-          border-left: 6px solid #f59e0b !important;
-          background: linear-gradient(to right, #fffbf2, #fff) !important;
+          animation: red-strobe 1.5s infinite ease-in-out, urgent-shake 0.8s cubic-bezier(.36,.07,.19,.97) both;
+          border: 4px solid var(--error) !important;
+          background: linear-gradient(to right, #fef2f2, #fff) !important;
+          z-index: 10 !important;
         }
         .status-ready-fade {
           opacity: 0.7;
@@ -501,6 +554,50 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
+              {/* Ödeme Bekleyen Siparişler (Yeni Hızlı Görünüm Ünitesi) */}
+              <div style={{ marginBottom: '48px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{ background: '#ecfdf5', color: 'var(--success)', padding: '8px', borderRadius: '10px' }}>
+                         <ShoppingCart size={20} />
+                      </div>
+                      <h3 className="font-bold" style={{ fontSize: '1.25rem' }}>Ödeme Bekleyen Masalar</h3>
+                   </div>
+                   <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)' }}>Toplam: {orders.filter(o => o.status === 'ready').length} Aktif Masa</span>
+                </div>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '16px' }}>
+                   {orders.filter(o => o.status === 'ready').length === 0 ? (
+                      <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '60px 40px', background: '#fff', borderRadius: '24px', border: '1px dashed #cbd5e1' }}>
+                         <div style={{ background: '#f8fafc', width: '64px', height: '64px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px auto', color: '#94a3b8' }}>
+                            <ShoppingCart size={32} />
+                         </div>
+                         <h4 className="font-bold" style={{ color: '#0f172a', fontSize: '1.1rem', marginBottom: '4px' }}>Ödeme Bekleyen Masa Yok</h4>
+                         <p className="font-secondary" style={{ color: '#64748b', fontSize: '0.85rem' }}>Şu an mutfaktan çıkıp ödeme aşamasına gelen aktif bir siparişiniz bulunmuyor.</p>
+                      </div>
+                   ) : (
+                      orders.filter(o => o.status === 'ready').slice(0, 8).map(o => (
+                        <div key={o.id} className="glass-card order-card-transition" style={{ padding: '20px', background: '#fff', border: '1px solid #e2e8f0', borderRadius:'20px', position: 'relative' }}>
+                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                              <div>
+                                 <p className="font-secondary" style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Masa / No</p>
+                                 <h4 className="font-bold" style={{ fontSize: '1.1rem', marginTop: '4px' }}>{o.customer_name}</h4>
+                              </div>
+                              <span style={{ background: '#dcfce7', color: '#16a34a', padding: '4px 10px', borderRadius: '30px', fontSize: '0.7rem', fontWeight: 900, boxShadow: '0 4px 10px rgba(22, 163, 74, 0.1)' }}>HESAP AÇIK</span>
+                           </div>
+                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <p className="font-bold" style={{ fontSize: '1.4rem', color: 'var(--primary)' }}>₺{Number(o.total_price).toFixed(2)}</p>
+                              <div style={{ background: 'var(--bg-main)', padding: '6px 10px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 600, color: '#64748b' }}>
+                                 {o.created_at ? new Date(o.created_at).toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'}) : '...'}
+                              </div>
+                           </div>
+                        </div>
+                      ))
+                   )}
+                </div>
+              </div>
+
+
               {/* Advanced Analytics & Product Performance Section */}
               <div className="analytics-grid" style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '32px' }}>
                 
@@ -630,36 +727,89 @@ export default function AdminDashboard() {
                  </div>
               </div>
               <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(350px, 1fr))', gap:'24px'}}>
-              {orders.map(o => (
-                <div key={o.id} className={`glass-card order-card-transition ${o.status === 'pending' ? 'pulse-pending' : ''} ${o.status === 'ready' ? 'status-ready-fade' : ''}`} style={{padding:'24px'}}>
-                   <div style={{display:'flex', justifyContent:'space-between', marginBottom:'16px', alignItems:'center'}}>
-                      <h4 className="font-bold" style={{fontSize:'1.2rem', display:'flex', alignItems:'center', gap:'8px'}}>
-                         {o.status === 'pending' && <span style={{background:'#f59e0b', color:'#fff', fontSize:'0.65rem', padding:'2px 8px', borderRadius:'6px', fontWeight:'900', boxShadow: '0 2px 4px rgba(0,0,0,0.1)'}}>YENİ!</span>}
-                         {o.customer_name}
-                      </h4>
-                      <span style={{fontSize:'0.8rem', color:'var(--text-muted)'}}>
-                        {o.created_at ? new Date(o.created_at).toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'}) : '...'}
-                      </span>
-                   </div>
-                   <div style={{marginBottom:'20px', padding:'12px', background:'var(--bg-main)', borderRadius:'10px'}}>
-                      {(() => {
-                         try {
-                            if (!o.items) return null;
-                            const items = typeof o.items === 'string' ? JSON.parse(o.items) : o.items;
-                            return Array.isArray(items) ? items.map((it, idx) => (
-                               <p key={idx} className="font-medium" style={{fontSize:'0.95rem', marginBottom:'4px'}}>
-                                  <span style={{color:'var(--accent)'}}>{it.quantity}x</span> {it.name}
-                               </p>
-                            )) : null;
-                         } catch(e) { return null; }
-                      })()}
-                   </div>
-                   {o.status === 'pending' && <button disabled={actionLoading === o.id} onClick={()=>updateOrderStatus(o.id, 'preparing')} className="btn-primary" style={{width:'100%', background:'#10b981', minHeight: '44px'}}>Siparişi Onayla</button>}
-                   {o.status === 'preparing' && <button disabled={actionLoading === o.id} onClick={()=>updateOrderStatus(o.id, 'ready')} className="btn-primary" style={{width:'100%', background:'var(--accent)', minHeight: '44px'}}>Hazır Bildir</button>}
-                   {o.status === 'ready' && <div style={{textAlign:'center', padding:'10px', color:'#10b981', fontWeight:'800', background:'#dcfce7', borderRadius:'8px', fontSize:'0.85rem'}}>Hazır & Teslim Edildi ✓</div>}
-                </div>
+               {orders.filter(o => o.status !== 'cancelled').map(o => (
+                 <div key={o.id} style={{ position: 'relative', overflow: 'hidden', borderRadius: '24px' }}>
+                    {/* Swipe Backgrounds */}
+                    <div style={{ position: 'absolute', inset: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 30px', borderRadius: '24px' }}>
+                       <div style={{ color: 'var(--error)', display: 'flex', alignItems: 'center', gap: '8px' }}><Trash2 size={32} /><span className="font-bold">İptal</span></div>
+                       <div style={{ color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '8px' }}><span className="font-bold">Hazır</span><Check size={32} /></div>
+                    </div>
+                    
+                    <motion.div 
+                      layout
+                      initial={{ scale: 0.8, opacity: 0, y: 30 }}
+                      animate={{ scale: 1, opacity: 1, y: 0 }}
+                      transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+                      drag="x" 
+                      dragConstraints={{ left: 0, right: 0 }}
+                      onDragEnd={(e, info) => {
+                         if (info.offset.x > 150) updateOrderStatus(o.id, o.status === 'pending' ? 'preparing' : 'ready');
+                         if (info.offset.x < -150) updateOrderStatus(o.id, 'cancelled');
+                      }}
+                      className={`glass-card order-card-transition ${o.status === 'pending' ? 'pulse-pending' : ''} ${o.status === 'ready' ? 'status-ready-fade' : ''}`} 
+                      style={{ padding:'24px', zIndex: 1, position: 'relative', cursor: 'grab' }}
+                      whileHover={{ y: -8, scale: 1.01, boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15)' }}
+                      whileTap={{ cursor: 'grabbing' }}
+                    >
+                       <div style={{display:'flex', justifyContent:'space-between', marginBottom:'16px', alignItems:'center'}}>
+                          <h4 className="font-bold" style={{fontSize:'1.2rem', display:'flex', alignItems:'center', gap:'8px'}}>
+                             {o.status === 'pending' && <span style={{background:'var(--warning)', color:'#fff', fontSize:'0.65rem', padding:'2px 8px', borderRadius:'6px', fontWeight:'900', boxShadow: '0 2px 4px rgba(0,0,0,0.1)'}}>YENİ!</span>}
+                             {o.customer_name}
+                          </h4>
+                          <span style={{fontSize:'0.8rem', color:'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px'}}>
+                            <ClockIcon size={14} /> {o.created_at ? new Date(o.created_at).toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'}) : '...'}
+                          </span>
+                       </div>
+                       
+                       <div style={{marginBottom:'24px', padding:'16px', background:'var(--bg-main)', borderRadius:'12px', border: '1px solid #f1f5f9'}}>
+                          {(() => {
+                             try {
+                                if (!o.items) return null;
+                                const items = typeof o.items === 'string' ? JSON.parse(o.items) : o.items;
+                                return Array.isArray(items) ? items.map((it, idx) => (
+                                   <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                      <p className="font-bold" style={{fontSize:'1rem'}}>
+                                         <span style={{color:'var(--primary)', marginRight: '8px'}}>{it.quantity}x</span> {it.name}
+                                      </p>
+                                      {it.isUpsell && <span style={{fontSize: '0.65rem', background: '#ecfdf5', color: '#059669', padding: '2px 8px', borderRadius: '10px', height: 'fit-content'}}>AVANTAJLI</span>}
+                                   </div>
+                                )) : null;
+                             } catch(e) { return null; }
+                          })()}
+                       </div>
+                       
+                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                          {o.status === 'pending' && (
+                             <button disabled={actionLoading === o.id} onClick={()=>updateOrderStatus(o.id, 'preparing')} className="btn-primary" style={{ gridColumn: 'span 2', background:'var(--success)', height: '64px', fontSize: '1.1rem', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                                <Check size={24} /> SİPARİŞİ ONAYLA
+                             </button>
+                          )}
+                          {o.status === 'preparing' && (
+                             <>
+                                <button disabled={actionLoading === o.id} onClick={()=>updateOrderStatus(o.id, 'cancelled')} className="btn-outline" style={{ background: '#fef2f2', color: 'var(--error)', borderColor: '#fee2e2', height: '64px', borderRadius: '16px' }}>
+                                   <Trash2 size={24} /> İPTAL
+                                </button>
+                                <button disabled={actionLoading === o.id} onClick={()=>updateOrderStatus(o.id, 'ready')} className="btn-primary" style={{ background:'var(--accent)', height: '64px', fontWeight: '800', borderRadius: '16px' }}>
+                                   HAZIR BİLDİR <ChevronRight size={24} />
+                                </button>
+                             </>
+                          )}
+                          {o.status === 'ready' && <div style={{gridColumn: 'span 2', textAlign:'center', padding:'16px', color:'var(--success)', fontWeight:'900', background:'#dcfce7', borderRadius:'16px', fontSize:'1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'}}><Check size={24} /> TESLİM EDİLDİ</div>}
+                       </div>
+                    </motion.div>
+                 </div>
               ))}
-              {orders.length === 0 && <div className="font-secondary" style={{gridColumn:'1/-1', textAlign:'center', marginTop:'100px'}}>Şu an aktif siparişiniz yok.</div>}
+               {orders.filter(o => o.status !== 'cancelled').length === 0 && (
+                  <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '100px 40px', background: '#fff', borderRadius: '32px', border: '1px dashed #cbd5e1' }}>
+                    <div style={{ background: '#f0f9ff', width: '80px', height: '80px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px auto', color: '#0ea5e9', animation: 'pulse 2s infinite' }}>
+                       <ClockIcon size={40} />
+                    </div>
+                    <h3 className="font-bold" style={{ fontSize: '1.5rem', color: '#0f172a', marginBottom: '12px' }}>Canlı Akış Bekleniyor</h3>
+                    <p className="font-secondary" style={{ color: '#64748b', maxWidth: '400px', margin: '0 auto', fontSize: '1rem', lineHeight: '1.6' }}>
+                       Şu an için yeni bir siparişiniz yok. Dijital menünüzden sipariş geldiğinde burası anlık ve sesli uyarılı olarak güncellenecektir.
+                    </p>
+                  </div>
+               )}
             </div>
          </div>
         )}
@@ -676,7 +826,7 @@ export default function AdminDashboard() {
                        <option>Ana Yemek</option><option>Ara Sıcak</option><option>Salata</option><option>Tatlı</option><option>İçecek</option>
                     </select>
                     <input placeholder="Görsel URL (Opsiyonel)" value={newProduct.image_url} onChange={e=>setNewProduct({...newProduct, image_url:e.target.value})} style={{padding:'14px', borderRadius:'12px', border:'1px solid var(--border)', background:'var(--bg-main)'}} />
-                    <button type="submit" className="btn-primary" style={{gridColumn:'1/-1', minHeight: '44px'}}>Ürünü Kaydet</button>
+                    <button type="submit" className="btn-primary" style={{gridColumn:'1/-1', minHeight: '48px'}}>Ürünü Kaydet</button>
                  </form>
               </div>
               <div className="glass-card" style={{padding:'0', overflowX: 'auto'}}>
@@ -708,10 +858,10 @@ export default function AdminDashboard() {
               <div className="glass-card" style={{padding:'24px', marginBottom:'32px'}}>
                  <h3 className="font-bold" style={{marginBottom:'20px'}}>Sarf Malzeme Ekle</h3>
                  <form onSubmit={handleAddStock} style={{display:'flex', gap:'16px', flexWrap:'wrap'}}>
-                    <input placeholder="Ürün Adı" value={newStock.product_name} onChange={e=>setNewStock({...newStock, product_name:e.target.value})} style={{padding:'12px', borderRadius:'10px', border:'1px solid var(--border)', flex:1, minHeight: '44px'}} />
-                    <input type="number" placeholder="Miktar" value={newStock.quantity} onChange={e=>setNewStock({...newStock, quantity:e.target.value})} style={{padding:'12px', borderRadius:'10px', border:'1px solid var(--border)', width:'100px', minHeight: '44px'}} />
-                    <input placeholder="Birim" value={newStock.unit} onChange={e=>setNewStock({...newStock, unit:e.target.value})} style={{padding:'12px', borderRadius:'10px', border:'1px solid var(--border)', width:'100px', minHeight: '44px'}} />
-                    <button type="submit" className="btn-primary" style={{minHeight: '44px'}}>Kaydet</button>
+                    <input placeholder="Ürün Adı" value={newStock.product_name} onChange={e=>setNewStock({...newStock, product_name:e.target.value})} style={{padding:'12px', borderRadius:'10px', border:'1px solid var(--border)', flex:2, minHeight: '48px'}} />
+                    <input type="number" placeholder="Miktar" value={newStock.quantity} onChange={e=>setNewStock({...newStock, quantity:e.target.value})} style={{padding:'12px', borderRadius:'10px', border:'1px solid var(--border)', width:'100px', minHeight: '48px'}} />
+                    <input placeholder="Birim" value={newStock.unit} onChange={e=>setNewStock({...newStock, unit:e.target.value})} style={{padding:'12px', borderRadius:'10px', border:'1px solid var(--border)', width:'100px', minHeight: '48px'}} />
+                    <button type="submit" className="btn-primary" style={{minHeight: '48px', flex:1}}>Kaydet</button>
                  </form>
               </div>
               <div className="glass-card" style={{padding:'0', overflowX: 'auto'}}>
@@ -732,13 +882,13 @@ export default function AdminDashboard() {
                                 <td style={{padding:'16px 24px'}}>
                                    <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
                                       <span className="font-bold" style={{fontSize:'1.1rem'}}>{item.quantity}</span>
-                                      {isLow ? <span style={{background:'#fee2e2', color:'#ef4444', padding:'2px 10px', borderRadius:'20px', fontSize:'0.7rem', fontWeight:'900'}}>AZALDI</span> : <span style={{background:'#dcfce7', color:'#22c55e', padding:'2px 10px', borderRadius:'20px', fontSize:'0.7rem', fontWeight:'900'}}>YETERLİ</span>}
+                                      {isLow ? <span style={{background:'#fee2e2', color:'var(--error)', padding:'2px 10px', borderRadius:'20px', fontSize:'0.7rem', fontWeight:'900'}}>AZALDI</span> : <span style={{background:'#dcfce7', color:'#22c55e', padding:'2px 10px', borderRadius:'20px', fontSize:'0.7rem', fontWeight:'900'}}>YETERLİ</span>}
                                    </div>
                                 </td>
                                 <td style={{padding:'16px 24px'}}>
                                    <div style={{display:'flex', gap:'8px'}}>
-                                      <button disabled={!!actionLoading} onClick={()=>handleStockAdjust(item.id, 1)} style={{padding:'4px 10px', borderRadius:'6px', border:'1px solid var(--border)', cursor:'pointer', minWidth: '40px', minHeight: '40px'}}>+</button>
-                                      <button disabled={!!actionLoading} onClick={()=>handleStockAdjust(item.id, -1)} style={{padding:'4px 10px', borderRadius:'6px', border:'1px solid var(--border)', cursor:'pointer', minWidth: '40px', minHeight: '40px'}}>-</button>
+                                      <button disabled={!!actionLoading} onClick={()=>handleStockAdjust(item.id, 1)} style={{padding:'4px 10px', borderRadius:'6px', border:'1px solid var(--border)', cursor:'pointer', minWidth: '40px', minHeight: '48px'}}>+</button>
+                                      <button disabled={!!actionLoading} onClick={()=>handleStockAdjust(item.id, -1)} style={{padding:'4px 10px', borderRadius:'6px', border:'1px solid var(--border)', cursor:'pointer', minWidth: '40px', minHeight: '48px'}}>-</button>
                                    </div>
                                 </td>
                              </tr>
@@ -767,7 +917,7 @@ export default function AdminDashboard() {
                           <td style={{padding:'16px 24px'}}><p className="font-bold">{c.name}</p><span style={{fontSize:'0.75rem', color:'#888'}}>Kayıt: {new Date(c.last_visit).toLocaleDateString()}</span></td>
                           <td style={{padding:'16px 24px'}} className="font-medium">{c.phone}</td>
                           <td style={{padding:'16px 24px'}}>
-                             <button onClick={() => window.open(`https://wa.me/${c.phone.replace(/\D/g,'')}?text=Kampanya%20var%21`)} className="btn-outline" style={{padding:'8px 16px', fontSize:'0.85rem', color:'var(--accent)', borderColor:'var(--accent)', borderRadius: '10px', minHeight: '44px'}}>Mesaj Gönder</button>
+                             <button onClick={() => window.open(`https://wa.me/${c.phone.replace(/\D/g,'')}?text=Kampanya%20var%21`)} className="btn-outline" style={{padding:'8px 16px', fontSize:'0.85rem', color:'var(--accent)', borderColor:'var(--accent)', borderRadius: '10px', minHeight: '48px'}}>Mesaj Gönder</button>
                           </td>
                        </tr>
                     ))}

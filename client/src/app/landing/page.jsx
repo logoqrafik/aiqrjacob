@@ -73,7 +73,7 @@ export default function LandingPage() {
           <div style={{ display: 'flex', gap: '32px', alignItems: 'center' }} className="hidden md:flex">
             <a href="#features" className="font-medium hidden-on-mobile" style={{ fontSize: '0.9rem', color: 'var(--text-muted)', textDecoration: 'none' }}>Özellikler</a>
             <a href="#pricing" className="font-medium hidden-on-mobile" style={{ fontSize: '0.9rem', color: 'var(--text-muted)', textDecoration: 'none' }}>Fiyatlandırma</a>
-            <Link href="/admin" className="btn-primary" style={{ padding: '10px 24px', fontSize: '0.9rem' }}>Demo Paneli Aç</Link>
+            <Link href="/admin" className="btn-primary" style={{ padding: '10px 24px', fontSize: '0.9rem', minHeight: '48px' }}>Demo Paneli Aç</Link>
           </div>
         </div>
       </nav>
