@@ -2,10 +2,30 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { Rocket, PackageSearch, Users, LineChart, XCircle, CheckCircle, TrendingUp, Clock, MousePointer2, ShieldCheck, Activity, Building2, QrCode, Utensils, ChefHat, ArrowRight, Zap, Smartphone, LayoutDashboard } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Rocket, PackageSearch, Users, LineChart, XCircle, CheckCircle, TrendingUp, Clock, MousePointer2, ShieldCheck, Activity, Building2, QrCode, Utensils, ChefHat, ArrowRight, Zap, Smartphone, LayoutDashboard, X, MessageSquare, Phone, MapPin, Hash } from 'lucide-react';
 
 export default function LandingPage() {
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [formData, setFormData] = useState({
+     name: '',
+     phone: '',
+     type: 'Restoran',
+     tables: ''
+  });
+
+  const handleFormSubmit = (e) => {
+     e.preventDefault();
+     const message = `Yeni Başvuru:
+Ad Soyad: ${formData.name}
+Telefon: ${formData.phone}
+İşletme Türü: ${formData.type}
+Masa Sayısı: ${formData.tables}`;
+     
+     const encodedMsg = encodeURIComponent(message);
+     window.open(`https://wa.me/905520814796?text=${encodedMsg}`, '_blank');
+     setIsFormOpen(false);
+  };
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -312,7 +332,7 @@ export default function LandingPage() {
                   <li style={{ marginBottom: '16px', display: 'flex', gap: '12px', alignItems: 'center' }}><CheckCircle size={20} color="var(--accent)" /> <span style={{ fontWeight: 500 }}>QR Menü Sistemi</span></li>
                   <li style={{ marginBottom: '16px', display: 'flex', gap: '12px', alignItems: 'center' }}><CheckCircle size={20} color="var(--accent)" /> <span style={{ fontWeight: 500 }}>E-posta Desteği</span></li>
                </ul>
-               <button className="btn-outline" style={{ width: '100%', padding: '16px', fontSize: '1.1rem', fontWeight: 600, border: '2px solid #cbd5e1' }}>Hemen Başla</button>
+               <button onClick={() => setIsFormOpen(true)} className="btn-outline" style={{ width: '100%', padding: '16px', fontSize: '1.1rem', fontWeight: 600, border: '2px solid #cbd5e1' }}>Hemen Başla</button>
             </motion.div>
             {/* Plan 2 */}
             <motion.div 
@@ -343,7 +363,7 @@ export default function LandingPage() {
                   <li style={{ marginBottom: '16px', display: 'flex', gap: '12px', alignItems: 'center' }}><CheckCircle size={20} color="var(--accent)" /> <span style={{ fontWeight: 600 }}>Çoklu Masa Temsili</span></li>
                   <li style={{ marginBottom: '16px', display: 'flex', gap: '12px', alignItems: 'center' }}><CheckCircle size={20} color="var(--accent)" /> <span style={{ fontWeight: 600 }}>7/24 Kesintisiz Teknik Destek</span></li>
                </ul>
-               <button className="btn-primary" style={{ width: '100%', padding: '16px', fontSize: '1.1rem', fontWeight: 600, background: 'linear-gradient(to right, #2563eb, #3b82f6)' }}>Hemen Başla</button>
+               <button onClick={() => setIsFormOpen(true)} className="btn-primary" style={{ width: '100%', padding: '16px', fontSize: '1.1rem', fontWeight: 600, background: 'linear-gradient(to right, #2563eb, #3b82f6)' }}>Hemen Başla</button>
             </motion.div>
           </div>
         </motion.div>
@@ -424,6 +444,70 @@ export default function LandingPage() {
            <path d="M16 15.5c-1 2-3 2-4 1s-3-2-4-3 .5-3 2.5-4c0-.5-.5-1-1-1.5s-1-2-1.5-2C7.5 5 7 5 6.5 5c-1.5.5-2.5 1.5-2 3.5 1 3.5 3 6 5 8s6 4 7 3c2-.5 2.5-1.5 2.5-2.5s-2-2-2.5-2.5c-.5-.5-1-1-1-1s-1.5.5-2 1.5z"></path>
         </svg>
       </a>
+      {/* Application Form Modal */}
+      <AnimatePresence>
+         {isFormOpen && (
+            <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(8px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+               <motion.div 
+                 initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                 animate={{ opacity: 1, scale: 1, y: 0 }}
+                 exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                 className="glass-card" 
+                 style={{ width: '100%', maxWidth: '500px', padding: '40px', background: '#fff', position: 'relative', overflow: 'hidden' }}
+               >
+                  <button onClick={() => setIsFormOpen(false)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'none', border: 'none', color: '#64748b', cursor: 'pointer' }}><X size={24} /></button>
+                  
+                  <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+                     <div style={{ background: '#eff6ff', width: '56px', height: '56px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563eb', margin: '0 auto 16px auto' }}>
+                        <Rocket size={32} />
+                     </div>
+                     <h3 className="font-bold" style={{ fontSize: '1.75rem', color: '#0f172a' }}>Başvurunuzu Yapın</h3>
+                     <p className="font-secondary" style={{ fontSize: '0.95rem' }}>İşletmenizi dijitalleştirmek için ilk adımı atın.</p>
+                  </div>
+
+                  <form onSubmit={handleFormSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                     <div>
+                        <label className="font-bold" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', marginBottom: '8px', color: '#1e293b' }}>
+                           <Users size={16} /> İsim Soyisim
+                        </label>
+                        <input required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="Örn: Ahmet Yılmaz" style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1.5px solid #e2e8f0', background: '#f8f9fb', fontSize: '1rem' }} />
+                     </div>
+                     <div>
+                        <label className="font-bold" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', marginBottom: '8px', color: '#1e293b' }}>
+                           <Phone size={16} /> Telefon Numarası
+                        </label>
+                        <input required type="tel" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="0500 000 00 00" style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1.5px solid #e2e8f0', background: '#f8f9fb', fontSize: '1rem' }} />
+                     </div>
+                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                        <div>
+                           <label className="font-bold" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', marginBottom: '8px', color: '#1e293b' }}>
+                              <Building2 size={16} /> İşletme Türü
+                           </label>
+                           <select value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})} style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1.5px solid #e2e8f0', background: '#f8f9fb', fontSize: '1rem' }}>
+                              <option>Restoran</option>
+                              <option>Kafe</option>
+                              <option>Pastane</option>
+                              <option>Otel</option>
+                           </select>
+                        </div>
+                        <div>
+                           <label className="font-bold" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', marginBottom: '8px', color: '#1e293b' }}>
+                              <Hash size={16} /> Masa Sayısı
+                           </label>
+                           <input required type="number" value={formData.tables} onChange={e => setFormData({...formData, tables: e.target.value})} placeholder="20" style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1.5px solid #e2e8f0', background: '#f8f9fb', fontSize: '1rem' }} />
+                        </div>
+                     </div>
+                     <button type="submit" className="btn-primary" style={{ width: '100%', padding: '16px', fontSize: '1.1rem', fontWeight: '800', marginTop: '10px', background: 'linear-gradient(to right, #2563eb, #1e40af)', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                        Başvuruyu Gönder <MessageSquare size={20} />
+                     </button>
+                  </form>
+                  <p style={{ textAlign: 'center', fontSize: '0.75rem', color: '#94a3b8', marginTop: '20px' }}>
+                     * Başvurunuz WhatsApp üzerinden ilgili birime iletilecektir.
+                  </p>
+               </motion.div>
+            </div>
+         )}
+      </AnimatePresence>
     </div>
   );
 }
