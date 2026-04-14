@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/navigation';
+import Link from 'next/link';
 
 export default function LandingPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
