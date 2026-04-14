@@ -1,8 +1,8 @@
 import './globals.css';
 
 export const metadata = {
-  title: 'Lezzet Durağı | QR Menü & Sipariş',
-  description: 'Geleceğin Menüsü, Şimdi Masanızda.',
+  title: 'BUTA | Modern QR Menü & Yönetim Sistemi',
+  description: 'BUTA Kalitesiyle Dijitalleşen İşletmeler, Mutlu Müşteriler.',
 };
 
 export default function RootLayout({ children }) {
