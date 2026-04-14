@@ -23,8 +23,8 @@ export default function CustomerMenu() {
   const fetchBusinessData = async () => {
     try {
       const [bRes, pRes] = await Promise.all([
-        fetch(`${API_URL}/api/businesses/${businessSlug}`),
-        fetch(`${API_URL}/api/${businessSlug}/products`)
+        fetch(`${API_URL}/api/public/business/${businessSlug}`),
+        fetch(`${API_URL}/api/public/${businessSlug}/products`)
       ]);
       
       if (bRes.ok) setBusiness(await bRes.json());
@@ -47,7 +47,7 @@ export default function CustomerMenu() {
     if (!customerName || cart.length === 0) return alert('Lütfen isim girin ve sepeti doldurun.');
     
     try {
-      const res = await fetch(`${API_URL}/api/${businessSlug}/orders`, {
+      const res = await fetch(`${API_URL}/api/public/${businessSlug}/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

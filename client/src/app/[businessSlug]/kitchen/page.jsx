@@ -17,8 +17,10 @@ export default function KitchenDisplay() {
       fetchOrders();
       const socket = io(API_URL);
 
-      // Sadece bu isletmeye ozel kanali dinle
-      socket.on(`new_order_${businessSlug}`, (newOrder) => {
+      // İZOLASYON: İşletme odasına katıl
+      socket.emit('join_business_room', businessSlug);
+
+      socket.on('new_order', (newOrder) => {
         setOrders(prev => [newOrder, ...prev]);
         playNotification();
       });
@@ -33,11 +35,10 @@ export default function KitchenDisplay() {
 
   const fetchOrders = async () => {
     try {
-      // Not: Mutfak ekrani icin de bir auth gerekebilir ama su an hizli erisim icin slug bazli filtresiz (veya bir mutfak pini ile) yapilabilir.
-      // Su anlik tum aktif siparisleri çekip client-side filtreleyelim (Daha sonra server-side filtrelenecek)
-      const res = await fetch(`${API_URL}/api/orders`); // Legacy fallback or new public filtered endpoint
+      // Mutfak verisi de artık sadece bu dükkana özel çekilmeli (Geçici olarak public filtered endpoint kullanıyoruz)
+      const res = await fetch(`${API_URL}/api/public/${businessSlug}/orders`); 
       const data = await res.json();
-      setOrders(data.filter(o => o.status !== 'completed' && o.status !== 'cancelled'));
+      setOrders(Array.isArray(data) ? data.filter(o => o.status !== 'completed') : []);
     } catch (e) { console.error(e); }
   };
 
