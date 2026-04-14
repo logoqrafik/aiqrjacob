@@ -160,9 +160,55 @@ app.get('/api/admin/customers', authenticateToken, async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'Musteriler getirilemedi' }); }
 });
 
+// ─── SUPER ADMIN (MASTER CONTROL) ─────────────────────────
+
+// Verify if user is super-admin
+const authenticateSuperAdmin = (req, res, next) => {
+    authenticateToken(req, res, () => {
+        if (req.user.role !== 'super-admin') return res.status(403).json({ error: 'Bu islem icin Super Admin yetkisi gerekiyor.' });
+        next();
+    });
+};
+
+// Get all businesses with high-level stats
+app.get('/api/super-admin/businesses', authenticateSuperAdmin, async (req, res) => {
+    try {
+        const query = await pool.query(`
+            SELECT 
+                b.*, 
+                (SELECT COUNT(*) FROM orders WHERE business_id = b.id) as total_orders,
+                (SELECT COUNT(*) FROM products WHERE business_id = b.id) as total_products,
+                (SELECT SUM(total_price) FROM orders WHERE business_id = b.id AND status = 'completed') as total_revenue
+            FROM businesses b
+            ORDER BY b.created_at DESC
+        `);
+        res.json(query.rows);
+    } catch (err) { res.status(500).json({ error: 'Isletmeler getirilemedi' }); }
+});
+
+// Super Admin Impersonation (One-click login as any business)
+app.post('/api/super-admin/login-as/:id', authenticateSuperAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const bizRes = await pool.query('SELECT * FROM businesses WHERE id = $1', [id]);
+        if (bizRes.rows.length === 0) return res.status(404).json({ error: 'Isletme bulunamadi' });
+        
+        const business = bizRes.rows[0];
+
+        // Generate a standard admin token for this business
+        const token = jwt.sign(
+            { id: req.user.id, business_id: business.id, slug: business.slug, role: 'admin' },
+            JWT_SECRET,
+            { expiresIn: '1h' }
+        );
+
+        res.json({ token, business });
+    } catch (err) { res.status(500).json({ error: 'Giris saglanamadi' }); }
+});
+
 // ─── START ───────────────────────────────────────────────
 server.listen(PORT, () => {
-    console.log(`ZIRHLI SaaS Server ${PORT} portunda calisiyor 🛡️`);
+    console.log(`PATRON SaaS Server ${PORT} portunda calisiyor 👑`);
 });
 
 // ─── START ───────────────────────────────────────────────
