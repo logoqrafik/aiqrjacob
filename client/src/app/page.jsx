@@ -15,8 +15,6 @@ export default function Home() {
   const [activeOrder, setActiveOrder] = useState(null); 
   const [cancelRemaining, setCancelRemaining] = useState(45);  
   const [prepareRemaining, setPrepareRemaining] = useState(300); 
-  const [showUpsell, setShowUpsell] = useState(false);
-  const [suggestedItems, setSuggestedItems] = useState([]);
 
   const timerRef = useRef(null);
 
@@ -55,23 +53,9 @@ export default function Home() {
   useEffect(() => { fetchProducts(); }, []);
 
   const addToCart = (item) => {
-    // Determine suggestions based on added item
-    const isMain = item.category === 'Ana Yemek';
-    const suggestions = menuData
-       .filter(cat => isMain ? (cat.name === 'İçecek' || cat.name === 'Tatlı') : cat.name !== item.category)
-       .flatMap(cat => cat.items)
-       .sort(() => 0.5 - Math.random())
-       .slice(0, 3);
-    
-    setSuggestedItems(suggestions);
-    
     setCart(prev => {
       const existing = prev.find(c => c.id === item.id);
       if (existing) return prev.map(c => c.id === item.id ? { ...c, quantity: c.quantity + 1 } : c);
-      
-      // Open upsell if it's a new item added
-      if (suggestions.length > 0) setShowUpsell(true);
-      
       return [...prev, { ...item, quantity: 1 }];
     });
   };
@@ -117,51 +101,34 @@ export default function Home() {
   }
 
   return (
-    <div className="fade-in" style={{ maxWidth: '100vw', overflowX: 'hidden' }}>
-      <header style={{ 
-        background: '#fff', 
-        borderBottom: '1px solid var(--border)', 
-        position: 'sticky', 
-        top: 0, 
-        zIndex: 100, 
-        padding: '12px 0',
-        width: '100%'
-      }}>
-        <div className="container" style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          padding: '0 16px'
-        }}>
-          <h1 className="font-bold" style={{ fontSize: '1.25rem', letterSpacing: '-0.5px' }}>Lezzet Durağı</h1>
-          <button className="btn-outline" style={{ padding: '8px 12px', fontSize: '0.85rem', minHeight: '40px' }}>Giriş Yap</button>
+    <div className="fade-in">
+      <header style={{background:'#fff', borderBottom:'1px solid var(--border)', position:'sticky', top:0, zIndex:100, padding:'16px 0'}}>
+        <div className="container" style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+          <h1 className="font-bold" style={{fontSize:'1.5rem', letterSpacing:'-0.5px'}}>Lezzet Durağı</h1>
+          <button className="btn-outline" style={{padding:'8px 16px', fontSize:'0.9rem'}}>Masa Onayı</button>
         </div>
       </header>
 
-      <main className="container" style={{ 
-        padding: '24px 16px 140px 16px',
-        maxWidth: '100%',
-        margin: '0 auto'
-      }}>
+      <main className="container" style={{padding:'32px 20px 120px 20px'}}>
         
         {activeOrder && (
-          <div className="glass-card" style={{ padding: '16px', marginBottom: '24px', borderLeft: '4px solid var(--accent)' }}>
-             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="glass-card" style={{padding:'20px', marginBottom:'32px', borderLeft:'4px solid var(--accent)'}}>
+             <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
                <div>
-                  <p className="font-secondary" style={{ fontSize: '0.75rem', marginBottom: '4px' }}>Sipariş Durumu</p>
-                  <h3 className="font-bold" style={{ fontSize: '1rem' }}>
+                  <p className="font-secondary" style={{fontSize:'0.85rem', marginBottom:'4px'}}>Sipariş Durumu</p>
+                  <h3 className="font-bold" style={{fontSize:'1.1rem'}}>
                     {activeOrder.status === 'pending' ? 'Hazırlık Bekleniyor' : activeOrder.status === 'preparing' ? 'Mutfakta Hazırlanıyor' : 'Sipariş Hazır ✨'}
                   </h3>
                </div>
-               <div style={{ textAlign: 'right' }}>
-                  <p className="font-secondary" style={{ fontSize: '0.75rem', marginBottom: '4px' }}>Kalan Süre</p>
-                  <span className="font-bold" style={{ fontSize: '1.1rem', color: activeOrder.status === 'ready' ? 'var(--accent)' : 'inherit' }}>
+               <div style={{textAlign:'right'}}>
+                  <p className="font-secondary" style={{fontSize:'0.85rem', marginBottom:'4px'}}>Kalan Süre</p>
+                  <span className="font-bold" style={{fontSize:'1.2rem', color: activeOrder.status === 'ready' ? 'var(--accent)' : 'inherit'}}>
                     {Math.floor(prepareRemaining / 60)}:{(prepareRemaining % 60).toString().padStart(2, '0')}
                   </span>
                </div>
              </div>
              {activeOrder.status === 'pending' && cancelRemaining > 0 && (
-               <button onClick={cancelOrder} style={{ marginTop: '12px', border: 'none', background: 'transparent', color: '#ff4d4d', cursor: 'pointer', fontSize: '0.85rem' }} className="font-medium">
+               <button onClick={cancelOrder} style={{marginTop:'16px', border:'none', background:'transparent', color:'#ff4d4d', cursor:'pointer', fontSize:'0.9rem'}} className="font-medium">
                   × İptal Et ({cancelRemaining}s)
                </button>
              )}
@@ -169,44 +136,34 @@ export default function Home() {
         )}
 
         {menuData.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px 0' }}>
+          <div style={{textAlign:'center', padding:'80px 0'}}>
             <p className="font-secondary">Henüz ürün bulunmamaktadır.</p>
           </div>
         ) : (
           menuData.map(category => (
-            <section key={category.id} style={{ marginBottom: '32px' }}>
-              <h2 className="font-bold" style={{ fontSize: '1.15rem', marginBottom: '20px', borderLeft: '3px solid var(--primary)', paddingLeft: '12px' }}>{category.name}</h2>
-              <div style={{ 
-                display: 'grid', 
-                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', 
-                gap: '24px' 
-              }}>
+            <section key={category.id} style={{marginBottom:'48px'}}>
+              <h2 className="font-bold" style={{fontSize:'1.25rem', marginBottom:'24px', borderLeft:'3px solid var(--primary)', paddingLeft:'12px'}}>{category.name}</h2>
+              <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(300px, 1fr))', gap:'32px'}}>
                 {category.items.map(item => (
-                  <div key={item.id} className="glass-card" style={{ 
-                    overflow: 'hidden', 
-                    display: 'flex', 
-                    flexDirection: 'column',
-                    maxWidth: '100%',
-                    boxSizing: 'border-box'
-                  }}>
-                    <div style={{ position: 'relative', height: '180px', width: '100%' }}>
-                      {item.image_url ? <Image src={item.image_url} alt={item.name} fill style={{ objectFit: 'cover' }} /> : <div style={{ width: '100%', height: '100%', background: '#f1f5f9' }} />}
+                  <div key={item.id} className="glass-card" style={{overflow:'hidden', transition:'transform 0.2s'}} onMouseEnter={e=>e.currentTarget.style.transform='translateY(-4px)'} onMouseLeave={e=>e.currentTarget.style.transform='translateY(0)'}>
+                    <div style={{position:'relative', height:'220px'}}>
+                      {item.image_url ? <Image src={item.image_url} alt={item.name} fill style={{objectFit:'cover'}} /> : <div style={{width:'100%', height:'100%', background:'#f1f5f9'}} />}
                     </div>
-                    <div style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                        <h4 className="font-bold" style={{ fontSize: '1rem', flex: 1 }}>{item.name}</h4>
-                        <span className="font-bold" style={{ marginLeft: '12px' }}>₺{item.price}</span>
+                    <div style={{padding:'24px'}}>
+                      <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'12px'}}>
+                        <h4 className="font-bold" style={{fontSize:'1.1rem'}}>{item.name}</h4>
+                        <span className="font-bold">₺{item.price}</span>
                       </div>
-                      <p className="font-secondary" style={{ fontSize: '0.85rem', marginBottom: '20px', lineHeight: '1.5', flex: 1 }}>{item.description}</p>
+                      <p className="font-secondary" style={{fontSize:'0.9rem', marginBottom:'24px', lineHeight:'1.6'}}>{item.description}</p>
                       
                       {cart.find(c => c.id === item.id) ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '20px', justifyContent: 'center', background: 'var(--bg-main)', padding: '6px', borderRadius: '12px' }}>
-                          <button onClick={() => removeFromCart(item)} style={{ border: 'none', background: 'none', color: 'var(--primary)', fontSize: '1.4rem', cursor: 'pointer', width: '44px', height: '44px' }}>-</button>
-                          <span className="font-bold" style={{ fontSize: '1rem' }}>{cart.find(c => c.id === item.id).quantity}</span>
-                          <button onClick={() => addToCart(item)} style={{ border: 'none', background: 'none', color: 'var(--primary)', fontSize: '1.4rem', cursor: 'pointer', width: '44px', height: '44px' }}>+</button>
+                        <div style={{display:'flex', alignItems:'center', gap:'16px', justifyContent:'center', background:'var(--bg-main)', padding:'4px', borderRadius:'10px'}}>
+                          <button onClick={()=>removeFromCart(item)} style={{border:'none', background:'none', color:'var(--primary)', fontSize:'1.5rem', cursor:'pointer', width:'32px'}}>-</button>
+                          <span className="font-bold">{cart.find(c=>c.id === item.id).quantity}</span>
+                          <button onClick={()=>addToCart(item)} style={{border:'none', background:'none', color:'var(--primary)', fontSize:'1.5rem', cursor:'pointer', width:'32px'}}>+</button>
                         </div>
                       ) : (
-                        <button className="btn-primary" style={{ width: '100%', minHeight: '44px', fontSize: '0.95rem' }} onClick={() => addToCart(item)}>Sepete Ekle</button>
+                        <button className="btn-primary" style={{width:'100%', padding:'10px'}} onClick={()=>addToCart(item)}>Sepete Ekle</button>
                       )}
                     </div>
                   </div>
@@ -217,89 +174,35 @@ export default function Home() {
         )}
       </main>
 
-      {/* --- STICKY BOTTOM CART BAR (MOBİL DOSTU) --- */}
       {cart.length > 0 && !isCheckoutOpen && (
-        <div style={{ 
-          position: 'fixed', 
-          bottom: '0', 
-          left: '0', 
-          right: '0', 
-          background: 'rgba(255, 255, 255, 0.95)',
-          backdropFilter: 'blur(10px)',
-          borderTop: '1px solid var(--border)',
-          padding: '16px 20px env(safe-area-inset-bottom)', 
-          zIndex: 1500,
-          boxShadow: '0 -4px 20px rgba(0,0,0,0.08)'
-        }}>
-          <button className="btn-primary" style={{ 
-            width: '100%', 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center', 
-            borderRadius: '14px', 
-            padding: '14px 20px',
-            minHeight: '54px'
-          }} onClick={() => setIsCheckoutOpen(true)}>
-             <div style={{ textAlign: 'left' }}>
-                <span style={{ fontSize: '0.75rem', opacity: 0.8, display: 'block' }}>{cart.reduce((n, i) => n + i.quantity, 0)} Ürün</span>
-                <span style={{ fontSize: '1.1rem', fontWeight: 800 }}>₺{cart.reduce((t, i) => t + (Number(i.price) * i.quantity), 0).toFixed(2)}</span>
-             </div>
-             <span className="font-bold" style={{ fontSize: '1rem' }}>Siparişi Tamamla →</span>
+        <div style={{position:'fixed', bottom:'24px', left:'50%', transform:'translateX(-50%)', width:'calc(100% - 40px)', maxWidth:'600px', zIndex:1000}}>
+          <button className="btn-primary" style={{width:'100%', display:'flex', justifyContent:'space-between', alignItems:'center', boxShadow:'0 10px 25px -5px rgba(15, 23, 42, 0.4)', borderRadius:'16px', padding:'18px 24px'}} onClick={()=>setIsCheckoutOpen(true)}>
+             <span className="font-medium">Sepeti Onayla ({cart.reduce((n,i)=>n+i.quantity,0)})</span>
+             <span className="font-bold" style={{fontSize:'1.1rem'}}>₺{cart.reduce((t,i)=>t+(Number(i.price)*i.quantity),0).toFixed(2)}</span>
           </button>
         </div>
       )}
 
-      {/* --- UPSELL MODAL (FIXED FOR MOBILE) --- */}
-      {showUpsell && suggestedItems.length > 0 && (
-         <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.7)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '16px' }}>
-            <div className="fade-in" style={{ background: '#fff', width: '100%', maxWidth: '400px', borderRadius: '24px', padding: '24px', textAlign: 'center', maxHeight: '90vh', overflowY: 'auto' }}>
-               <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>🍱</div>
-               <h3 className="font-bold" style={{ fontSize: '1.25rem', marginBottom: '8px' }}>Yanına ister misiniz?</h3>
-               
-               <div style={{ background: '#fffbeb', padding: '10px', borderRadius: '12px', marginBottom: '20px' }}>
-                  <p className="font-bold" style={{ color: '#92400e', fontSize: '0.8rem' }}>✨ Menü yapınca %10 avantaj!</p>
-               </div>
-
-               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px' }}>
-                  {suggestedItems.map(s => (
-                    <div key={s.id} className="glass-card" style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px', textAlign: 'left' }}>
-                       <div style={{ width: '44px', height: '44px', position: 'relative', borderRadius: '8px', overflow: 'hidden', flexShrink: 0 }}>
-                          {s.image_url ? <Image src={s.image_url} alt={s.name} fill style={{ objectFit: 'cover' }} /> : <div style={{ width: '100%', height: '100%', background: '#f1f5f9' }} />}
-                       </div>
-                       <div style={{ flex: 1 }}>
-                          <p className="font-bold" style={{ fontSize: '0.85rem', marginBottom: '0' }}>{s.name}</p>
-                          <p className="font-secondary" style={{ fontSize: '0.8rem' }}>₺{s.price}</p>
-                       </div>
-                       <button onClick={() => { addToCart(s); setShowUpsell(false); }} style={{ background: 'var(--primary)', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '10px', fontSize: '0.75rem', cursor: 'pointer', minHeight: '36px' }}>Ekle</button>
-                    </div>
-                  ))}
-               </div>
-
-               <button onClick={() => setShowUpsell(false)} style={{ width: '100%', padding: '12px', border: 'none', background: 'transparent', color: 'var(--text-muted)', fontSize: '0.9rem', cursor: 'pointer' }}>Gerek Yok, Devam Et</button>
-            </div>
-         </div>
-      )}
-
       {isCheckoutOpen && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'flex-end', zIndex: 1600 }}>
-           <div className="fade-in" style={{ background: '#fff', width: '100%', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', padding: '24px 20px 48px 20px', maxHeight: '90vh', overflowY: 'auto' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
-                 <h3 className="font-bold" style={{ fontSize: '1.2rem' }}>Siparişi Tamamla</h3>
-                 <button onClick={() => setIsCheckoutOpen(false)} style={{ border: 'none', background: 'none', fontSize: '1.8rem', cursor: 'pointer', padding: '8px' }}>&times;</button>
+        <div style={{position:'fixed', inset:0, background:'rgba(15, 23, 42, 0.6)', backdropFilter:'blur(4px)', display:'flex', alignItems:'flex-end', zIndex:1001}}>
+           <div className="fade-in" style={{background:'#fff', width:'100%', borderTopLeftRadius:'24px', borderTopRightRadius:'24px', padding:'32px 24px 48px 24px', maxHeight:'90vh', overflowY:'auto'}}>
+              <div style={{display:'flex', justifyContent:'space-between', marginBottom:'32px'}}>
+                 <h3 className="font-bold" style={{fontSize:'1.4rem'}}>Siparişi Tamamla</h3>
+                 <button onClick={()=>setIsCheckoutOpen(false)} style={{border:'none', background:'none', fontSize:'1.5rem', cursor:'pointer'}}>&times;</button>
               </div>
               
-              <div style={{ marginBottom: '20px' }}>
-                <label className="font-medium" style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem' }}>Masa No / İsim</label>
-                <input value={customerInfo} onChange={e => setCustomerInfo(e.target.value)} placeholder="Örn: Masa 5" style={{ width: '100%', padding: '14px', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--bg-main)', fontSize: '0.95rem' }} />
+              <div style={{marginBottom:'32px'}}>
+                <label className="font-medium" style={{display:'block', marginBottom:'8px', fontSize:'0.9rem'}}>Masa No / İsim</label>
+                <input value={customerInfo} onChange={e=>setCustomerInfo(e.target.value)} placeholder="Örn: Masa 5" style={{width:'100%', padding:'16px', borderRadius:'12px', border:'1px solid var(--border)', background:'var(--bg-main)', fontSize:'1rem'}} />
               </div>
 
-              <div style={{ marginBottom: '24px' }}>
-                <label className="font-medium" style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem' }}>Sipariş Notu</label>
-                <textarea value={customerNote} onChange={e => setCustomerNote(e.target.value)} placeholder="Sos istemiyorum..." rows="2" style={{ width: '100%', padding: '14px', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--bg-main)', fontSize: '0.95rem', resize: 'none' }} />
+              <div style={{marginBottom:'32px'}}>
+                <label className="font-medium" style={{display:'block', marginBottom:'8px', fontSize:'0.9rem'}}>Özel Not (Opsiyonel)</label>
+                <textarea value={customerNote} onChange={e=>setCustomerNote(e.target.value)} placeholder="Sos istemiyorum, pişkin olsun..." rows="3" style={{width:'100%', padding:'16px', borderRadius:'12px', border:'1px solid var(--border)', background:'var(--bg-main)', fontSize:'1rem', resize:'none'}} />
               </div>
 
-              <button className="btn-primary" style={{ width: '100%', minHeight: '54px', fontSize: '1.1rem' }} disabled={isSubmitting} onClick={handleFinalCheckout}>
-                {isSubmitting ? 'İletiliyor...' : `₺${cart.reduce((t, i) => t + (Number(i.price) * i.quantity), 0).toFixed(2)} - Siparişi Onayla`}
+              <button className="btn-primary" style={{width:'100%', padding:'18px'}} disabled={isSubmitting} onClick={handleFinalCheckout}>
+                {isSubmitting ? 'İletiliyor...' : 'Siparişi Gönder'}
               </button>
            </div>
         </div>
@@ -307,5 +210,3 @@ export default function Home() {
     </div>
   );
 }
-
-
