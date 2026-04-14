@@ -22,7 +22,6 @@ app.use(express.json());
 
 // ─── SOCKET.IO ROOMS (Strict Partitioning) ────────────────
 io.on('connection', (socket) => {
-    // İşletme özel odasına katılma (Admin/Kitchen bu odaya girer)
     socket.on('join_business_room', (businessSlug) => {
         socket.join(`business_${businessSlug}`);
         console.log(`Socket ${socket.id} isletme odasina katildi: ${businessSlug}`);
@@ -43,6 +42,9 @@ app.post('/api/auth/login', async (req, res) => {
         
         if (!validPass) return res.status(401).json({ error: 'Gecersiz bilgiler' });
 
+        // Son giris zamanini GUNCELLE
+        await pool.query('UPDATE users SET last_login_at = NOW() WHERE id = $1', [user.id]);
+
         const bizRes = await pool.query('SELECT * FROM businesses WHERE id = $1', [user.business_id]);
         const business = bizRes.rows[0];
 
@@ -58,7 +60,6 @@ app.post('/api/auth/login', async (req, res) => {
 
 // ─── PUBLIC (CUSTOMER) ROUTES ───────────────────────────
 
-// Isletme bilgisi (Sadece halka acik kisim)
 app.get('/api/public/business/:slug', async (req, res) => {
     try {
         const result = await pool.query('SELECT name, slug, logo_url, theme_color FROM businesses WHERE slug = $1', [req.params.slug]);
@@ -67,7 +68,6 @@ app.get('/api/public/business/:slug', async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'Hata' }); }
 });
 
-// Menü Ürünleri (Slug bazli izolasyon)
 app.get('/api/public/:slug/products', async (req, res) => {
     try {
         const query = await pool.query(`
@@ -80,7 +80,6 @@ app.get('/api/public/:slug/products', async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'Menu getirilemedi' }); }
 });
 
-// Sipariş Oluşturma (Müşteri)
 app.post('/api/public/:slug/orders', async (req, res) => {
     try {
         const { customer_name, items, total_price, note } = req.body;
@@ -102,8 +101,6 @@ app.post('/api/public/:slug/orders', async (req, res) => {
 
 // ─── ADMIN (STRICT ISOLATION) ────────────────────────────
 
-// Tüm admin istekleri req.user.business_id ile filtrelenir! (Dışarıya veri sızamaz)
-
 app.get('/api/admin/orders', authenticateToken, async (req, res) => {
     try {
         const query = await pool.query('SELECT * FROM orders WHERE business_id = $1 ORDER BY id DESC', [req.user.business_id]);
@@ -114,7 +111,6 @@ app.get('/api/admin/orders', authenticateToken, async (req, res) => {
 app.put('/api/admin/orders/:id/status', authenticateToken, async (req, res) => {
     try {
         const { status } = req.body;
-        // ID + Business_ID eşleşmesi zorunludur (Ownership Verification)
         const result = await pool.query(
             'UPDATE orders SET status = $1 WHERE id = $2 AND business_id = $3 RETURNING *',
             [status, req.params.id, req.user.business_id]
@@ -162,7 +158,6 @@ app.get('/api/admin/customers', authenticateToken, async (req, res) => {
 
 // ─── SUPER ADMIN (MASTER CONTROL) ─────────────────────────
 
-// Verify if user is super-admin
 const authenticateSuperAdmin = (req, res, next) => {
     authenticateToken(req, res, () => {
         if (req.user.role !== 'super-admin') return res.status(403).json({ error: 'Bu islem icin Super Admin yetkisi gerekiyor.' });
@@ -170,23 +165,23 @@ const authenticateSuperAdmin = (req, res, next) => {
     });
 };
 
-// Get all businesses with high-level stats
 app.get('/api/super-admin/businesses', authenticateSuperAdmin, async (req, res) => {
     try {
         const query = await pool.query(`
             SELECT 
                 b.*, 
                 (SELECT COUNT(*) FROM orders WHERE business_id = b.id) as total_orders,
+                (SELECT COUNT(*) FROM orders WHERE business_id = b.id AND created_at >= CURRENT_DATE) as daily_orders,
                 (SELECT COUNT(*) FROM products WHERE business_id = b.id) as total_products,
-                (SELECT SUM(total_price) FROM orders WHERE business_id = b.id AND status = 'completed') as total_revenue
+                (SELECT SUM(total_price) FROM orders WHERE business_id = b.id AND status = 'completed') as total_revenue,
+                (SELECT MAX(last_login_at) FROM users WHERE business_id = b.id) as last_login_at
             FROM businesses b
-            ORDER BY b.created_at DESC
+            ORDER BY last_login_at DESC NULLS LAST
         `);
         res.json(query.rows);
     } catch (err) { res.status(500).json({ error: 'Isletmeler getirilemedi' }); }
 });
 
-// Super Admin Impersonation (One-click login as any business)
 app.post('/api/super-admin/login-as/:id', authenticateSuperAdmin, async (req, res) => {
     try {
         const { id } = req.params;
@@ -195,7 +190,6 @@ app.post('/api/super-admin/login-as/:id', authenticateSuperAdmin, async (req, re
         
         const business = bizRes.rows[0];
 
-        // Generate a standard admin token for this business
         const token = jwt.sign(
             { id: req.user.id, business_id: business.id, slug: business.slug, role: 'admin' },
             JWT_SECRET,
@@ -209,9 +203,4 @@ app.post('/api/super-admin/login-as/:id', authenticateSuperAdmin, async (req, re
 // ─── START ───────────────────────────────────────────────
 server.listen(PORT, () => {
     console.log(`PATRON SaaS Server ${PORT} portunda calisiyor 👑`);
-});
-
-// ─── START ───────────────────────────────────────────────
-server.listen(PORT, () => {
-    console.log(`Server + WebSocket ${PORT} portunda calisiyor`);
 });
