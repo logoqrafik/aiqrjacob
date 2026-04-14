@@ -182,6 +182,38 @@ app.get('/api/super-admin/businesses', authenticateSuperAdmin, async (req, res) 
     } catch (err) { res.status(500).json({ error: 'Isletmeler getirilemedi' }); }
 });
 
+// Get products for a specific business (Remote Manage)
+app.get('/api/super-admin/businesses/:id/products', authenticateSuperAdmin, async (req, res) => {
+    try {
+        const query = await pool.query('SELECT * FROM products WHERE business_id = $1 ORDER BY category, id ASC', [req.params.id]);
+        res.json(query.rows);
+    } catch (err) { res.status(500).json({ error: 'Urunler getirilemedi' }); }
+});
+
+// Update a specific product (Remote Manage)
+app.put('/api/super-admin/products/:id', authenticateSuperAdmin, async (req, res) => {
+    try {
+        const { name, price, category } = req.body;
+        const result = await pool.query(
+            'UPDATE products SET name = $1, price = $2, category = $3 WHERE id = $4 RETURNING *',
+            [name, price, category, req.params.id]
+        );
+        res.json(result.rows[0]);
+    } catch (err) { res.status(500).json({ error: 'Urun guncellenemedi' }); }
+});
+
+// Update business settings (Remote Manage)
+app.put('/api/super-admin/businesses/:id', authenticateSuperAdmin, async (req, res) => {
+    try {
+        const { name, theme_color, logo_url } = req.body;
+        const result = await pool.query(
+            'UPDATE businesses SET name = $1, theme_color = $2, logo_url = $3 WHERE id = $4 RETURNING *',
+            [name, theme_color, logo_url, req.params.id]
+        );
+        res.json(result.rows[0]);
+    } catch (err) { res.status(500).json({ error: 'Isletme guncellenemedi' }); }
+});
+
 app.post('/api/super-admin/login-as/:id', authenticateSuperAdmin, async (req, res) => {
     try {
         const { id } = req.params;
