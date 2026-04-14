@@ -62,7 +62,7 @@ app.post('/api/auth/login', async (req, res) => {
 
 app.get('/api/public/business/:slug', async (req, res) => {
     try {
-        const result = await pool.query('SELECT name, slug, logo_url, theme_color FROM businesses WHERE slug = $1', [req.params.slug]);
+        const result = await pool.query('SELECT name, slug, logo_url, theme_color, whatsapp_number, welcome_message, footer_text FROM businesses WHERE slug = $1', [req.params.slug]);
         if (result.rows.length === 0) return res.status(404).json({ error: 'Isletme yok' });
         res.json(result.rows[0]);
     } catch (err) { res.status(500).json({ error: 'Hata' }); }
@@ -154,6 +154,25 @@ app.get('/api/admin/customers', authenticateToken, async (req, res) => {
         const query = await pool.query('SELECT * FROM customers WHERE business_id = $1 ORDER BY last_visit DESC', [req.user.business_id]);
         res.json(query.rows);
     } catch (err) { res.status(500).json({ error: 'Musteriler getirilemedi' }); }
+});
+
+// Settings Management
+app.get('/api/admin/settings', authenticateToken, async (req, res) => {
+    try {
+        const query = await pool.query('SELECT name, logo_url, theme_color, whatsapp_number, welcome_message, footer_text FROM businesses WHERE id = $1', [req.user.business_id]);
+        res.json(query.rows[0]);
+    } catch (err) { res.status(500).json({ error: 'Ayarlar getirilemedi' }); }
+});
+
+app.put('/api/admin/settings', authenticateToken, async (req, res) => {
+    try {
+        const { name, logo_url, theme_color, whatsapp_number, welcome_message, footer_text } = req.body;
+        const result = await pool.query(
+            'UPDATE businesses SET name = $1, logo_url = $2, theme_color = $3, whatsapp_number = $4, welcome_message = $5, footer_text = $6 WHERE id = $7 RETURNING *',
+            [name, logo_url, theme_color, whatsapp_number, welcome_message, footer_text, req.user.business_id]
+        );
+        res.json(result.rows[0]);
+    } catch (err) { res.status(500).json({ error: 'Ayarlar guncellenemedi' }); }
 });
 
 // ─── SUPER ADMIN (MASTER CONTROL) ─────────────────────────
