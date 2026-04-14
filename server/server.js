@@ -80,19 +80,6 @@ app.get('/api/public/:slug/products', async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'Menu getirilemedi' }); }
 });
 
-// Kamu siparişlerini çek (Mutfak için izolasyonlu)
-app.get('/api/public/:slug/orders', async (req, res) => {
-    try {
-        const query = await pool.query(`
-            SELECT o.* FROM orders o 
-            JOIN businesses b ON o.business_id = b.id 
-            WHERE b.slug = $1 AND o.status != 'completed' 
-            ORDER BY o.id DESC
-        `, [req.params.slug]);
-        res.json(query.rows);
-    } catch (err) { res.status(500).json({ error: 'Siparisler getirilemedi' }); }
-});
-
 // Sipariş Oluşturma (Müşteri)
 app.post('/api/public/:slug/orders', async (req, res) => {
     try {
