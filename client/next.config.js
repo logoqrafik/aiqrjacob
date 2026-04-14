@@ -15,6 +15,7 @@ const nextConfig = {
     typescript: {
         ignoreDuringBuilds: true,
     },
+    trailingSlash: false,
 }
 
 module.exports = nextConfig
