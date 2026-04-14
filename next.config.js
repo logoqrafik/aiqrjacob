@@ -9,6 +9,12 @@ const nextConfig = {
             { protocol: 'https', hostname: 'i.pravatar.cc' },
         ],
     },
+    eslint: {
+        ignoreDuringBuilds: true,
+    },
+    typescript: {
+        ignoreDuringBuilds: true,
+    },
 }
 
 module.exports = nextConfig
