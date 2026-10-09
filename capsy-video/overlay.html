@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="az"><head><meta charset="utf-8"><title>Capsy Ad Overlay</title>
+<style>
+@font-face{font-family:'InterX';font-weight:500;src:url(fonts/Inter-Medium.otf)}
+@font-face{font-family:'InterX';font-weight:600;src:url(fonts/Inter-SemiBold.otf)}
+@font-face{font-family:'InterX';font-weight:700;src:url(fonts/Inter-Bold.otf)}
+@font-face{font-family:'InterX';font-weight:800;src:url(fonts/Inter-ExtraBold.otf)}
+:root{--red:#E94739;--purple:#4A287C;--bg:#0A0612;--bg2:#140B22;--muted:rgba(255,255,255,.62);--line:rgba(255,255,255,.14)}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1080px;height:1920px;background:transparent;overflow:hidden;font-family:'InterX','Inter',sans-serif;color:#fff}
+.abs{position:absolute}
+#bg{position:absolute;inset:0;opacity:0;
+ background:radial-gradient(900px 700px at 100% 0%,rgba(74,40,124,.6),transparent 65%),radial-gradient(800px 700px at 0% 100%,rgba(233,71,57,.22),transparent 65%),linear-gradient(180deg,var(--bg2),var(--bg))}
+#glow{position:absolute;width:900px;height:900px;border-radius:50%;filter:blur(120px);opacity:.35;background:radial-gradient(circle,#4A287C,transparent 65%)}
+#scrimTop,#scrimBot{position:absolute;left:0;right:0;opacity:0}
+#scrimTop{top:0;height:520px;background:linear-gradient(180deg,rgba(10,6,18,.7),transparent)}
+#scrimBot{bottom:0;height:900px;background:linear-gradient(0deg,rgba(10,6,18,.88),rgba(10,6,18,.55) 55%,transparent)}
+#logo{position:absolute;left:84px;top:170px;height:84px;opacity:0}
+.scene{position:absolute;inset:0;opacity:0}
+.chip{position:absolute;right:84px;top:188px;font-size:22px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);padding:13px 22px;border:1px solid var(--line);border-radius:100px;background:rgba(10,6,18,.45)}
+.live{display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--red);margin-right:12px;box-shadow:0 0 0 6px rgba(233,71,57,.2)}
+.big{font-weight:800;letter-spacing:-.04em;line-height:1}
+.red{background:linear-gradient(90deg,var(--red),#ff7a5c);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lbl{font-size:34px;font-weight:600;color:var(--muted);margin-top:14px;letter-spacing:-.01em}
+.card{position:absolute;left:84px;width:912px;background:#fff;border-radius:26px;padding:22px 20px;box-shadow:0 40px 90px -20px rgba(0,0,0,.8),0 0 0 1px rgba(255,255,255,.08),0 0 140px -30px rgba(233,71,57,.5)}
+.card img{display:block;width:100%;height:auto}
+.win{position:relative;overflow:hidden;border-radius:6px}
+.win img{max-width:none}
+.hl{position:absolute;left:0;right:0;border:5px solid var(--red);border-radius:14px;background:rgba(233,71,57,.10);box-shadow:0 0 40px rgba(233,71,57,.55)}
+.badge{position:absolute;top:-17px;left:28px;font-size:18px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;background:var(--red);color:#fff;padding:8px 16px;border-radius:100px}
+#cap{position:absolute;left:70px;right:70px;top:1395px;text-align:center;font-size:62px;font-weight:800;line-height:1.14;letter-spacing:-.025em;text-shadow:0 4px 30px rgba(0,0,0,.65);opacity:0}
+#cap em{font-style:normal;color:#ff6a58}
+.pill{position:absolute;padding:26px 44px;border-radius:100px;font-weight:800;font-size:46px;letter-spacing:-.02em}
+.btn{background:linear-gradient(90deg,var(--red),#ff6a58);box-shadow:0 20px 60px -10px rgba(233,71,57,.8)}
+</style></head><body>
+<div id="bg"></div><div id="glow"></div><div id="scrimTop"></div><div id="scrimBot"></div>
+<img id="logo" src="../capsy-template/assets/logo.webp">
+
+<!-- B brand -->
+<div class="scene" id="sB">
+  <div class="abs" id="bLogo" style="left:0;right:0;top:640px;text-align:center"><img src="../capsy-template/assets/logo.webp" style="height:300px"></div>
+  <div class="abs big" id="bLine" style="left:84px;right:84px;top:1010px;text-align:center;font-size:62px">Meta reklam <span class="red">xidməti</span></div>
+  <div id="bChips"></div>
+</div>
+<!-- C transition -->
+<div class="scene" id="sC">
+  <div class="abs big" id="cTxt" style="left:84px;right:84px;top:760px;text-align:center;font-size:120px">REAL<br><span class="red">NƏTİCƏLƏR</span></div>
+  <div class="abs" id="cBar" style="left:340px;width:400px;height:6px;top:1130px;background:var(--red);border-radius:6px;transform-origin:left"></div>
+</div>
+<!-- proof scenes injected -->
+<div id="proofs"></div>
+<!-- E stack -->
+<div class="scene" id="sE">
+  <div class="abs big" id="eTxt" style="left:84px;right:84px;top:300px;text-align:center;font-size:92px">Bunlar <span class="red">real</span><br>hesabatlardır</div>
+  <div id="eCards"></div>
+  <div class="pill btn" id="eCheck" style="left:290px;width:500px;text-align:center;top:1180px;font-size:38px;padding:22px 0">✓ Meta Ads Manager</div>
+</div>
+<!-- F cta -->
+<div class="scene" id="sF">
+  <div class="pill btn" id="fBtn" style="left:150px;width:780px;text-align:center;top:1120px;font-size:52px">DM: <span style="letter-spacing:.04em">REKLAM</span></div>
+  <div class="pill" id="fFree" style="left:240px;width:600px;text-align:center;top:1275px;font-size:36px;padding:20px 0;background:rgba(74,40,124,.9);border:1px solid rgba(255,255,255,.2)">Pulsuz analiz</div>
+</div>
+<div class="scene" id="sEnd">
+  <div class="abs" style="left:0;right:0;top:640px;text-align:center"><img src="../capsy-template/assets/logo.webp" style="height:300px"></div>
+  <div class="abs big" style="left:0;right:0;top:1010px;text-align:center;font-size:64px">@capsy.studio</div>
+  <div class="abs" style="left:0;right:0;top:1100px;text-align:center;font-size:34px;font-weight:600;color:var(--muted)">Instaqram: DM-ə <b style="color:#fff">REKLAM</b> yaz</div>
+</div>
+<div id="cap"></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
+const ease=x=>1-Math.pow(1-clamp(x),3);
+const easeIO=x=>{x=clamp(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2};
+const back=x=>{x=clamp(x);const c1=1.70158,c3=c1+1;return 1+c3*Math.pow(x-1,3)+c1*Math.pow(x-1,2)};
+const vis=(t,a,b,fi=.25,fo=.2)=>clamp((t-a)/fi)*clamp((b-t)/fo);
+const fmt=n=>Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g,' ');
+
+const TA=5.93, TC=11.9, TD=13.3, TE=26.3, TF=28.1, TEND=33.35, DUR=34.6;
+const PROOFS=[
+ {a:13.3,b:17.5,num:494,numL:'mesaj',cost:'26,45 TL',costL:'hər mesaj',img:'../capsy-template/assets/ref-7.png',row:2,n:3,zx:100,costAt:15.2},
+ {a:17.5,b:22.0,num:8371,numL:'profil ziyarəti',cost:'1,02 TL',costL:'hər ziyarət',img:'../capsy-template/assets/ref-8.png',row:0,n:3,zx:100,costAt:20.0},
+ {a:22.0,b:26.3,num:4038,numL:'müştəri müraciəti',cost:'10,88 TL',costL:'hər müraciət',img:'../capsy-template/assets/ref-5.png',row:1,n:4,zx:90,costAt:24.5}
+];
+const CAPS=[
+ [0.0,2.55,'Instaqramda reklam verirsən, amma <em>müştəri gəlmir?</em>'],
+ [3.1,4.25,'Problem reklamda <em>deyil.</em>'],
+ [4.3,5.9,'Problem <em>strategiyadadır.</em>'],
+ [6.0,7.7,'Biz, <em>Capsy Studio</em> olaraq,'],
+ [7.7,9.95,'Meta reklamları ilə Bakıdakı bizneslərə'],
+ [9.95,11.6,'hər gün <em>real müştəri</em> gətiririk.'],
+ [11.85,13.2,'Nəticələrimizə baxın.'],
+ [13.35,15.1,'<em>494</em> mesaj'],
+ [15.2,17.2,'hər mesaj cəmi <em>26 lirə</em>'],
+ [17.7,20.0,'<em>8 371</em> profil ziyarəti'],
+ [20.0,21.8,'hər ziyarət cəmi <em>1 lirə</em>'],
+ [22.15,24.35,'<em>4 038</em> müştəri müraciəti'],
+ [24.5,26.3,'hər biri təxminən <em>11 lirə</em>'],
+ [26.45,28.1,'Bunlar <em>real</em> hesabatlardır.'],
+ [28.2,30.8,'Sən də biznesini böyütmək istəyirsənsə,'],
+ [30.85,32.4,'Instaqramda bizə <em>REKLAM</em> yaz.'],
+ [32.55,33.9,'<em>Pulsuz</em> analiz sənin.']
+];
+// build proof scenes
+const P=$('proofs');
+PROOFS.forEach((p,i)=>{
+  const d=document.createElement('div');d.className='scene';d.id='p'+i;
+  d.innerHTML=`
+   <div class="chip"><span class="live"></span>Meta Ads — real data</div>
+   <div class="abs" style="left:84px;top:330px;width:440px"><div class="big red" id="p${i}n" style="font-size:150px">0</div><div class="lbl">${p.numL}</div></div>
+   <div class="abs" style="left:540px;top:372px;width:2px;height:150px;background:var(--line)"></div>
+   <div class="abs" id="p${i}c" style="left:580px;top:330px;width:440px"><div class="big" style="font-size:112px;padding-top:22px">${p.cost}</div><div class="lbl" style="margin-top:22px">${p.costL}</div></div>
+   <div class="card" id="p${i}s1" style="top:640px"><img src="${p.img}"></div>
+   <div class="card" id="p${i}s2" style="top:0"><span class="badge">Zoom</span><div class="win"><img src="${p.img}"><div class="hl"></div></div></div>`;
+  P.appendChild(d);
+});
+// brand chips
+['Meta Ads','Bakı','Real müştəri'].forEach((t,i)=>{
+  const c=document.createElement('div');c.className='pill';c.id='chip'+i;
+  c.style.cssText=`top:1150px;font-size:34px;padding:18px 34px;background:rgba(255,255,255,.07);border:1px solid var(--line);left:${[84,330,560][i]}px`;
+  c.textContent=t;$('bChips').appendChild(c);
+});
+// stack cards
+PROOFS.forEach((p,i)=>{
+  const c=document.createElement('div');c.className='card';c.id='ec'+i;c.style.top=(560+i*190)+'px';
+  c.innerHTML=`<img src="${p.img}">`;$('eCards').appendChild(c);
+});
+
+let layoutDone=false;
+function layout(){ // position zoom cards after images have sizes
+  PROOFS.forEach((p,i)=>{
+    const s1=$('p'+i+'s1'),s2=$('p'+i+'s2');
+    const win=s2.querySelector('.win'),img=win.querySelector('img'),hl=win.querySelector('.hl');
+    const W=win.clientWidth,sc=2.0;img.style.width=(W*sc)+'px';
+    const h=img.naturalHeight/img.naturalWidth*W*sc;win.style.height=h+'px';
+    s2.style.top=(640+s1.offsetHeight+34)+'px';
+    hl.style.top=(p.row*h/p.n)+'px';hl.style.height=(h/p.n)+'px';
+    p._h=h;p._W=W;
+  });
+  layoutDone=true;
+}
+window.ready=Promise.all([...document.images].map(i=>i.decode().catch(()=>{}))).then(()=>document.fonts.ready).then(layout);
+
+function setT(t){
+  // backgrounds / scrims
+  const bgA=clamp((t-5.7)/.23)*clamp((28.25-t)/.3)+clamp((t-33.35)/.25);
+  $('bg').style.opacity=clamp(bgA);
+  $('glow').style.opacity=.35*clamp(bgA);
+  $('glow').style.left=(500+Math.sin(t*.5)*140)+'px';$('glow').style.top=(300+Math.cos(t*.4)*120+(t>26?400:0))+'px';
+  $('scrimTop').style.opacity=(t<TA||(t>TF&&t<TEND))?1:0;
+  $('scrimBot').style.opacity=(t<TA?clamp(t/.4):0)+(t>TF&&t<TEND?clamp((t-TF)/.4):0);
+  // logo
+  const lg=(t>TA&&t<TEND)?vis(t,TA+.2,TEND-.1,.3,.2):(t<TA?vis(t,.3,TA,.4,.1):(t>=TF&&t<TEND?1:0));
+  const inBrand=(t>=5.9&&t<12.2)||(t>=TEND-.2);
+  $('logo').style.opacity=inBrand?0:(t<TA?clamp((t-.3)/.4):(t>TEND?0:1));
+  // B brand
+  const vB=vis(t,TA,TC,.3,.25);$('sB').style.opacity=vB;
+  const bl=back((t-TA-.1)/.7);$('bLogo').style.transform=`scale(${.7+.3*bl})`;$('bLogo').style.opacity=clamp((t-TA)/.3);
+  $('bLine').style.opacity=clamp((t-TA-.9)/.4);$('bLine').style.transform=`translateY(${(1-ease((t-TA-.9)/.5))*30}px)`;
+  [0,1,2].forEach(i=>{const c=$('chip'+i);const k=back((t-(TA+1.8+i*.45))/.5);c.style.opacity=clamp((t-(TA+1.8+i*.45))/.2);c.style.transform=`scale(${.6+.4*k})`});
+  // C transition
+  const vC=vis(t,TC,TD,.2,.2);$('sC').style.opacity=vC;
+  $('cTxt').style.transform=`scale(${.9+.1*ease((t-TC)/.6)})`;
+  $('cBar').style.transform=`scaleX(${ease((t-TC-.2)/.7)})`;
+  // proofs
+  PROOFS.forEach((p,i)=>{
+    const s=$('p'+i);const v=vis(t,p.a,p.b,.2,.15);s.style.opacity=v;
+    if(v<=0||!layoutDone)return;
+    const u=t-p.a;
+    $('p'+i+'n').textContent=fmt(p.num*ease((u-.1)/1.3));
+    const ck=back((t-p.costAt+.15)/.5);const c=$('p'+i+'c');c.style.opacity=clamp((t-p.costAt+.15)/.2);c.style.transform=`scale(${.7+.3*ck})`;c.style.transformOrigin='left center';
+    const s1=$('p'+i+'s1'),s2=$('p'+i+'s2');
+    s1.style.transform=`translateY(${(1-ease((u-.15)/.6))*120}px)`;s1.style.opacity=clamp((u-.15)/.3);
+    s2.style.transform=`translateY(${(1-ease((u-.45)/.6))*140}px)`;s2.style.opacity=clamp((u-.45)/.3);
+    const win=s2.querySelector('.win'),img=win.querySelector('img');
+    const pan=p.zx-14*(1-clamp(u/(p.b-p.a)));
+    img.style.marginLeft=(-(img.clientWidth-win.clientWidth)*pan/100)+'px';
+    const hl=win.querySelector('.hl');const hk=ease((u-1.1)/.5);hl.style.opacity=hk;hl.style.transform=`scale(${1.04-.04*hk})`;
+    s.style.transform=`scale(${1+.02*clamp(u/(p.b-p.a))})`;s.style.transformOrigin='50% 40%';
+  });
+  // E
+  const vE=vis(t,TE,TF,.2,.2);$('sE').style.opacity=vE;
+  if(vE>0){const u=t-TE;
+    $('eTxt').style.opacity=clamp(u/.3);
+    PROOFS.forEach((p,i)=>{const c=$('ec'+i);const k=ease((u-.1-i*.2)/.5);c.style.opacity=k;c.style.transform=`translateY(${(1-k)*160}px) rotate(${(i-1)*-1.4*k}deg)`;});
+    const k=back((u-.7)/.4);$('eCheck').style.opacity=clamp((u-.7)/.2);$('eCheck').style.transform=`scale(${.7+.3*k})`;
+  }
+  // F
+  const vF=(t>=TF&&t<TEND)?clamp((t-TF-2.6)/.01)*1:0; // buttons only after CTA words
+  const fB=clamp((t-30.7)/.2)*clamp((TEND-.15-t)/.2);$('fBtn').style.opacity=fB;$('fBtn').style.transform=`scale(${.7+.3*back((t-30.7)/.45)})`;
+  const fF=clamp((t-32.5)/.2)*clamp((TEND-.15-t)/.2);$('fFree').style.opacity=fF;$('fFree').style.transform=`scale(${.7+.3*back((t-32.5)/.45)})`;
+  $('sF').style.opacity=1;
+  $('sEnd').style.opacity=clamp((t-TEND)/.3);
+  const sc=1+.04*Math.sin(Math.max(0,t-30.7)*5)*clamp((TEND-t)/1)*(t>30.7?1:0);$('fBtn').style.transform+=` scale(${sc})`;
+  // captions
+  const cap=$('cap');let hit=null;
+  for(const c of CAPS){if(t>=c[0]&&t<c[1]){hit=c;break}}
+  if(hit&&t<TEND){cap.innerHTML=hit[2];const u=t-hit[0];cap.style.opacity=clamp(u/.12)*clamp((hit[1]-t)/.1);cap.style.transform=`translateY(${(1-ease(u/.25))*24}px)`;}
+  else cap.style.opacity=0;
+}
+window.setT=setT;
+</script></body></html>
