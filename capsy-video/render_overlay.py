@@ -14,7 +14,7 @@ p = subprocess.Popen(cmd, stdin=subprocess.PIPE)
 with sync_playwright() as pw:
     b = pw.chromium.launch(executable_path=__import__('os').environ.get('CHROME_PATH'), args=['--no-sandbox'])
     pg = b.new_page(viewport={"width":1080,"height":1920})
-    pg.goto((here/"overlay.html").as_uri())
+    pg.goto((here/__import__("os").environ.get("OVERLAY","overlay.html")).as_uri())
     pg.evaluate("window.ready")
     n = int((T1-T0)*FPS)
     for i in range(n):
