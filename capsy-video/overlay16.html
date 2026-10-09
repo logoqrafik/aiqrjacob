@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="az"><head><meta charset="utf-8"><title>Capsy 15s Ad Overlay</title>
+<style>
+@font-face{font-family:'InterX';font-weight:500;src:url(fonts/Inter-Medium.otf)}
+@font-face{font-family:'InterX';font-weight:600;src:url(fonts/Inter-SemiBold.otf)}
+@font-face{font-family:'InterX';font-weight:700;src:url(fonts/Inter-Bold.otf)}
+@font-face{font-family:'InterX';font-weight:800;src:url(fonts/Inter-ExtraBold.otf)}
+:root{--red:#E94739;--purple:#4A287C;--bg:#0A0612;--bg2:#140B22;--muted:rgba(255,255,255,.64);--line:rgba(255,255,255,.14)}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1080px;height:1920px;background:transparent;overflow:hidden;font-family:'InterX','Inter',sans-serif;color:#fff}
+.abs{position:absolute}
+#bg{position:absolute;inset:0;opacity:0;background:linear-gradient(180deg,var(--bg2),var(--bg))}
+.orb{position:absolute;border-radius:50%;filter:blur(110px);opacity:0}
+#o1{width:900px;height:900px;background:radial-gradient(circle,#5a2fa0,transparent 65%)}
+#o2{width:800px;height:800px;background:radial-gradient(circle,#E94739,transparent 65%)}
+#o3{width:700px;height:700px;background:radial-gradient(circle,#4A287C,transparent 65%)}
+#grid{position:absolute;inset:0;opacity:0;background-image:linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px);background-size:90px 90px;-webkit-mask-image:radial-gradient(circle at 50% 45%,#000,transparent 70%);mask-image:radial-gradient(circle at 50% 45%,#000,transparent 70%)}
+#parts{position:absolute;inset:0;opacity:0}
+.pt{position:absolute;border-radius:50%;background:#fff}
+#grain{position:absolute;inset:-100px;opacity:.07;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='300' height='300' filter='url(%23n)' opacity='.9'/></svg>")}
+#vig{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,transparent 55%,rgba(0,0,0,.55))}
+#scrimTop,#scrimBot{position:absolute;left:0;right:0;opacity:0}
+#scrimTop{top:0;height:520px;background:linear-gradient(180deg,rgba(10,6,18,.72),transparent)}
+#scrimBot{bottom:0;height:900px;background:linear-gradient(0deg,rgba(10,6,18,.9),rgba(10,6,18,.55) 55%,transparent)}
+#logo{position:absolute;left:84px;top:170px;height:84px;opacity:0}
+.scene{position:absolute;inset:0;opacity:0;will-change:transform}
+.chip{position:absolute;right:84px;top:188px;font-size:22px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);padding:13px 22px;border:1px solid var(--line);border-radius:100px;background:rgba(10,6,18,.45)}
+.live{display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--red);margin-right:12px;box-shadow:0 0 0 6px rgba(233,71,57,.2)}
+.big{font-weight:800;letter-spacing:-.04em;line-height:1}
+.red{background:linear-gradient(90deg,var(--red),#ff7a5c);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lbl{font-size:34px;font-weight:600;color:var(--muted);margin-top:12px;letter-spacing:-.01em}
+.card{position:absolute;left:84px;width:912px;background:#fff;border-radius:26px;padding:22px 20px;box-shadow:0 40px 90px -20px rgba(0,0,0,.85),0 0 0 1px rgba(255,255,255,.08),0 0 150px -30px rgba(233,71,57,.55)}
+.card img{display:block;width:100%;height:auto}
+.win{position:relative;overflow:hidden;border-radius:6px}
+.win img{max-width:none}
+.hl{position:absolute;left:0;right:0;border:5px solid var(--red);border-radius:14px;background:rgba(233,71,57,.10);box-shadow:0 0 40px rgba(233,71,57,.6)}
+.badge{position:absolute;top:-17px;left:28px;font-size:18px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;background:var(--red);color:#fff;padding:8px 16px;border-radius:100px}
+#cap{position:absolute;left:70px;right:70px;top:1395px;text-align:center;font-size:62px;font-weight:800;line-height:1.14;letter-spacing:-.025em;text-shadow:0 4px 30px rgba(0,0,0,.65);opacity:0}
+#cap em{font-style:normal;color:#ff6a58}
+.pill{position:absolute;padding:26px 44px;border-radius:100px;font-weight:800;font-size:46px;letter-spacing:-.02em}
+.btn{background:linear-gradient(90deg,var(--red),#ff6a58);box-shadow:0 20px 60px -10px rgba(233,71,57,.85)}
+.stk{position:absolute;right:70px;padding:16px 30px;border-radius:100px;font-size:40px;font-weight:800;letter-spacing:-.02em;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);backdrop-filter:blur(8px)}
+.stk b{color:#6dffb0}
+.svc{position:absolute;width:440px;height:420px;border-radius:34px;padding:34px;background:linear-gradient(160deg,rgba(255,255,255,.10),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.18);box-shadow:0 30px 80px -20px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.2)}
+.svc .no{position:absolute;right:30px;top:24px;font-size:26px;font-weight:700;color:rgba(255,255,255,.35);letter-spacing:.1em}
+.svc svg{width:150px;height:150px;stroke:#fff;fill:none;stroke-width:5;stroke-linecap:round;stroke-linejoin:round}
+.svc .ic{width:170px;height:170px;border-radius:44px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--red),#ff7a5c);box-shadow:0 20px 50px -10px rgba(233,71,57,.7)}
+.svc:nth-of-type(2n) .ic{background:linear-gradient(135deg,#6b3fc0,var(--purple));box-shadow:0 20px 50px -10px rgba(107,63,192,.8)}
+.svc h3{margin-top:30px;font-size:44px;line-height:1.05;font-weight:800;letter-spacing:-.03em}
+.svc p{margin-top:12px;font-size:26px;font-weight:600;color:var(--muted)}
+.orbchip{position:absolute;padding:16px 28px;border-radius:100px;font-size:34px;font-weight:800;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);backdrop-filter:blur(8px);white-space:nowrap}
+#flash{position:absolute;inset:0;opacity:0;background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.95),rgba(233,71,57,.55) 45%,transparent 75%)}
+#streak{position:absolute;top:-200px;width:260px;height:2400px;opacity:0;background:linear-gradient(90deg,transparent,rgba(255,180,150,.55),transparent);transform:rotate(18deg);filter:blur(18px)}
+</style></head><body>
+<div id="bg"></div><div id="o1" class="orb"></div><div id="o2" class="orb"></div><div id="o3" class="orb"></div><div id="grid"></div><div id="parts"></div>
+<div id="scrimTop"></div><div id="scrimBot"></div>
+<img id="logo" src="../capsy-template/assets/logo.webp">
+
+<!-- S1 hook stickers -->
+<div class="scene" id="s1">
+  <div class="stk" id="k1" style="top:1010px"><b>+</b> Müştəri</div>
+  <div class="stk" id="k2" style="top:1105px"><b>+</b> Satış</div>
+  <div class="stk" id="k3" style="top:1200px"><b>+</b> Tanınma</div>
+</div>
+<!-- proofs -->
+<div id="proofs"></div>
+<!-- services -->
+<div class="scene" id="sS">
+  <div class="abs big" id="sTitle" style="left:84px;right:84px;top:300px;font-size:84px;text-align:center">Biz nə <span class="red">edirik?</span></div>
+</div>
+<!-- 360 -->
+<div class="scene" id="s360">
+  <div class="abs" id="ring" style="left:90px;top:520px;width:900px;height:900px"><svg viewBox="0 0 900 900" width="900" height="900"><circle cx="450" cy="450" r="400" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="3"/><circle cx="450" cy="450" r="400" fill="none" stroke="url(#g)" stroke-width="8" stroke-dasharray="500 2013" stroke-linecap="round" id="arc"/><circle cx="450" cy="450" r="300" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="2" stroke-dasharray="6 14"/><defs><linearGradient id="g"><stop offset="0" stop-color="#E94739"/><stop offset="1" stop-color="#6b3fc0"/></linearGradient></defs></svg></div>
+  <div class="abs big" id="n360" style="left:0;right:0;top:830;text-align:center;font-size:270px;top:800px"><span class="red">360°</span></div>
+  <div class="abs big" id="t360" style="left:0;right:0;top:1090px;text-align:center;font-size:62px">Rəqəmsal <span class="red">həll</span></div>
+  <div id="orbs"></div>
+</div>
+<!-- CTA over woman -->
+<div class="scene" id="sC">
+  <div class="pill btn" id="cBtn" style="left:150px;width:780px;text-align:center;top:1125px;font-size:54px">DM: <span style="letter-spacing:.05em">REKLAM</span></div>
+</div>
+<!-- end card -->
+<div class="scene" id="sEnd">
+  <div class="abs" id="eLogo" style="left:0;right:0;top:640px;text-align:center"><img src="../capsy-template/assets/logo.webp" style="height:320px"></div>
+  <div class="abs big" id="eHandle" style="left:0;right:0;top:1030px;text-align:center;font-size:66px">@capsy.studio</div>
+  <div class="abs" id="eSub" style="left:0;right:0;top:1125px;text-align:center;font-size:36px;font-weight:600;color:var(--muted)">İnstaqram DM-ə <b style="color:#fff">REKLAM</b> yaz</div>
+</div>
+<div id="streak"></div><div id="flash"></div><div id="vig"></div><div id="grain"></div>
+<div id="cap"></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
+const ease=x=>1-Math.pow(1-clamp(x),3);
+const easeIn=x=>Math.pow(clamp(x),3);
+const back=x=>{x=clamp(x);const c1=1.70158,c3=c1+1;return 1+c3*Math.pow(x-1,3)+c1*Math.pow(x-1,2)};
+const fmt=n=>Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g,' ');
+
+const T={p1:4.4,p2:5.95,sv:7.4,r360:10.6,cta:12.9,end:15.6,dur:16.3};
+const BOUNDS=[T.p1,T.p2,T.sv,T.r360,T.cta,T.end];
+const PROOFS=[
+ {a:T.p1,b:T.p2,num:494,numL:'mesaj',cost:'26,45 TL',costL:'hər mesaj',img:'../capsy-template/assets/ref-7.png',row:2,n:3,zx:100,sc:2.4,costAt:4.95},
+ {a:T.p2,b:T.sv,num:8371,numL:'profil ziyarəti',cost:'1,02 TL',costL:'hər ziyarət',img:'../capsy-template/assets/ref-8.png',row:0,n:3,zx:100,sc:2.4,costAt:6.5}
+];
+const SERV=[
+ {t:7.55,h:'Sosial media<br>idarəsi',p:'Strategiya • kontent',svg:'<rect x="40" y="14" width="70" height="122" rx="14"/><circle cx="75" cy="118" r="4"/><path d="M58 60c0-8 6-12 12-12s12 4 12 12c0 10-12 20-12 20s-12-10-12-20z" transform="translate(5,-4)"/>'},
+ {t:8.4,h:'Video çəkiliş<br>və montaj',p:'Reels • reklam çarxları',svg:'<rect x="14" y="40" width="88" height="70" rx="12"/><path d="M102 64l36-20v62l-36-20z"/>'},
+ {t:9.28,h:'Reklam kabineti<br>və targeting',p:'Meta Ads • hədəf kütlə',svg:'<circle cx="75" cy="75" r="56"/><circle cx="75" cy="75" r="34"/><circle cx="75" cy="75" r="10"/><path d="M75 75L132 18M118 18h14v14"/>'},
+ {t:9.9,h:'Qrafik dizayn<br>və loqo',p:'Brend kimliyi',svg:'<path d="M75 14l20 50-20 26-20-26z"/><path d="M75 90v36"/><circle cx="75" cy="64" r="6"/><path d="M40 134h70"/>'}
+];
+const SPOS=[[84,520],[556,520],[84,980],[556,980]];
+const CAPS=[
+ [0.0,1.95,'Biznesin var, amma <em>müştəri yox?</em>'],
+ [2.2,4.4,'Düzgün reklam hər gün <em>yeni müştəri</em> gətirir.'],
+ [4.65,6.15,'<em>Real nəticələrimizə</em> baxın.'],
+ [12.95,13.7,'<em>Capsy Studio.</em>'],
+ [14.05,15.6,'İnstaqramda bizə <em>REKLAM</em> yaz.']
+];
+// ---- build DOM
+const P=$('proofs');
+PROOFS.forEach((p,i)=>{
+  const d=document.createElement('div');d.className='scene';d.id='p'+i;
+  d.innerHTML=`<div class="chip"><span class="live"></span>Meta Ads — real data</div>
+   <div class="abs" style="left:84px;top:340px;width:440px"><div class="big red" id="p${i}n" style="font-size:150px">0</div><div class="lbl">${p.numL}</div></div>
+   <div class="abs" style="left:540px;top:362px;width:2px;height:150px;background:var(--line)"></div>
+   <div class="abs" id="p${i}c" style="left:580px;top:340px;width:440px"><div class="big" style="font-size:88px;padding-top:34px;white-space:nowrap">${p.cost}</div><div class="lbl" style="margin-top:20px">${p.costL}</div></div>
+   <div class="card" id="p${i}s1" style="top:680px"><img src="${p.img}"></div>
+   <div class="card" id="p${i}s2" style="top:0"><span class="badge">Zoom</span><div class="win"><img src="${p.img}"><div class="hl"></div></div></div>`;
+  P.appendChild(d);
+});
+const SV=$('sS');
+SERV.forEach((s,i)=>{const d=document.createElement('div');d.className='svc';d.id='sv'+i;d.style.left=SPOS[i][0]+'px';d.style.top=SPOS[i][1]+'px';
+  d.innerHTML=`<span class="no">0${i+1}</span><div class="ic"><svg viewBox="0 0 150 150">${s.svg}</svg></div><h3>${s.h}</h3><p>${s.p}</p>`;SV.appendChild(d)});
+const ORB=['Sosial media','Video','Reklam','Dizayn'];
+ORB.forEach((t,i)=>{const c=document.createElement('div');c.className='orbchip';c.id='ob'+i;c.textContent=t;$('orbs').appendChild(c)});
+// particles
+const PT=[];for(let i=0;i<34;i++){const e=document.createElement('div');e.className='pt';const s=3+((i*7)%5);e.style.width=e.style.height=s+'px';$('parts').appendChild(e);PT.push({e,x:(i*173)%1080,y:(i*331)%1920,v:20+(i*13)%40,s:s,ph:i})}
+
+let layoutDone=false;
+function layout(){
+  PROOFS.forEach((p,i)=>{
+    const s1=$('p'+i+'s1'),s2=$('p'+i+'s2');
+    const win=s2.querySelector('.win'),img=win.querySelector('img'),hl=win.querySelector('.hl');
+    const W=win.clientWidth;img.style.width=(W*p.sc)+'px';
+    const h=img.naturalHeight/img.naturalWidth*W*p.sc;win.style.height=h+'px';
+    s2.style.top=(680+s1.offsetHeight+40)+'px';
+    hl.style.top=(p.row*h/p.n)+'px';hl.style.height=(h/p.n)+'px';
+  });
+  layoutDone=true;
+}
+window.ready=Promise.all([...document.images].map(i=>i.decode().catch(()=>{}))).then(()=>document.fonts.ready).then(layout);
+
+// scene transform helper: enters from right (3D tilt), exits to left
+function place(el,t,a,b,tin=.3,tout=.2){
+  const pi=clamp((t-a)/tin),po=clamp((b-t)/tout);const vis=pi>0&&po>0;
+  el.style.opacity=vis?Math.min(ease(pi)*1.4,po*1.4,1):0;
+  if(!vis)return false;
+  const x=(1-ease(pi))*220-(1-ease(po))*220, rot=(1-ease(pi))*-9+(1-ease(po))*9, bl=(1-ease(pi))*12+(1-ease(po))*12, sc=1+(1-ease(pi))*.06;
+  el.style.transform=`perspective(1600px) translateX(${x}px) rotateY(${rot}deg) scale(${sc})`;
+  el.style.filter=bl>.2?`blur(${bl}px)`:'none';
+  return true;
+}
+function setT(t){
+  const gfx=t>=T.p1-.05&&t<T.cta+.05||t>=T.end;
+  const bgA=Math.max(clamp((t-(T.p1-.15))/.2)*clamp((T.cta+.1-t)/.2),clamp((t-T.end)/.12));
+  $('bg').style.opacity=bgA;
+  ['grid','parts'].forEach(i=>$(i).style.opacity=bgA*.9);
+  // orbs (also faintly present over woman scenes for coloured light)
+  const oa=bgA*.55+(1-bgA)*.07;
+  const o=(id,cx,cy,sx,sy,sp)=>{const e=$(id);e.style.opacity=oa;e.style.left=(cx+Math.sin(t*sp)*sx-e.offsetWidth/2)+'px';e.style.top=(cy+Math.cos(t*sp*1.2)*sy-e.offsetHeight/2)+'px'};
+  o('o1',900,250,160,120,1.3);o('o2',140,1600,140,100,1.1);o('o3',520,950,260,180,.9);
+  PT.forEach(p=>{const y=((p.y-t*p.v*3)%1920+1920)%1920;p.e.style.top=y+'px';p.e.style.left=(p.x+Math.sin(t*1.4+p.ph)*30)+'px';p.e.style.opacity=.15+.35*Math.abs(Math.sin(t*2+p.ph))});
+  $('grain').style.transform=`translate(${(Math.floor(t*24)*53)%100}px,${(Math.floor(t*24)*91)%100}px)`;
+  // scrims
+  const woman=t<T.p1||(t>=T.cta&&t<T.end);
+  $('scrimTop').style.opacity=woman?1:0;
+  $('scrimBot').style.opacity=woman?(t<T.p1?clamp(t/.3):clamp((t-T.cta)/.3)*clamp((T.end-t)/.1)):0;
+  // logo
+  $('logo').style.opacity=(t<T.end-.05&&!(t>=T.r360&&t<T.cta))?clamp(t/.4):0;
+  // flash + streak at boundaries
+  let fl=0,st=-1;for(const b of BOUNDS){const d=t-b;if(d>-.04&&d<.5){fl=Math.max(fl,Math.exp(-Math.max(0,d)*16)*(d<0?1+d/.04:1)*.5);if(d>=0&&d<.38)st=d/.38}}
+  $('flash').style.opacity=clamp(fl);
+  const sk=$('streak');if(st>=0){sk.style.opacity=.9*Math.sin(Math.PI*st);sk.style.left=(-400+st*1900)+'px'}else sk.style.opacity=0;
+  // S1 stickers
+  const s1=$('s1');s1.style.opacity=t<T.p1?1:0;
+  [[2.7,'k1'],[3.25,'k2'],[3.8,'k3']].forEach(([a,id])=>{const e=$(id);const k=back((t-a)/.4);e.style.opacity=clamp((t-a)/.1)*clamp((T.p1-.05-t)/.15);e.style.transform=`translateX(${(1-ease((t-a)/.4))*220}px) scale(${.8+.2*k})`});
+  // proofs
+  PROOFS.forEach((p,i)=>{
+    const s=$('p'+i);const on=place(s,t,p.a,p.b,.26,.18);if(!on||!layoutDone)return;
+    const u=t-p.a;
+    $('p'+i+'n').textContent=fmt(p.num*ease((u-.05)/.7));
+    const ck=back((t-p.costAt)/.35);const c=$('p'+i+'c');c.style.opacity=clamp((t-p.costAt)/.12);c.style.transform=`scale(${.7+.3*ck})`;c.style.transformOrigin='left center';
+    const s1=$('p'+i+'s1'),s2=$('p'+i+'s2');
+    s1.style.transform=`translateY(${(1-ease((u-.1)/.4))*100}px)`;s1.style.opacity=clamp((u-.1)/.2);
+    s2.style.transform=`translateY(${(1-ease((u-.25)/.4))*120}px)`;s2.style.opacity=clamp((u-.25)/.2);
+    const win=s2.querySelector('.win'),img=win.querySelector('img');
+    img.style.marginLeft=(-(img.clientWidth-win.clientWidth)*p.zx/100)+'px';
+    const hl=win.querySelector('.hl');const hk=ease((u-.55)/.3);hl.style.opacity=hk;hl.style.transform=`scale(${1.05-.05*hk})`;
+  });
+  // services
+  const on=place($('sS'),t,T.sv,T.r360,.28,.18);
+  if(on){const u=t-T.sv;$('sTitle').style.opacity=clamp((u-.05)/.2);$('sTitle').style.transform=`translateY(${(1-ease(u/.4))*40}px)`;
+    SERV.forEach((s,i)=>{const e=$('sv'+i);const k=back((t-s.t)/.5);e.style.opacity=clamp((t-s.t)/.12);e.style.transform=`translateY(${(1-ease((t-s.t)/.45))*120}px) scale(${.82+.18*k})`;
+      const ic=e.querySelector('svg');ic.style.strokeDasharray=500;ic.style.strokeDashoffset=500*(1-ease((t-s.t-.1)/.6))})}
+  // 360
+  const o360=place($('s360'),t,T.r360,T.cta,.28,.18);
+  if(o360){const u=t-T.r360,pr=clamp(u/1.8);
+    $('ring').style.transform=`rotate(${pr*360}deg)`;$('arc').style.strokeDashoffset=-pr*2513*1.4;
+    const k=back(u/.55);$('n360').style.transform=`scale(${.5+.5*k})`;$('n360').style.opacity=clamp(u/.15);
+    $('t360').style.opacity=clamp((u-.5)/.25);
+    ORB.forEach((n,i)=>{const e=$('ob'+i);const ang=(i/4)*Math.PI*2+pr*Math.PI*2-Math.PI/2;const r=400;const cx=540+Math.cos(ang)*r,cy=970+Math.sin(ang)*r;
+      e.style.left=(cx-e.offsetWidth/2)+'px';e.style.top=(cy-e.offsetHeight/2)+'px';e.style.opacity=clamp((u-.2-i*.1)/.2);e.style.transform=`scale(${.85+.15*Math.sin(pr*6.28+i)})`})}
+  // CTA
+  const sc=$('sC');sc.style.opacity=(t>=T.cta&&t<T.end)?1:0;
+  const cb=clamp((t-14.1)/.01)*clamp((T.end-.05-t)/.15);$('cBtn').style.opacity=cb;
+  $('cBtn').style.transform=`scale(${(.7+.3*back((t-14.1)/.4))*(1+.035*Math.sin(Math.max(0,t-14.5)*9))})`;
+  // end card
+  const ee=clamp((t-T.end)/.2);$('sEnd').style.opacity=ee;
+  $('eLogo').style.transform=`scale(${.75+.25*back((t-T.end)/.45)})`;
+  $('eHandle').style.opacity=clamp((t-T.end-.2)/.2);$('eSub').style.opacity=clamp((t-T.end-.3)/.2);
+  // captions
+  const cap=$('cap');let hit=null;for(const c of CAPS){if(t>=c[0]&&t<c[1]){hit=c;break}}
+  if(hit){cap.innerHTML=hit[2];const u=t-hit[0];cap.style.opacity=clamp(u/.1)*clamp((hit[1]-t)/.08);cap.style.transform=`translateY(${(1-ease(u/.22))*26}px) scale(${.96+.04*ease(u/.22)})`}else cap.style.opacity=0;
+}
+window.setT=setT;
+</script></body></html>
