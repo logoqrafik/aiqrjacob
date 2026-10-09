@@ -122,7 +122,7 @@ PROOFS.forEach((p,i)=>{
   d.innerHTML=`<div class="chip"><span class="live"></span>Meta Ads — real data</div>
    <div class="abs" style="left:84px;top:340px;width:440px"><div class="big red" id="p${i}n" style="font-size:150px">0</div><div class="lbl">${p.numL}</div></div>
    <div class="abs" style="left:540px;top:362px;width:2px;height:150px;background:var(--line)"></div>
-   <div class="abs" id="p${i}c" style="left:580px;top:340px;width:440px"><div class="big" style="font-size:112px;padding-top:22px">${p.cost}</div><div class="lbl" style="margin-top:22px">${p.costL}</div></div>
+   <div class="abs" id="p${i}c" style="left:580px;top:340px;width:440px"><div class="big" style="font-size:88px;padding-top:34px;white-space:nowrap">${p.cost}</div><div class="lbl" style="margin-top:20px">${p.costL}</div></div>
    <div class="card" id="p${i}s1" style="top:680px"><img src="${p.img}"></div>
    <div class="card" id="p${i}s2" style="top:0"><span class="badge">Zoom</span><div class="win"><img src="${p.img}"><div class="hl"></div></div></div>`;
   P.appendChild(d);
@@ -165,7 +165,7 @@ function setT(t){
   $('bg').style.opacity=bgA;
   ['grid','parts'].forEach(i=>$(i).style.opacity=bgA*.9);
   // orbs (also faintly present over woman scenes for coloured light)
-  const oa=bgA*.55+(1-bgA)*.22;
+  const oa=bgA*.55+(1-bgA)*.07;
   const o=(id,cx,cy,sx,sy,sp)=>{const e=$(id);e.style.opacity=oa;e.style.left=(cx+Math.sin(t*sp)*sx-e.offsetWidth/2)+'px';e.style.top=(cy+Math.cos(t*sp*1.2)*sy-e.offsetHeight/2)+'px'};
   o('o1',900,250,160,120,1.3);o('o2',140,1600,140,100,1.1);o('o3',520,950,260,180,.9);
   PT.forEach(p=>{const y=((p.y-t*p.v*3)%1920+1920)%1920;p.e.style.top=y+'px';p.e.style.left=(p.x+Math.sin(t*1.4+p.ph)*30)+'px';p.e.style.opacity=.15+.35*Math.abs(Math.sin(t*2+p.ph))});
