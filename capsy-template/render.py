@@ -19,6 +19,15 @@ CASES = {
   "case-5usd": dict(img="assets/ref-4.png", client="Gündə 5 $ büdcə",
       title="Gündə 5 $, <em>0,77 $</em>", sub="Hər mesajın dəyəri. Kiçik büdcə, real mesajlar.", zx=100,
       m1v="15", m1l="Mesajlaşma söhbəti", m2v="0,77 $", m2l="Bir mesajın dəyəri", m3v="5 $", m3l="Gündəlik büdcə"),
+  "case-etkilesim-2444": dict(img="assets/ref-6.png", client="Postun təbliği",
+      title="Etkileşim: <em>0,22 TL</em>", sub="2 444 etkileşim, gündə 215 TL büdcə ilə.", zx=100,
+      m1v="2 444", m1l="Gönderi etkileşimi", m2v="0,22 TL", m2l="Bir etkileşimin dəyəri", m3v="215 TL", m3l="Gündəlik büdcə"),
+  "case-koltuk-494": dict(img="assets/ref-7.png", client="Xidmət / Mebel",
+      title="494 mesaj, <em>26,45 TL</em>", sub="Hər mesajın dəyəri. Üç kampaniya, üçü də 30 TL-dən aşağı.", zx=100,
+      m1v="494", m1l="Mesajlaşma söhbəti", m2v="26,45 TL", m2l="Bir mesajın dəyəri", m3v="350 TL", m3l="Gündəlik büdcə"),
+  "case-hali-8371": dict(img="assets/ref-8.png", client="Profil ziyarəti",
+      title="8 371 ziyarət, <em>1,02 TL</em>", sub="Hər Instagram profil ziyarətinin dəyəri.", zx=100,
+      m1v="8 371", m1l="Profil ziyarəti", m2v="1,02 TL", m2l="Bir ziyarətin dəyəri", m3v="300 TL", m3l="Gündəlik büdcə"),
 }
 
 with sync_playwright() as pw:
