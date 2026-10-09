@@ -78,9 +78,9 @@ const fmt=n=>Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g,' ');
 
 const TA=5.93, TC=11.9, TD=13.3, TE=26.3, TF=28.1, TEND=33.35, DUR=34.6;
 const PROOFS=[
- {a:13.3,b:17.5,num:494,numL:'mesaj',cost:'26,45 TL',costL:'hər mesaj',img:'../capsy-template/assets/ref-7.png',row:2,n:3,zx:100,costAt:15.2},
- {a:17.5,b:22.0,num:8371,numL:'profil ziyarəti',cost:'1,02 TL',costL:'hər ziyarət',img:'../capsy-template/assets/ref-8.png',row:0,n:3,zx:100,costAt:20.0},
- {a:22.0,b:26.3,num:4038,numL:'müştəri müraciəti',cost:'10,88 TL',costL:'hər müraciət',img:'../capsy-template/assets/ref-5.png',row:1,n:4,zx:90,costAt:24.5}
+ {a:13.3,b:17.5,num:494,numL:'mesaj',cost:'26,45 TL',costL:'hər mesaj',img:'../capsy-template/assets/ref-7.png',row:2,n:3,zx:100,sc:2.4,costAt:15.2},
+ {a:17.5,b:22.0,num:8371,numL:'profil ziyarəti',cost:'1,02 TL',costL:'hər ziyarət',img:'../capsy-template/assets/ref-8.png',row:0,n:3,zx:100,sc:2.4,costAt:20.0},
+ {a:22.0,b:26.3,num:4038,numL:'müştəri müraciəti',cost:'10,88 TL',costL:'hər müraciət',img:'../capsy-template/assets/ref-5.png',row:1,n:4,zx:92,sc:2.0,costAt:24.5}
 ];
 const CAPS=[
  [0.0,2.55,'Instaqramda reklam verirsən, amma <em>müştəri gəlmir?</em>'],
@@ -107,11 +107,12 @@ PROOFS.forEach((p,i)=>{
   const d=document.createElement('div');d.className='scene';d.id='p'+i;
   d.innerHTML=`
    <div class="chip"><span class="live"></span>Meta Ads — real data</div>
-   <div class="abs" style="left:84px;top:330px;width:440px"><div class="big red" id="p${i}n" style="font-size:150px">0</div><div class="lbl">${p.numL}</div></div>
+   <div class="abs" style="left:84px;top:350px;width:440px"><div class="big red" id="p${i}n" style="font-size:150px">0</div><div class="lbl">${p.numL}</div></div>
    <div class="abs" style="left:540px;top:372px;width:2px;height:150px;background:var(--line)"></div>
-   <div class="abs" id="p${i}c" style="left:580px;top:330px;width:440px"><div class="big" style="font-size:112px;padding-top:22px">${p.cost}</div><div class="lbl" style="margin-top:22px">${p.costL}</div></div>
-   <div class="card" id="p${i}s1" style="top:640px"><img src="${p.img}"></div>
-   <div class="card" id="p${i}s2" style="top:0"><span class="badge">Zoom</span><div class="win"><img src="${p.img}"><div class="hl"></div></div></div>`;
+   <div class="abs" id="p${i}c" style="left:580px;top:350px;width:440px"><div class="big" style="font-size:112px;padding-top:22px">${p.cost}</div><div class="lbl" style="margin-top:22px">${p.costL}</div></div>
+   <div class="card" id="p${i}s1" style="top:690px"><img src="${p.img}"></div>
+   <div class="card" id="p${i}s2" style="top:0"><span class="badge">Zoom</span><div class="win"><img src="${p.img}"><div class="hl"></div></div></div>
+   <div class="abs" id="p${i}t" style="left:84px;right:84px;top:1290px;font-size:26px;font-weight:600;color:var(--muted);text-align:center">✓ Real Meta Ads Manager ekranı. Redaktə edilməyib.</div>`;
   P.appendChild(d);
 });
 // brand chips
@@ -131,9 +132,9 @@ function layout(){ // position zoom cards after images have sizes
   PROOFS.forEach((p,i)=>{
     const s1=$('p'+i+'s1'),s2=$('p'+i+'s2');
     const win=s2.querySelector('.win'),img=win.querySelector('img'),hl=win.querySelector('.hl');
-    const W=win.clientWidth,sc=2.0;img.style.width=(W*sc)+'px';
+    const W=win.clientWidth,sc=p.sc;img.style.width=(W*sc)+'px';
     const h=img.naturalHeight/img.naturalWidth*W*sc;win.style.height=h+'px';
-    s2.style.top=(640+s1.offsetHeight+34)+'px';
+    s2.style.top=(690+s1.offsetHeight+40)+'px';
     hl.style.top=(p.row*h/p.n)+'px';hl.style.height=(h/p.n)+'px';
     p._h=h;p._W=W;
   });
@@ -173,9 +174,9 @@ function setT(t){
     s1.style.transform=`translateY(${(1-ease((u-.15)/.6))*120}px)`;s1.style.opacity=clamp((u-.15)/.3);
     s2.style.transform=`translateY(${(1-ease((u-.45)/.6))*140}px)`;s2.style.opacity=clamp((u-.45)/.3);
     const win=s2.querySelector('.win'),img=win.querySelector('img');
-    const pan=p.zx-14*(1-clamp(u/(p.b-p.a)));
+    const pan=p.zx;
     img.style.marginLeft=(-(img.clientWidth-win.clientWidth)*pan/100)+'px';
-    const hl=win.querySelector('.hl');const hk=ease((u-1.1)/.5);hl.style.opacity=hk;hl.style.transform=`scale(${1.04-.04*hk})`;
+    $('p'+i+'t').style.opacity=clamp((u-1.4)/.4);const hl=win.querySelector('.hl');const hk=ease((u-1.1)/.5);hl.style.opacity=hk;hl.style.transform=`scale(${1.04-.04*hk})`;
     s.style.transform=`scale(${1+.02*clamp(u/(p.b-p.a))})`;s.style.transformOrigin='50% 40%';
   });
   // E
