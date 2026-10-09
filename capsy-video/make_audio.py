@@ -44,6 +44,10 @@ def thud():
     n = int(0.25*SR); t = np.arange(n)/SR
     return (np.sin(2*np.pi*(70+60*np.exp(-t*40))*t)*np.exp(-t*22)) + 0.2*rng.standard_normal(n)*np.exp(-t*90)
 
+def kick():
+    n = int(0.3*SR); x = np.arange(n)/SR
+    return np.sin(2*np.pi*np.cumsum(50+95*np.exp(-x*30))/SR)*np.exp(-x*14)
+
 # ---- music bed ----
 chords = [(110.0, 130.81, 164.81, 220.0), (87.31, 110.0, 130.81, 174.61), (130.81, 164.81, 196.0, 261.63), (98.0, 123.47, 146.83, 196.0)]
 def pad(freqs, dur):
@@ -64,7 +68,7 @@ while T < DUR:
 bpm = 100; beat = 60/bpm
 t = 5.95
 while t < 28.0:
-    add(boom(0.35)*0.0 + (np.sin(2*np.pi*np.cumsum(50+95*np.exp(-np.arange(int(.3*SR))/SR*30))/SR)*np.exp(-np.arange(int(.3*SR))/SR*14)), t, 0.40)
+    add(kick(), t, 0.40)
     h = rng.standard_normal(int(0.05*SR)); h = h-lp(h, 5000)
     add(h*np.exp(-np.arange(len(h))/SR*70), t+beat/2, 0.07, pan=0.3)
     t += beat
