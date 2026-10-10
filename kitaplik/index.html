@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@1,9..144,400;1,9..144,500&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=11">
+  <link rel="stylesheet" href="style.css?v=12">
 </head>
 <body>
   <div class="bg" aria-hidden="true"><i class="blob b1"></i><i class="blob b2"></i><i class="blob b3"></i></div>
@@ -33,22 +33,36 @@
     </nav>
 
     <div id="tab-quotes">
-    <section class="card search">
-      <label class="photo" id="drop">
-        <input type="file" id="file" accept="image/*" hidden>
-        <span class="photo-ico" aria-hidden="true">📖</span>
-        <span id="photoLabel">Kitabın fotoğrafını yükle</span>
-        <img id="preview" alt="" hidden>
-      </label>
-      <div class="or"><span>ya da</span></div>
-      <input id="title" placeholder="Kitap adı" autocomplete="off">
-      <input id="author" placeholder="Yazar" autocomplete="off">
-      <button id="go" class="go"><span>Alıntıları getir</span></button>
-    </section>
+      <section class="card">
+        <input id="q" type="search" placeholder="Kitap veya yazar ara" autocomplete="off" enterkeyhint="search">
+        <div id="sug" class="sug"></div>
+        <div class="btns2">
+          <button class="btn2" data-act="all">📚 Tüm kitaplar</button>
+          <button class="btn2" data-act="add">➕ Alıntı ekle</button>
+        </div>
+      </section>
 
-    <section id="daily" class="daily"></section>
-    <div id="recent" class="recent"></div>
-    <div id="out"></div>
+      <section id="addbox" class="card addbox" hidden>
+        <h3>Kitabından bir alıntı ekle</h3>
+        <p class="hint">Kitaptaki gibi yaz. Kendi kitabından eklediğin için doğruluğundan emin olursun.</p>
+        <input id="at" placeholder="Kitap adı" autocomplete="off" list="titles">
+        <datalist id="titles"></datalist>
+        <input id="aa" placeholder="Yazar" autocomplete="off">
+        <div class="ask2">Hangi duyguya uygun?</div>
+        <div class="cats" id="acat"></div>
+        <textarea id="aq" placeholder="Alıntıyı buraya yaz"></textarea>
+        <input id="ap" placeholder="Sayfa (isteğe bağlı)" inputmode="numeric" autocomplete="off">
+        <button id="asave" class="go"><span>Kaydet</span></button>
+        <button class="back" data-act="closeadd">Vazgeç</button>
+      </section>
+
+      <section id="daily" class="daily"></section>
+      <div id="recent" class="recent"></div>
+      <div id="out"></div>
+      <div class="tools">
+        <button data-act="export">⬇️ Alıntılarımı yedekle</button>
+        <button data-act="import">⬆️ Yedekten yükle</button>
+      </div>
     </div>
 
     <div id="tab-story" hidden>
@@ -70,11 +84,15 @@
           <button class="cchip c1 on" data-ly="safe">🖼️ Kitap açıkta</button>
           <button class="cchip c2" data-ly="full">🌄 Tam ekran</button>
         </div>
-        <div class="or"><span>kitap adı (isteğe bağlı)</span></div>
+        <div class="ask2">Hangi kitap?</div>
         <input id="stitle" placeholder="Kitap adı" autocomplete="off">
+        <div id="ssug" class="sug"></div>
         <input id="sauthor" placeholder="Yazar" autocomplete="off">
+        <div class="ask2">Görselde hangi alıntılar olsun? <span class="muted2">(en fazla 3)</span></div>
+        <div id="spick" class="spick"></div>
+        <textarea id="scustom" placeholder="Ya da kendi cümleni yaz"></textarea>
+        <button class="btn2 wide" id="saddc">➕ Bu cümleyi ekle</button>
         <button id="sgo" class="go"><span>Görseli hazırla</span></button>
-        <p class="hint">Fotoğraftaki kitabı otomatik tanıyoruz. Tanıyamazsa adını yazman yeterli.</p>
       </section>
       <div id="sout"></div>
     </div>
@@ -83,9 +101,10 @@
   </main>
   <div id="toast" class="toast" hidden></div>
 
-  <script src="config.js?v=11"></script>
-  <script src="daily.js?v=11"></script>
-  <script src="app.js?v=11"></script>
-  <script src="story.js?v=11"></script>
+  <script src="config.js?v=12"></script>
+  <script src="pool.js?v=12"></script>
+  <script src="daily.js?v=12"></script>
+  <script src="app.js?v=12"></script>
+  <script src="story.js?v=12"></script>
 </body>
 </html>

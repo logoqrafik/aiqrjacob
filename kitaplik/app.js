@@ -1,32 +1,62 @@
 (() => {
   'use strict';
-  const C = window.CONFIG, D = window.DAILY, $ = s => document.querySelector(s);
+  const C = window.CONFIG, D = window.DAILY, POOL = window.POOL || [];
+  const $ = s => document.querySelector(s);
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const HIST = 'sa.history', CODE = 'sa.code';
+  const CATS = ['Motivasyon', 'Güçlü Kal', 'Duygusal', 'Düşündüren', 'Umut'];
+  const OWN = 'sa.own', RECENT = 'sa.recent';
   const hello = [
-    'Bir kitap seç, içinden en güzel cümleleri çıkaralım.',
-    'Kitabın kapağı yeter. Gerisini yapay zekâ okur.',
+    'Bir kitap seç, içinden en güzel cümleleri bulalım.',
+    'Aradığın cümle burada ya da senin defterinde.',
     'Okumaya vaktin yoksa alıntılar var. Vaktin varsa da var.'
   ];
-  const wait = ['Kitap karıştırılıyor…', 'Sayfalar çevriliyor…', 'Altı çizilecek cümleler aranıyor…'];
-  const loading = t => `<div class="status"><div class="dots"><i></i><i></i><i></i></div><div class="msg">${t}</div></div>`;
 
-  // Bugünün sıra numarası (yerel saate göre, gece yarısı değişir)
+  const get = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch (e) { return d; } };
+  const set = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } };
+  const toast = m => { const t = $('#toast'); t.textContent = m; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 2200); };
   const dayNum = () => { const d = new Date(); return Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 864e5); };
+  // Türkçe karakterlerden bağımsız karşılaştırma: "ozgurluk" = "Özgürlük"
+  const norm = s => String(s || '').toLocaleLowerCase('tr').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/ı/g, 'i').replace(/[^a-z0-9]+/g, ' ').trim();
+  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
   $('#hello').textContent = `Merhaba ${C.friend}. ${hello[dayNum() % hello.length]}`;
   document.querySelector('.credit').innerHTML = `${esc(C.footer)}<br>— ${esc(C.giver)}<br><small style="opacity:.55">sürüm ${esc(C.version || '')}</small>`;
 
-  let image = '';
-  const get = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch (e) { return d; } };
-  const set = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* önemsiz */ } };
-  const toast = m => { const t = $('#toast'); t.textContent = m; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 2000); };
+  // ---------- kitaplık: hazır havuz + kullanıcının kendi eklediği alıntılar ----------
+  function library() {
+    const books = [];
+    const mk = (t, a) => ({ key: norm(t) + '|' + norm(a), t, a: a || '', cats: [[], [], [], [], []] });
+    POOL.forEach(p => { const b = mk(p.t, p.a); CATS.forEach((c, i) => (p.q[c] || []).forEach(q => b.cats[i].push({ q, own: false }))); books.push(b); });
+    get(OWN, []).forEach(o => {
+      let b = books.find(x => norm(x.t) === norm(o.t) && (!norm(o.a) || norm(x.a) === norm(o.a)));
+      if (!b) { b = mk(o.t, o.a); books.push(b); }
+      if (!b.a && o.a) b.a = o.a;
+      (b.cats[o.c] || b.cats[2]).push({ q: o.q, own: true, id: o.id, p: o.p });
+    });
+    return books;
+  }
+  const count = b => b.cats.reduce((a, c) => a + c.length, 0);
+  function find(text) {
+    const toks = norm(text).split(' ').filter(Boolean);
+    if (!toks.length) return [];
+    const nt = norm(text);
+    return library().filter(b => { const h = norm(b.t + ' ' + b.a); return toks.every(t => h.includes(t)); })
+      .sort((x, y) => (norm(y.t).startsWith(nt) - norm(x.t).startsWith(nt)) || x.t.localeCompare(y.t, 'tr'));
+  }
+  const byKey = k => library().find(b => b.key === k);
+  window.SA = { CATS, norm, library, find, count, toast, esc, get };
 
-  // ---------- günün alıntısı ve kitabı ----------
+  function rows(list, attr) {
+    return list.map(b => `<button class="srow" ${attr}="${esc(b.key)}"><b>${esc(b.t)}</b><small>${esc(b.a)}${b.a ? ' · ' : ''}${count(b)} alıntı</small></button>`).join('');
+  }
+
+  // ---------- günün alıntısı / kitabı ----------
   const hash = str => [...str].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7);
+  function todaysBook() { return D.books[(dayNum() + 5) % D.books.length]; }
   function renderDaily() {
     const n = dayNum();
-    const q = D.quotes[n % D.quotes.length], b = D.books[(n + 5) % D.books.length];
+    const q = D.quotes[n % D.quotes.length], b = todaysBook();
+    const have = library().find(x => norm(x.t) === norm(b.t) && count(x) > 0);
     $('#daily').innerHTML = `
       <div class="dcard quote">
         <span class="dlabel">Günün alıntısı</span>
@@ -42,7 +72,8 @@
             <div class="dbt">${esc(b.t)}</div>
             <div class="dba">${esc(b.a)}</div>
             <div class="dbd">${esc(b.d)}</div>
-            <button class="dbtn" data-dbook>Alıntıları getir →</button>
+            ${have ? `<button class="dbtn" data-open="${esc(have.key)}">Alıntılara bak →</button>`
+                   : '<button class="dbtn" data-dadd>İlk alıntıyı sen ekle +</button>'}
           </div>
         </div>
       </div>`;
@@ -55,100 +86,135 @@
   }
   function clearOut() {
     document.body.classList.remove('has-out');
-    $('#out').innerHTML = '';
+    $('#out').innerHTML = ''; $('#q').value = ''; $('#sug').innerHTML = '';
     scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  // Fotoğrafı küçültüp JPEG'e çevir (hızlı yükleme + sunucu limiti)
-  function shrink(file) {
-    return new Promise((ok, no) => {
-      const img = new Image(), url = URL.createObjectURL(file);
-      img.onload = () => {
-        const k = Math.min(1, 1280 / Math.max(img.width, img.height));
-        const cv = document.createElement('canvas'); cv.width = img.width * k; cv.height = img.height * k;
-        cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
-        URL.revokeObjectURL(url); ok(cv.toDataURL('image/jpeg', 0.85));
-      };
-      img.onerror = () => no(new Error('Fotoğraf okunamadı'));
-      img.src = url;
-    });
-  }
-
-  $('#file').addEventListener('change', async e => {
-    const f = e.target.files[0]; if (!f) return;
-    try {
-      image = await shrink(f);
-      $('#preview').src = image; $('#preview').hidden = false;
-      $('#photoLabel').textContent = 'Başka fotoğraf seç';
-    } catch (err) { toast(err.message); }
-  });
-
-  let cur = null;
-  function show(d, sel = -1) {
-    cur = d;
-    const cats = d.categories.map((c, i) => ({ ...c, i })).filter(c => c.quotes.length);
-    let html = `<div class="book"><h2>${esc(d.title)}</h2><div class="muted">${esc(d.author)}</div></div>`;
+  // ---------- kitap sonucu ----------
+  let curKey = null;
+  function pushRecent(key) { set(RECENT, [key, ...get(RECENT, []).filter(k => k !== key)].slice(0, 8)); renderRecent(); }
+  function show(key, sel = -1) {
+    const b = byKey(key); if (!b) return;
+    curKey = key; if (sel === -1) pushRecent(key);
+    const cats = b.cats.map((q, i) => ({ q, i })).filter(c => c.q.length);
+    let html = `<div class="book"><h2>${esc(b.t)}</h2><div class="muted">${esc(b.a)}</div></div>`;
     if (!cats.length) {
-      html += '<div class="status">Bu kitaptan güvenle hatırladığım alıntı yok.</div>';
+      html += `<div class="status">Bu kitapta henüz alıntı yok.</div>`;
     } else {
       html += `<div class="ask">Hangi ruh halindesin?</div><div class="cats">${cats.map(c =>
-        `<button class="cchip c${c.i} ${sel === c.i ? 'on' : ''}" data-c="${c.i}">${esc(c.name)}</button>`).join('')}</div>`;
+        `<button class="cchip c${c.i} ${sel === c.i ? 'on' : ''}" data-c="${c.i}">${esc(CATS[c.i])}</button>`).join('')}</div>`;
       const pick = cats.find(c => c.i === sel);
       if (pick) {
-        html += `<div class="qs" style="--g:var(--g${pick.i});--glow:var(--glow${pick.i})">${pick.quotes.map((q, k) =>
-          `<div class="q" style="--i:${k}" data-q="${esc(q)}">“${esc(q)}”<small>Kopyalamak için dokun</small></div>`).join('')}</div>` +
-          `<p class="note">Alıntılar yapay zekâ (Google Gemini) tarafından kitaptan hatırlanarak yazılıyor. Kelimesi kelimesine doğru olmayabilir, kullanmadan önce kitaptan kontrol et. Çeviri kitaplarda ifadeler baskıya göre değişir.</p>`;
+        html += `<div class="qs" style="--g:var(--g${pick.i});--glow:var(--glow${pick.i})">${pick.q.map((x, k) =>
+          `<div class="q" style="--i:${k}" data-q="${esc(x.q)}">${esc(x.q)}<small>${x.own ? 'Senin eklediğin' : 'Seçki'}${x.p ? ' · s. ' + esc(x.p) : ''} · kopyalamak için dokun${x.own ? ` · <button class="del" data-del="${esc(x.id)}">sil</button>` : ''}</small></div>`).join('')}</div>` +
+          `<p class="note">Şiir dizeleri ve alıntılar baskıya göre noktalama bakımından küçük farklar gösterebilir.</p>`;
       }
     }
+    html += `<div class="btns2" style="margin-top:18px"><button class="btn2" data-addfor="${esc(b.key)}">➕ Bu kitaba alıntı ekle</button></div>`;
     setOut(html);
   }
 
   function renderRecent() {
-    const h = get(HIST, []);
-    $('#recent').innerHTML = h.map((x, i) => `<button data-h="${i}">${esc(x.title)}</button>`).join('');
+    const lib = library();
+    $('#recent').innerHTML = get(RECENT, []).map(k => lib.find(b => b.key === k)).filter(Boolean)
+      .map(b => `<button data-open="${esc(b.key)}">${esc(b.t)}</button>`).join('');
   }
 
-  async function go() {
-    const title = $('#title').value.trim(), author = $('#author').value.trim();
-    if (!image && !title) return toast('Fotoğraf yükle ya da kitap adını yaz.');
-    $('#go').disabled = true;
-    let i = 0; setOut(loading(wait[0]));
-    const timer = setInterval(() => { $('#out .msg') && ($('#out .msg').textContent = wait[++i % wait.length]); }, 2500);
-    try {
-      const r = await fetch('/api/quotes', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json', 'x-access-code': get(CODE, '') },
-        body: JSON.stringify(image ? { image } : { title, author })
-      });
-      if (r.status === 401) {
-        const c = prompt('Erişim kodu?'); if (c) { set(CODE, c); clearInterval(timer); $('#go').disabled = false; return go(); }
-        throw new Error('Erişim kodu gerekli.');
-      }
-      const d = await r.json().catch(() => { throw new Error('Sunucu şu an yanıt vermiyor. Biraz sonra tekrar dene.'); });
-      if (!r.ok) throw new Error(d.error || 'Bir şey ters gitti.');
-      if (!d.found) { setOut('<div class="status">Bu kitabı tanıyamadım. Adını ve yazarını yazarak dene.</div>'); return; }
-      show(d);
-      set(HIST, [d, ...get(HIST, []).filter(x => x.title !== d.title)].slice(0, 12)); renderRecent();
-    } catch (e) {
-      setOut(`<div class="status">${esc(e.message)}</div>`);
-    } finally { clearInterval(timer); $('#go').disabled = false; }
+  // ---------- arama ----------
+  $('#q').addEventListener('input', e => {
+    const text = e.target.value.trim();
+    if (!text) { $('#sug').innerHTML = ''; return; }
+    const list = find(text).slice(0, 6);
+    $('#sug').innerHTML = list.length ? rows(list, 'data-open')
+      : `<div class="none">“${esc(text)}” havuzda yok.</div><button class="srow add" data-addfor="" data-title="${esc(text)}">➕ Bu kitaba ilk alıntıyı ekle</button>`;
+  });
+  $('#q').addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    const l = find(e.target.value); if (l.length === 1) show(l[0].key);
+  });
+
+  // ---------- alıntı ekleme ----------
+  let addCat = 2;
+  function buildCatChips() {
+    $('#acat').innerHTML = CATS.map((c, i) => `<button class="cchip c${i} ${i === addCat ? 'on' : ''}" data-ac="${i}">${esc(c)}</button>`).join('');
+  }
+  function openAdd(title = '', author = '') {
+    $('#addbox').hidden = false; buildCatChips();
+    $('#titles').innerHTML = [...new Set(library().map(b => b.t))].map(t => `<option value="${esc(t)}">`).join('');
+    $('#at').value = title; $('#aa').value = author; $('#aq').value = ''; $('#ap').value = '';
+    $('#addbox').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setTimeout(() => (title ? $('#aq') : $('#at')).focus(), 350);
+  }
+  $('#at').addEventListener('change', e => { // bilinen kitapsa yazarı otomatik doldur
+    const b = library().find(x => norm(x.t) === norm(e.target.value)); if (b && !$('#aa').value) $('#aa').value = b.a;
+  });
+  $('#asave').addEventListener('click', () => {
+    const t = $('#at').value.trim(), a = $('#aa').value.trim(), q = $('#aq').value.trim(), p = $('#ap').value.trim();
+    if (!t) return toast('Kitap adını yaz.');
+    if (!q) return toast('Alıntıyı yaz.');
+    const own = get(OWN, []);
+    if (own.some(o => norm(o.t) === norm(t) && norm(o.q) === norm(q))) return toast('Bu alıntı zaten ekli.');
+    own.push({ id: uid(), t, a, c: addCat, q, p });
+    if (!set(OWN, own)) return toast('Kaydedilemedi, depolama dolu olabilir.');
+    $('#addbox').hidden = true; toast('Alıntı eklendi ✓');
+    const b = library().find(x => norm(x.t) === norm(t) && (!norm(a) || norm(x.a) === norm(a)));
+    if (b) show(b.key, addCat);
+    renderDaily();
+  });
+
+  // ---------- yedek ----------
+  function exportOwn() {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([JSON.stringify({ own: get(OWN, []) }, null, 2)], { type: 'application/json' }));
+    a.download = `satir-arasi-alintilarim-${new Date().toISOString().slice(0, 10)}.json`; document.body.appendChild(a); a.click(); a.remove();
+  }
+  function importOwn() {
+    const i = document.createElement('input'); i.type = 'file'; i.accept = 'application/json';
+    i.onchange = async () => {
+      try {
+        const j = JSON.parse(await i.files[0].text()); if (!Array.isArray(j.own)) throw 0;
+        const own = get(OWN, []); let add = 0;
+        j.own.forEach(o => { if (o && o.t && o.q && !own.some(x => norm(x.t) === norm(o.t) && norm(x.q) === norm(o.q))) { own.push({ id: uid(), t: String(o.t), a: String(o.a || ''), c: Math.min(4, Math.max(0, +o.c || 0)), q: String(o.q), p: String(o.p || '') }); add++; } });
+        set(OWN, own); toast(add + ' alıntı yüklendi.'); renderDaily(); renderRecent();
+      } catch (e) { toast('Bu dosya geçerli bir yedek değil.'); }
+    };
+    i.click();
   }
 
-  $('#go').addEventListener('click', go);
+  // ---------- tıklamalar ----------
   document.addEventListener('click', e => {
+    const del = e.target.closest('[data-del]');
+    if (del) {
+      if (confirm('Bu alıntı silinsin mi?')) {
+        set(OWN, get(OWN, []).filter(o => o.id !== del.dataset.del));
+        const on = document.querySelector('.cchip.on[data-c]'), b = byKey(curKey);
+        const idx = on ? +on.dataset.c : -1;
+        if (b && idx >= 0 && b.cats[idx].length) show(curKey, idx); else if (b && count(b)) show(curKey, -2); else clearOut();
+        renderDaily();
+      }
+      return;
+    }
     const q = e.target.closest('[data-q]');
     if (q) { navigator.clipboard?.writeText(q.dataset.q).then(() => toast('Kopyalandı.'), () => toast('Kopyalanamadı.')); return; }
     if (e.target.closest('[data-back]')) return clearOut();
-    if (e.target.closest('[data-dbook]')) {
-      const b = D.books[(dayNum() + 5) % D.books.length];
-      image = ''; $('#preview').hidden = true; $('#photoLabel').textContent = 'Kitabın fotoğrafını yükle';
-      $('#title').value = b.t; $('#author').value = b.a; return go();
+    const open = e.target.closest('[data-open]'); if (open) { $('#sug').innerHTML = ''; show(open.dataset.open); scrollTo({ top: 0, behavior: 'smooth' }); return; }
+    const af = e.target.closest('[data-addfor]');
+    if (af) { const b = byKey(af.dataset.addfor); openAdd(b ? b.t : (af.dataset.title || ''), b ? b.a : ''); return; }
+    if (e.target.closest('[data-dadd]')) { const b = todaysBook(); openAdd(b.t, b.a); return; }
+    const ac = e.target.closest('[data-ac]'); if (ac) { addCat = +ac.dataset.ac; buildCatChips(); return; }
+    const c = e.target.closest('[data-c]'); if (c && curKey) { show(curKey, +c.dataset.c); return; }
+    const act = e.target.closest('[data-act]'); if (!act) return;
+    const a = act.dataset.act;
+    if (a === 'add') openAdd();
+    else if (a === 'closeadd') $('#addbox').hidden = true;
+    else if (a === 'export') exportOwn();
+    else if (a === 'import') importOwn();
+    else if (a === 'all') {
+      const lib = library().sort((x, y) => x.t.localeCompare(y.t, 'tr'));
+      setOut(`<div class="ask">Tüm kitaplar</div><div class="sug open">${lib.length ? rows(lib, 'data-open') : '<div class="none">Henüz kitap yok.</div>'}</div>`);
     }
-    const c = e.target.closest('[data-c]');
-    if (c && cur) { show(cur, +c.dataset.c); return; }
-    const h = e.target.closest('[data-h]');
-    if (h) { show(get(HIST, [])[+h.dataset.h]); scrollTo({ top: 0, behavior: 'smooth' }); }
   });
+
   renderDaily();
   renderRecent();
 })();
