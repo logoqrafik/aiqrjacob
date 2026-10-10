@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="Satır Arası logosu: boynuzlu gülen kalp">
+  <defs>
+    <linearGradient id="heart" x1="18" y1="22" x2="108" y2="116" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#e0789f"/>
+      <stop offset=".55" stop-color="#c4678c"/>
+      <stop offset="1" stop-color="#8d63cc"/>
+    </linearGradient>
+    <linearGradient id="horn" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f3c98a"/>
+      <stop offset="1" stop-color="#d99a52"/>
+    </linearGradient>
+    <radialGradient id="shine" cx=".3" cy=".25" r=".6">
+      <stop offset="0" stop-color="#fff" stop-opacity=".55"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- boynuzlar -->
+  <path d="M31 40 C20 33 17 17 26 7 C27 20 37 28 47 32 Z" fill="url(#horn)" stroke="#a8702f" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M97 40 C108 33 111 17 102 7 C101 20 91 28 81 32 Z" fill="url(#horn)" stroke="#a8702f" stroke-width="2" stroke-linejoin="round"/>
+  <!-- kalp -->
+  <path d="M64 119 C18 88 6 56 24 36 C38 21 57 26 64 42 C71 26 90 21 104 36 C122 56 110 88 64 119 Z" fill="url(#heart)" stroke="#5f3a8f" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M64 119 C18 88 6 56 24 36 C38 21 57 26 64 42 C71 26 90 21 104 36 C122 56 110 88 64 119 Z" fill="url(#shine)"/>
+  <!-- yüz: sinsi kaşlar, gözler, geniş gülümseme -->
+  <path d="M38 55 L56 63" stroke="#2a1442" stroke-width="5" stroke-linecap="round"/>
+  <path d="M90 55 L72 63" stroke="#2a1442" stroke-width="5" stroke-linecap="round"/>
+  <ellipse cx="48" cy="70" rx="6.5" ry="7.5" fill="#2a1442"/>
+  <ellipse cx="80" cy="70" rx="6.5" ry="7.5" fill="#2a1442"/>
+  <circle cx="50" cy="67.5" r="2.4" fill="#fff"/>
+  <circle cx="82" cy="67.5" r="2.4" fill="#fff"/>
+  <path d="M40 83 Q64 108 88 83 Q64 92 40 83 Z" fill="#fff" stroke="#2a1442" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M52 88 L55 94 L58 89.5 M70 89.5 L73 94 L76 88" fill="none" stroke="#2a1442" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
+</svg>
