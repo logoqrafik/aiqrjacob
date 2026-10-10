@@ -1,5 +1,5 @@
 // Vercel serverless fonksiyonu. Google Gemini (ücretsiz kota) kullanır. GEMINI_API_KEY ortam değişkeni gerekir.
-// İsteğe bağlı: MODEL ile model adını değiştirebilirsin (varsayılan gemini-2.5-flash).
+// İsteğe bağlı: MODEL ile model adını değiştirebilirsin (verilmezse güncel modeller sırayla denenir).
 // İsteğe bağlı: ACCESS_CODE tanımlarsan istek başlığında aynı kod gerekir (link sızarsa kota yanmasın).
 const CATEGORIES = ['Motivasyon', 'Güçlü Kal', 'Duygusal', 'Düşündüren', 'Umut'];
 
@@ -34,21 +34,36 @@ module.exports = async (req, res) => {
     return res.status(400).json({ error: 'Fotoğraf ya da kitap adı gerekli' });
   }
 
+  // Google model adlarını sık değiştiriyor. Sırayla dener, çalışan ilk modeli kullanır.
+  const models = [process.env.MODEL, 'gemini-3.8-flash', 'gemini-flash-latest', 'gemini-flash-lite-latest', 'gemini-2.5-flash-lite']
+    .filter((m, i, a) => m && a.indexOf(m) === i);
+  let data = null, quota = false, lastErr = '';
+  for (const model of models) {
+    try {
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-goog-api-key': process.env.GEMINI_API_KEY },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: SYSTEM }] },
+          contents: [{ role: 'user', parts: content }],
+          generationConfig: { responseMimeType: 'application/json', temperature: 0.4, maxOutputTokens: 8000 }
+        })
+      });
+      const j = await r.json();
+      if (!r.ok) {
+        if (r.status === 429) quota = true;
+        lastErr = (j.error && j.error.message) || String(r.status);
+        continue;
+      }
+      const text = (((j.candidates || [])[0] || {}).content || { parts: [] }).parts.map(c => c.text || '').join('');
+      data = JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1));
+      break;
+    } catch (e) { lastErr = 'Cevap okunamadı'; }
+  }
+  if (!data) {
+    return res.status(502).json({ error: quota ? 'Bugünlük ücretsiz kota doldu, biraz sonra tekrar dene.' : 'Yapay zekâya ulaşılamadı: ' + lastErr.slice(0, 160) });
+  }
   try {
-    const model = process.env.MODEL || 'gemini-2.5-flash';
-    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', 'x-goog-api-key': process.env.GEMINI_API_KEY },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: SYSTEM }] },
-        contents: [{ role: 'user', parts: content }],
-        generationConfig: { responseMimeType: 'application/json', temperature: 0.4, maxOutputTokens: 2000 }
-      })
-    });
-    const j = await r.json();
-    if (!r.ok) return res.status(502).json({ error: r.status === 429 ? 'Bugünlük ücretsiz kota doldu, biraz sonra tekrar dene.' : ((j.error && j.error.message) || 'Yapay zekâ isteği başarısız') });
-    const text = (((j.candidates || [])[0] || {}).content || { parts: [] }).parts.map(c => c.text || '').join('');
-    const data = JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1));
     if (!data.found) return res.status(200).json({ found: false });
     const cats = CATEGORIES.map(name => {
       const c = (data.categories || []).find(x => x.name === name);
