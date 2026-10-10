@@ -4,49 +4,48 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>Satır Arası</title>
-  <meta name="theme-color" content="#f3e0b8">
-  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#4a1fa8">
+  <meta name="color-scheme" content="dark light">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Satır Arası">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="icon" href="icon-192.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;1,400;1,500&family=Nunito:wght@500;700;800&family=Playfair+Display:ital,wght@0,700;0,800;1,500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@1,9..144,400;1,9..144,500&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header>
-    <div class="spines" aria-hidden="true">
-      <i style="--h:46px;--c:#8e2c3a"></i><i style="--h:60px;--c:#1f6f6b"></i><i style="--h:38px;--c:#e0a526"></i>
-      <i style="--h:54px;--c:#3d5a80"></i><i style="--h:66px;--c:#b4472b"></i><i style="--h:42px;--c:#4f772d"></i>
-      <i style="--h:58px;--c:#6d3b6e"></i><i style="--h:48px;--c:#e0a526"></i><i style="--h:64px;--c:#8e2c3a"></i>
-      <i style="--h:40px;--c:#1f6f6b"></i><i style="--h:56px;--c:#b4472b"></i><i style="--h:44px;--c:#3d5a80"></i>
-    </div>
-    <div class="shelf" aria-hidden="true"></div>
-    <h1>Satır Arası</h1>
-    <p id="hello" class="hello"></p>
-  </header>
+  <div class="bg" aria-hidden="true"><i class="blob b1"></i><i class="blob b2"></i><i class="blob b3"></i></div>
 
-  <section class="card search">
-    <label class="photo" id="drop">
-      <input type="file" id="file" accept="image/*" hidden>
-      <span class="photo-ico" aria-hidden="true">📖</span>
-      <span id="photoLabel">Kitabın fotoğrafını yükle</span>
-      <img id="preview" alt="" hidden>
-    </label>
-    <div class="or"><span>ya da</span></div>
-    <input id="title" placeholder="Kitap adı" autocomplete="off">
-    <input id="author" placeholder="Yazar" autocomplete="off">
-    <button id="go" class="go">Alıntıları getir</button>
-  </section>
+  <main class="wrap">
+    <header>
+      <div class="pill">✨ Kitaplardan alıntılar</div>
+      <h1>Satır Arası</h1>
+      <p id="hello" class="hello"></p>
+    </header>
 
-  <section id="daily" class="daily"></section>
-  <div id="recent" class="recent"></div>
-  <div id="out"></div>
+    <section class="card search">
+      <label class="photo" id="drop">
+        <input type="file" id="file" accept="image/*" hidden>
+        <span class="photo-ico" aria-hidden="true">📖</span>
+        <span id="photoLabel">Kitabın fotoğrafını yükle</span>
+        <img id="preview" alt="" hidden>
+      </label>
+      <div class="or"><span>ya da</span></div>
+      <input id="title" placeholder="Kitap adı" autocomplete="off">
+      <input id="author" placeholder="Yazar" autocomplete="off">
+      <button id="go" class="go"><span>Alıntıları getir</span></button>
+    </section>
 
-  <p class="credit"></p>
+    <section id="daily" class="daily"></section>
+    <div id="recent" class="recent"></div>
+    <div id="out"></div>
+
+    <p class="credit"></p>
+  </main>
   <div id="toast" class="toast" hidden></div>
 
   <script src="config.js"></script>
