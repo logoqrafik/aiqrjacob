@@ -11,8 +11,8 @@
     }
   ],
   "functions": {
-    "api/identify.js": {
-      "maxDuration": 40
+    "api/quotes.js": {
+      "maxDuration": 60
     }
   }
 }

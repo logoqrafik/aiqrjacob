@@ -17,7 +17,7 @@
 
   let status = 'basladim', layout = 'safe', file = null, imgEl = null, result = null, blobUrl = '', lastBlob = null, busy = false;
   const SA = window.SA, MAXQ = 3;
-  let picked = [], customs = [], pickables = [], redrawT = 0;
+  let picked = [], customs = [], pickables = [], redrawT = 0, bookRec = null;
 
   const toast = m => { const t = $('#toast'); t.textContent = m; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 2200); };
 
@@ -45,22 +45,30 @@
     try {
       const { i, u } = await loadImage(f);
       file = f; imgEl = i; result = null; lastBlob = null;
+      bookRec = null; picked = []; customs = []; $('#stitle').value = ''; $('#sauthor').value = '';
       $('#spreview').src = u; $('#spreview').hidden = false;
       $('#sLabel').textContent = 'Başka fotoğraf seç';
       $('#sout').innerHTML = '';
+      renderPicker(false);
       await generate(); // fotoğraf yeterli: görsel hemen hazırlanır
-      autoIdentify(f);  // arka planda kitabı tanı; tanırsa kitap adı ve havuz alıntıları otomatik eklenir
+      autoIdentify(f);  // arka planda kitabı tanı; tanırsa kitap adı ve alıntılar otomatik eklenir
     } catch (err) { toast(err.message); }
   });
 
+  const setPickLoading = t => { $('#spick').innerHTML = `<div class="status" style="padding:18px 0"><div class="dots"><i></i><i></i><i></i></div><div>${esc(t)}</div></div>`; };
+  function applyRec(rec) {
+    bookRec = rec; $('#stitle').value = rec.title; $('#sauthor').value = rec.author || '';
+    picked = []; renderPicker(true); queueRedraw();
+  }
   async function autoIdentify(f) {
-    if ($('#stitle').value.trim() || !SA.identifyFile) return;
     try {
-      const r = await SA.identifyFile(f);
-      if (!r || file !== f || $('#stitle').value.trim()) return; // başka fotoğraf seçildi ya da kullanıcı kendi yazdı
-      $('#stitle').value = r.title; $('#sauthor').value = r.author || '';
-      picked = []; renderPicker(true); queueRedraw(); toast('Kitap tanındı: ' + r.title);
-    } catch (e) { /* sessiz: kullanıcı kitap adını elle yazabilir */ }
+      const data = await SA.shrink(f);
+      setPickLoading('Kitap tanınıyor, alıntılar getiriliyor…');
+      const rec = await SA.fetchByImage(data);
+      if (file !== f) return;                               // başka fotoğraf seçildi
+      if (!rec || $('#stitle').value.trim()) { renderPicker(false); return; } // tanınmadı ya da kullanıcı kendi yazdı
+      applyRec(rec); toast('Kitap tanındı: ' + rec.title);
+    } catch (e) { if (file === f) renderPicker(false); /* sessiz: kitap adı elle yazılabilir */ }
   }
 
   $('#sStatus').addEventListener('click', e => {
@@ -77,16 +85,11 @@
     if (result && imgEl) draw();
   });
 
-  // ---------- kitap ve alıntı seçimi (yapay zekâ yok, havuzdan) ----------
+  // ---------- kitap ve alıntı seçimi ----------
   const cleanQ = q => String(q).replace(/\s*\n\s*/g, ' / ').trim();
-  function matchedBook() {
-    const t = SA.norm($('#stitle').value); if (!t) return null; const a = SA.norm($('#sauthor').value);
-    return SA.library().find(b => SA.norm(b.t) === t && (!a || SA.norm(b.a) === a)) || null;
-  }
   function renderPicker(autoSelect) {
-    const b = matchedBook(), title = $('#stitle').value.trim();
     pickables = [];
-    if (b) b.cats.forEach((arr, i) => arr.forEach(x => pickables.push({ q: cleanQ(x.q), cat: i })));
+    if (bookRec) bookRec.categories.forEach((c, i) => c.quotes.forEach(q => pickables.push({ q: cleanQ(q), cat: i })));
     const valid = new Set([...pickables.map(p => p.q), ...customs]);
     picked = picked.filter(q => valid.has(q));
     if (autoSelect && !picked.length) { // her kategoriden birer alıntı, en fazla 3
@@ -95,8 +98,7 @@
       for (const p of pickables) { if (picked.length >= MAXQ) break; if (!picked.includes(p.q)) picked.push(p.q); }
     }
     let html = '';
-    if (!title) html = '<div class="none">İstersen kitap adını yaz, havuzdaki alıntılar burada listelensin. Ya da aşağıya kendi cümleni yaz. İkisi de isteğe bağlı.</div>';
-    else if (!pickables.length) html = '<div class="none">Bu kitap havuzda yok. İstersen aşağıya kitaptan bir cümle yazıp ekleyebilirsin.</div>';
+    if (!pickables.length && !customs.length) html = '<div class="none">Fotoğraf yüklersen kitabı kendim tanırım. Ya da kitap adını yazıp "Bu kitaptan alıntıları getir"e bas. Kendi cümleni de yazabilirsin. Hepsi isteğe bağlı.</div>';
     SA.CATS.forEach((name, ci) => {
       const items = pickables.map((p, idx) => ({ ...p, idx })).filter(p => p.cat === ci);
       if (!items.length) return;
@@ -127,29 +129,25 @@
     $('#scustom').value = ''; renderPicker(false); queueRedraw(); toast('Eklendi ✓');
   });
 
-  // Kitap adı önerileri
-  $('#stitle').addEventListener('input', () => {
-    const text = $('#stitle').value.trim();
-    const list = text ? SA.find(text).filter(b => SA.norm(b.t) !== SA.norm(text)).slice(0, 5) : [];
-    $('#ssug').innerHTML = list.map(b => `<button class="srow" data-spk="${esc(b.key)}"><b>${esc(b.t)}</b><small>${esc(b.a)}${b.a ? ' · ' : ''}${SA.count(b)} alıntı</small></button>`).join('');
-    const exact = SA.library().filter(b => SA.norm(b.t) === SA.norm(text));
-    if (exact.length === 1 && !$('#sauthor').value.trim()) $('#sauthor').value = exact[0].a;
-    renderPicker(true); queueRedraw();
+  // Yazılan kitap için alıntıları getir
+  $('#sfetch').addEventListener('click', async () => {
+    const t = $('#stitle').value.trim(), a = $('#sauthor').value.trim();
+    if (!t) return toast('Önce kitap adını yaz.');
+    const btn = $('#sfetch'); btn.disabled = true; setPickLoading('Alıntılar getiriliyor…');
+    try {
+      const rec = await SA.fetchBook(a ? `${t} - ${a}` : t);
+      if (!rec) { renderPicker(false); toast('Bu kitabı tanıyamadım.'); } else applyRec(rec);
+    } catch (e) { renderPicker(false); toast(e.message); }
+    finally { btn.disabled = false; }
   });
-  $('#sauthor').addEventListener('input', () => { renderPicker(true); queueRedraw(); });
-  $('#ssug').addEventListener('click', e => {
-    const b = e.target.closest('[data-spk]'); if (!b) return;
-    const bk = SA.library().find(x => x.key === b.dataset.spk); if (!bk) return;
-    $('#stitle').value = bk.t; $('#sauthor').value = bk.a; $('#ssug').innerHTML = '';
-    picked = []; renderPicker(true); queueRedraw();
-  });
+  $('#stitle').addEventListener('input', queueRedraw);
+  $('#sauthor').addEventListener('input', queueRedraw);
 
   // sonucu oluştur (hazırla düğmesi ve yeniden çizim için ortak)
   function buildResult() {
-    const b = matchedBook(), title = $('#stitle').value.trim();
     if (!imgEl) { toast('Önce kitabın fotoğrafını yükle.'); return null; }
     // Kitap adı ve alıntı isteğe bağlı: yoksa yalnızca fotoğraf + durum etiketi çizilir
-    result = { title: b ? b.t : title, author: b ? b.a : $('#sauthor').value.trim(), quotes: picked.slice() };
+    result = { title: $('#stitle').value.trim(), author: $('#sauthor').value.trim(), quotes: picked.slice() };
     return result;
   }
   async function generate() {
