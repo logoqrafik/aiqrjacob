@@ -124,7 +124,7 @@
         const c = prompt('Erişim kodu?'); if (c) { set(CODE, c); clearInterval(timer); $('#go').disabled = false; return go(); }
         throw new Error('Erişim kodu gerekli.');
       }
-      const d = await r.json();
+      const d = await r.json().catch(() => { throw new Error('Sunucu şu an yanıt vermiyor. Biraz sonra tekrar dene.'); });
       if (!r.ok) throw new Error(d.error || 'Bir şey ters gitti.');
       if (!d.found) { setOut('<div class="status">Bu kitabı tanıyamadım. Adını ve yazarını yazarak dene.</div>'); return; }
       show(d);

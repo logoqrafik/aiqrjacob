@@ -48,14 +48,19 @@ module.exports = async (req, res) => {
   }
   if (story && avoid.length) content.push({ text: 'Önceki alıntılar (tekrar etme):\n- ' + avoid.join('\n- ') });
 
-  // Google model adlarını sık değiştiriyor. Sırayla dener, çalışan ilk modeli kullanır.
-  const models = [process.env.MODEL, 'gemini-3.8-flash', 'gemini-flash-latest', 'gemini-flash-lite-latest', 'gemini-2.5-flash-lite']
+  // Google model adlarını sık değiştiriyor ve bazı modeller yoğunlukta takılıyor.
+  // Hızlı model önce denenir; her denemenin süre sınırı vardır, takılırsa sıradakine geçilir.
+  const models = [process.env.MODEL, 'gemini-flash-lite-latest', 'gemini-3.8-flash', 'gemini-flash-latest']
     .filter((m, i, a) => m && a.indexOf(m) === i);
+  const deadline = Date.now() + 52000;
   let data = null, quota = false, lastErr = '';
   for (const model of models) {
+    const left = deadline - Date.now();
+    if (left < 4000) break;
+    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), Math.min(left, model === models[0] ? 24000 : 16000));
     try {
       const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-        method: 'POST',
+        method: 'POST', signal: ctl.signal,
         headers: { 'content-type': 'application/json', 'x-goog-api-key': process.env.GEMINI_API_KEY },
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: story ? SYSTEM_STORY : SYSTEM }] },
@@ -72,10 +77,11 @@ module.exports = async (req, res) => {
       const text = (((j.candidates || [])[0] || {}).content || { parts: [] }).parts.map(c => c.text || '').join('');
       data = JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1));
       break;
-    } catch (e) { lastErr = 'Cevap okunamadı'; }
+    } catch (e) { lastErr = e.name === 'AbortError' ? 'zaman aşımı (' + model + ')' : 'Cevap okunamadı'; }
+    finally { clearTimeout(timer); }
   }
   if (!data) {
-    return res.status(502).json({ error: quota ? 'Bugünlük ücretsiz kota doldu, biraz sonra tekrar dene.' : 'Yapay zekâya ulaşılamadı: ' + lastErr.slice(0, 160) });
+    return res.status(502).json({ error: quota ? 'Bugünlük ücretsiz kota doldu, biraz sonra tekrar dene.' : 'Yapay zekâ şu an yanıt vermiyor, biraz sonra tekrar dene. (' + lastErr.slice(0, 120) + ')' });
   }
   try {
     if (!data.found) return res.status(200).json({ found: false });
