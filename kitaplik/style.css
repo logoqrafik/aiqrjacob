@@ -27,3 +27,9 @@ input[type=text], input:not([type]) { width:100%; font:inherit; color:inherit; b
 .credit { margin-top:34px; text-align:center; font-family:var(--serif); font-style:italic; color:var(--mute); font-size:13px; line-height:1.5; }
 .toast { position:fixed; left:50%; transform:translateX(-50%); bottom:calc(24px + env(safe-area-inset-bottom)); background:var(--ink); color:var(--bg); padding:10px 16px; border-radius:99px; font-size:14px; }
 .toast[hidden] { display:none; }
+
+.ask { margin:18px 0 8px; font-family:var(--serif); font-style:italic; color:var(--mute); }
+.cats { display:flex; flex-wrap:wrap; gap:8px; }
+.cchip { border:1px solid var(--line); background:var(--card); color:var(--ink); border-radius:99px; padding:10px 16px; font:500 15px var(--sans); cursor:pointer; }
+.cchip.on { background:var(--ink); color:var(--bg); border-color:var(--ink); }
+.qs { margin-top:8px; }

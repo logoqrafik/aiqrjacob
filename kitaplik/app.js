@@ -42,13 +42,24 @@
     } catch (err) { toast(err.message); }
   });
 
-  function show(d) {
-    const cats = d.categories.filter(c => c.quotes.length);
-    $('#out').innerHTML = `<div class="book"><h2>${esc(d.title)}</h2><div class="muted">${esc(d.author)}</div></div>` +
-      (cats.length ? cats.map(c => `<div class="cat"><h3>${esc(c.name)}</h3>${c.quotes.map(q =>
-        `<div class="q" data-q="${esc(q)}">“${esc(q)}”<small>Kopyalamak için dokun</small></div>`).join('')}</div>`).join('')
-        : '<div class="status">Bu kitaptan güvenle hatırladığım alıntı yok.</div>') +
-      `<p class="note">Alıntılar yapay zekâ (Google Gemini) tarafından kitaptan hatırlanarak yazılıyor. Kelimesi kelimesine doğru olmayabilir, kullanmadan önce kitaptan kontrol et. Çeviri kitaplarda ifadeler baskıya göre değişir.</p>`;
+  let cur = null;
+  function show(d, sel = -1) {
+    cur = d;
+    const cats = d.categories.map((c, i) => ({ ...c, i })).filter(c => c.quotes.length);
+    let html = `<div class="book"><h2>${esc(d.title)}</h2><div class="muted">${esc(d.author)}</div></div>`;
+    if (!cats.length) {
+      html += '<div class="status">Bu kitaptan güvenle hatırladığım alıntı yok.</div>';
+    } else {
+      html += `<div class="ask">Hangi ruh halindesin?</div><div class="cats">${cats.map(c =>
+        `<button class="cchip ${sel === c.i ? 'on' : ''}" data-c="${c.i}">${esc(c.name)}</button>`).join('')}</div>`;
+      const pick = cats.find(c => c.i === sel);
+      if (pick) {
+        html += `<div class="qs">${pick.quotes.map(q =>
+          `<div class="q" data-q="${esc(q)}">“${esc(q)}”<small>Kopyalamak için dokun</small></div>`).join('')}</div>` +
+          `<p class="note">Alıntılar yapay zekâ (Google Gemini) tarafından kitaptan hatırlanarak yazılıyor. Kelimesi kelimesine doğru olmayabilir, kullanmadan önce kitaptan kontrol et. Çeviri kitaplarda ifadeler baskıya göre değişir.</p>`;
+      }
+    }
+    $('#out').innerHTML = html;
   }
 
   function renderRecent() {
@@ -86,6 +97,8 @@
   document.addEventListener('click', e => {
     const q = e.target.closest('[data-q]');
     if (q) { navigator.clipboard?.writeText(q.dataset.q).then(() => toast('Kopyalandı.'), () => toast('Kopyalanamadı.')); return; }
+    const c = e.target.closest('[data-c]');
+    if (c && cur) { show(cur, +c.dataset.c); return; }
     const h = e.target.closest('[data-h]');
     if (h) { show(get(HIST, [])[+h.dataset.h]); scrollTo({ top: $('#out').offsetTop - 10, behavior: 'smooth' }); }
   });
