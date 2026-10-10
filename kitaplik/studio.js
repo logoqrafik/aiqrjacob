@@ -90,7 +90,8 @@
   const EMO = '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji"';
   const fontStr = (L, size = L.size) => `${L.italic ? 'italic ' : ''}${L.bold ? 700 : 400} ${size}px "${fontOf(L.font).id}", ${fontOf(L.font).fb}, ${EMO}`;
   const isIcon = L => L && (L.type === 'ribbon' || L.type === 'lotus');
-  const isText = L => !isIcon(L);
+  const isMark = L => !!(L && (L.wm || L.type === 'lotus'));
+  const isText = L => !isIcon(L) && !L.wm;
   function loadFont(L) {
     if (!document.fonts || !document.fonts.load) return Promise.resolve();
     return Promise.race([document.fonts.load(fontStr(L, 40), 'Aİıİşğ'), new Promise(r => setTimeout(r, 1800))]).catch(() => {});
@@ -285,7 +286,7 @@
     box.innerHTML = PAL.map((c, i) => `<button class="sw ${L && L.color.toLowerCase() === c.hex.toLowerCase() ? 'on' : ''} ${i < 2 ? 'best' : ''}" style="background:${c.hex}" data-pc="${c.hex}" title="${esc(c.name)} · kontrast ${c.ratio.toFixed(1)}"><span style="color:${hexLum(c.hex) > 0.5 ? '#111' : '#fff'};background:none;text-shadow:none">${esc(c.name)}</span></button>`).join('');
   }
   function renderLayers() {
-    $('#stLayers').innerHTML = S.layers.map((L, i) => `<button class="${L.id === S.sel ? 'on' : ''}" data-l="${L.id}">${i + 1}. ${L.type === 'lotus' ? '🪷 Filigran' : L.type === 'ribbon' ? '🔖 Ayraç' : esc(String(L.text).replace(/\s+/g, ' ').slice(0, 14) || '…')}</button>`).join('');
+    $('#stLayers').innerHTML = S.layers.map((L, i) => `<button class="${L.id === S.sel ? 'on' : ''}" data-l="${L.id}">${i + 1}. ${isMark(L) ? '🪷 Filigran' : L.type === 'ribbon' ? '🔖 Ayraç' : esc(String(L.text).replace(/\s+/g, ' ').slice(0, 14) || '…')}</button>`).join('');
   }
   function syncCtl() {
     const L = sel(); $('#stNoSel').hidden = !!L; $('#stCtl').hidden = !L; renderLayers();
@@ -494,9 +495,9 @@
   });
 
   // ---------- filigran (lotus) ve hikâyeden içe aktarma ----------
-  const markLayer = () => ({ id: ++S.seq, type: 'lotus', fx: 0.5, fy: S.format === 'story' ? 0.955 : 0.93, size: 112, rot: 0, color: '#ffffff', alpha: 80, shadow: true, shB: 8 });
-  function hasMark() { return S.layers.some(l => l.type === 'lotus'); }
-  function addMark(select) { if (hasMark()) { const m = S.layers.find(l => l.type === 'lotus'); S.sel = m.id; applyAll(); return toast('Filigran zaten var, istersen sürükleyebilirsin.'); } const L = markLayer(); S.layers.push(L); if (select) S.sel = L.id; commit(); applyAll(); }
+  const markLayer = () => { const fy = S.format === 'story' ? 0.955 : 0.93, m = window.LIB ? window.LIB.markLayer(fy) : { type: 'lotus', wm: true, fx: 0.5, fy, size: 112, rot: 0, color: '#ffffff', alpha: 80, shadow: true, shB: 8 }; return { ...m, id: ++S.seq }; };
+  function hasMark() { return S.layers.some(isMark); }
+  function addMark(select) { if (hasMark()) { const m = S.layers.find(isMark); S.sel = m.id; applyAll(); return toast('Filigran zaten var, istersen sürükleyebilirsin.'); } const L = markLayer(); S.layers.push(L); if (select) S.sel = L.id; commit(); applyAll(); }
   $('#stMark').addEventListener('click', () => { addMark(true); });
 
   // Hikâye sekmesinin hazırladığı görseli (arka plan fotoğrafı + katmanlar) düzenlenebilir tasarım olarak aç
@@ -521,7 +522,7 @@
     renderFonts(); renderBgGrid(); render(); addLayer('Alıntını buraya yaz ✍️'); addMark(false); S.sel = S.layers.find(isText).id; applyAll(); dirty = false; history = []; base = JSON.stringify(S); renderSaved(); preloadFonts();
   }
   init();
-  window.__studioImport = importDesign;
+  window.__studioImport = importDesign; window.__studioDB = DB;
   window.__studioApi = { renderDesign, measureLayer, loadFont, fontsFor: ls => Promise.all(ls.map(loadFont)) };
   window.__studio = { get S() { return S; }, get PAL() { return PAL; }, FORMATS, FONTS, render, exportCanvas, layout: L => layout(mc, L) };
 })();
