@@ -15,7 +15,7 @@
   const dayNum = () => { const d = new Date(); return Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 864e5); };
 
   $('#hello').textContent = `Merhaba ${C.friend}. ${hello[dayNum() % hello.length]}`;
-  document.querySelector('.credit').innerHTML = `${esc(C.footer)}<br>— ${esc(C.giver)}`;
+  document.querySelector('.credit').innerHTML = `${esc(C.footer)}<br>— ${esc(C.giver)}<br><small style="opacity:.55">sürüm ${esc(C.version || '')}</small>`;
 
   let image = '';
   const get = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch (e) { return d; } };
