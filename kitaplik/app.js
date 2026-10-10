@@ -48,7 +48,7 @@
       (cats.length ? cats.map(c => `<div class="cat"><h3>${esc(c.name)}</h3>${c.quotes.map(q =>
         `<div class="q" data-q="${esc(q)}">“${esc(q)}”<small>Kopyalamak için dokun</small></div>`).join('')}</div>`).join('')
         : '<div class="status">Bu kitaptan güvenle hatırladığım alıntı yok.</div>') +
-      `<p class="note">Alıntılar yapay zekâ tarafından kitaptan hatırlanarak yazılıyor. Kelimesi kelimesine doğru olmayabilir, kullanmadan önce kitaptan kontrol et. Çeviri kitaplarda ifadeler baskıya göre değişir.</p>`;
+      `<p class="note">Alıntılar yapay zekâ (Google Gemini) tarafından kitaptan hatırlanarak yazılıyor. Kelimesi kelimesine doğru olmayabilir, kullanmadan önce kitaptan kontrol et. Çeviri kitaplarda ifadeler baskıya göre değişir.</p>`;
   }
 
   function renderRecent() {
