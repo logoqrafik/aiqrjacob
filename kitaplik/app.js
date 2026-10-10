@@ -110,7 +110,7 @@
           `<p class="note">Şiir dizeleri ve alıntılar baskıya göre noktalama bakımından küçük farklar gösterebilir.</p>`;
       }
     }
-    html += `<div class="btns2" style="margin-top:18px"><button class="btn2" data-addfor="${esc(b.key)}">➕ Bu kitaba alıntı ekle</button></div>`;
+    html += `<div class="btns2" style="margin-top:18px"><button class="btn2" data-addfor="${esc(b.key)}">➕ Bu kitaba alıntı ekle</button><button class="btn2" data-webbook="${esc(b.key)}">🌐 İnternetten doğrula</button></div><div id="webres"></div>`;
     setOut(html);
   }
 
@@ -126,11 +126,12 @@
     if (!text) { $('#sug').innerHTML = ''; return; }
     const list = find(text).slice(0, 6);
     $('#sug').innerHTML = list.length ? rows(list, 'data-open')
-      : `<div class="none">“${esc(text)}” havuzda yok.</div><button class="srow add" data-addfor="" data-title="${esc(text)}">➕ Bu kitaba ilk alıntıyı ekle</button>`;
+      : `<div class="none">“${esc(text)}” havuzda yok.</div><button class="srow web" data-web="${esc(text)}"><b>🌐 İnternette ara</b><small>Wikiquote'ta kaynaklı alıntı bul</small></button><button class="srow add" data-addfor="" data-title="${esc(text)}">➕ Bu kitaba ilk alıntıyı ekle</button>`;
   });
   $('#q').addEventListener('keydown', e => {
     if (e.key !== 'Enter') return;
-    const l = find(e.target.value); if (l.length === 1) show(l[0].key);
+    const text = e.target.value.trim(), l = find(text);
+    if (l.length === 1) show(l[0].key); else if (!l.length && text) doWeb(text);
   });
 
   // ---------- alıntı ekleme ----------
@@ -138,12 +139,12 @@
   function buildCatChips() {
     $('#acat').innerHTML = CATS.map((c, i) => `<button class="cchip c${i} ${i === addCat ? 'on' : ''}" data-ac="${i}">${esc(c)}</button>`).join('');
   }
-  function openAdd(title = '', author = '') {
+  function openAdd(title = '', author = '', quote = '') {
     $('#addbox').hidden = false; buildCatChips();
     $('#titles').innerHTML = [...new Set(library().map(b => b.t))].map(t => `<option value="${esc(t)}">`).join('');
-    $('#at').value = title; $('#aa').value = author; $('#aq').value = ''; $('#ap').value = '';
+    $('#at').value = title; $('#aa').value = author; $('#aq').value = quote; $('#ap').value = '';
     $('#addbox').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    setTimeout(() => (title ? $('#aq') : $('#at')).focus(), 350);
+    setTimeout(() => (title && !quote ? $('#aq') : $('#at')).focus(), 350);
   }
   $('#at').addEventListener('change', e => { // bilinen kitapsa yazarı otomatik doldur
     const b = library().find(x => norm(x.t) === norm(e.target.value)); if (b && !$('#aa').value) $('#aa').value = b.a;
@@ -161,6 +162,50 @@
     if (b) show(b.key, addCat);
     renderDaily();
   });
+
+
+  // ---------- internet araması (Wikiquote) ----------
+  let webList = [], webCtx = null;
+  const loadingHTML = t => `<div class="status"><div class="dots"><i></i><i></i><i></i></div><div>${esc(t)}</div></div>`;
+  async function doWeb(text, key) {
+    const book = key ? byKey(key) : null;
+    const query = book ? (book.a || book.t) : text;      // doğrulamada yazara göre ara (kitap adı sayfada geçmeyebilir)
+    webCtx = { book, text };
+    if (!book) setOut(`<div class="ask">“${esc(text)}” internette aranıyor</div><div id="webres"></div>`);
+    const box = $('#webres'); if (!box) return;
+    box.innerHTML = loadingHTML('Wikiquote taranıyor…');
+    let res;
+    try { res = await window.WEB.webSearch(query); } catch (e) { res = { quotes: [], failed: 2 }; }
+    let list = res.quotes;
+    if (book) { // yazar sayfasından gelenleri kitap adına göre daralt; yoksa hepsini göster
+      const tt = norm(book.t).split(' ').filter(Boolean);
+      const narrowed = list.filter(x => tt.every(t => norm(x.work + ' ' + x.src + ' ' + x.page).includes(t)));
+      if (narrowed.length) list = narrowed;
+    }
+    webList = list.slice(0, 12);
+    if (res.failed >= 2) { box.innerHTML = '<div class="status">İnternete ulaşılamadı. Bağlantını kontrol edip tekrar dene.</div>'; return; }
+    let head = '';
+    if (book) { // havuzdaki alıntıları internetteki sonuçlarla karşılaştır
+      let ok = 0, total = 0;
+      document.querySelectorAll('#out .q[data-q]').forEach(card => {
+        total++;
+        const hit = res.quotes.some(w => window.WEB.similar(card.dataset.q, w.q));
+        if (hit) ok++;
+        const s = card.querySelector('small'); if (s && !s.querySelector('.vb')) s.insertAdjacentHTML('beforeend', hit ? ' · <span class="vb ok">✓ Wikiquote\'ta doğrulandı</span>' : ' · <span class="vb no">Wikiquote\'ta eşleşme yok</span>');
+      });
+      head = total ? `<div class="vsum">Görünen ${total} alıntıdan <b>${ok}</b> tanesi Wikiquote'ta bulundu. "Eşleşme yok", alıntının yanlış olduğu anlamına gelmez, o sayfada listelenmemiş olabilir.</div>` : '';
+    }
+    if (!webList.length) { box.innerHTML = head + `<div class="status">İnternette (Wikiquote) “${esc(query)}” için alıntı bulunamadı.<br>Kendi kitabından ekleyebilirsin.</div>` + (book ? '' : `<div class="btns2"><button class="btn2" data-addfor="" data-title="${esc(text)}">➕ Alıntı ekle</button></div>`); return; }
+    box.innerHTML = head + `<div class="ask">İnternette bulunanlar <span class="muted2">· Wikiquote</span></div>` + webList.map((w, i) =>
+      `<div class="wq"><div class="wqt">${esc(w.q)}</div><small>${w.lang === 'tr' ? '🇹🇷' : '🇬🇧'} ${esc(w.page)}${w.work ? ' · ' + esc(w.work) : ''}${w.src ? ' · ' + esc(w.src) : ''} · <a href="${esc(w.url)}" target="_blank" rel="noopener">kaynağı aç ↗</a></small><button class="btn2" data-wadd="${i}">➕ Havuza ekle</button></div>`).join('')
+      + (res.failed ? '<p class="note">Dillerden biri şu an yanıt vermedi, sonuçlar eksik olabilir.</p>' : '') + '<p class="note">Wikiquote topluluk tarafından hazırlanan, kaynak gösteren bir alıntı sitesidir. İngilizce sonuçlar çeviri değildir.</p>';
+  }
+  function addFromWeb(i) {
+    const w = webList[i]; if (!w) return;
+    const ctx = webCtx || {};
+    const t = ctx.book ? ctx.book.t : (w.work || ctx.text || w.page), au = ctx.book ? ctx.book.a : (w.work ? w.page : '');
+    openAdd(t, au, w.q);
+  }
 
   // ---------- yedek ----------
   function exportOwn() {
@@ -201,6 +246,9 @@
     const af = e.target.closest('[data-addfor]');
     if (af) { const b = byKey(af.dataset.addfor); openAdd(b ? b.t : (af.dataset.title || ''), b ? b.a : ''); return; }
     if (e.target.closest('[data-dadd]')) { const b = todaysBook(); openAdd(b.t, b.a); return; }
+    const wb = e.target.closest('[data-web]'); if (wb) { doWeb(wb.dataset.web); return; }
+    const wk = e.target.closest('[data-webbook]'); if (wk) { doWeb('', wk.dataset.webbook); return; }
+    const wa = e.target.closest('[data-wadd]'); if (wa) { addFromWeb(+wa.dataset.wadd); return; }
     const ac = e.target.closest('[data-ac]'); if (ac) { addCat = +ac.dataset.ac; buildCatChips(); return; }
     const c = e.target.closest('[data-c]'); if (c && curKey) { show(curKey, +c.dataset.c); return; }
     const act = e.target.closest('[data-act]'); if (!act) return;

@@ -1,7 +1,7 @@
 // Kişiselleştirme: sadece bu dosya.
 window.CONFIG = {
-  version: "12 · kendi alıntı havuzu",
+  version: "13 · logo + internet doğrulama",
   friend: "Kitap Kurdu",   // Arkadaşının adı
-  giver: "Senin Adın",     // Senin adın (alt imza)
+  giver: "Panda 🐼",       // İmza (en altta)
   footer: "Kitaplardan hiç anlamayan biri tarafından, kitaplardan çok anlayan biri için yapıldı."
 };
