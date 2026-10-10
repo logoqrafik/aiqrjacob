@@ -26,12 +26,13 @@
     $('#tab-quotes').hidden = name !== 'quotes';
     $('#tab-story').hidden = name !== 'story';
     $('#tab-studio').hidden = name !== 'studio';
+    $('#tab-shelf').hidden = name !== 'shelf';
     document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === name));
-    try { history.replaceState(null, '', name === 'story' ? '#hikaye' : name === 'studio' ? '#tasarim' : location.pathname); } catch (e) { /* önemsiz */ }
+    try { history.replaceState(null, '', name === 'story' ? '#hikaye' : name === 'studio' ? '#tasarim' : name === 'shelf' ? '#raf' : location.pathname); } catch (e) { /* önemsiz */ }
     scrollTo({ top: 0 });
   }
   document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
-  if (location.hash === '#hikaye') setTab('story'); else if (location.hash === '#tasarim') setTab('studio');
+  if (location.hash === '#hikaye') setTab('story'); else if (location.hash === '#tasarim') setTab('studio'); else if (location.hash === '#raf') { setTab('shelf'); document.dispatchEvent(new Event('sa-open-shelf')); }
 
   // ---------- fotoğraf ----------
   function loadImage(f) {
@@ -245,7 +246,7 @@
     }
     // ayraç ve filigran (lotus)
     layers.push({ type: 'ribbon', size: 68, rot: 0, color: th.accent, shadow: true, shB: 24, fx: 920 / W, fy: 107 / H });
-    layers.push({ type: 'lotus', size: 112, rot: 0, color: '#ffffff', alpha: 80, shadow: true, shB: 8, fx: 0.5, fy: 0.955 });
+    layers.push(window.LIB ? window.LIB.markLayer(0.955) : { type: 'lotus', wm: true, size: 112, rot: 0, color: '#ffffff', alpha: 80, shadow: true, shB: 8, fx: 0.5, fy: 0.955 });
     return layers;
   }
 
@@ -280,6 +281,7 @@
         <button class="btn design" data-sdesign>🎨 Tasarla</button>
         ${canShare ? '<button class="btn" data-sshare>📤 Paylaş</button>' : ''}
         <button class="btn" data-sedit ${canShare ? '' : 'style="grid-column:1/-1"'}>✏️ Alıntıları değiştir</button>
+        <button class="btn" data-sshelf style="grid-column:1/-1">📚 Rafıma ekle</button>
       </div>
       <p class="snote">Durumu ya da alıntıları değiştirirsen görsel anında yenilenir. Kutuları, yazıyı ve simgeleri kendin yerleştirmek için <b>Tasarla</b>'ya bas. iPhone'da indirme olmazsa görsele uzun basıp "Fotoğraflara Ekle"yi seç.</p>
     </div>`;
@@ -288,7 +290,16 @@
   const ascii = t => String(t || '').toLocaleLowerCase('tr').replace(/[ığüşöç]/g, ch => ({ 'ı': 'i', 'ğ': 'g', 'ü': 'u', 'ş': 's', 'ö': 'o', 'ç': 'c' }[ch])).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   const fname = () => `satir-arasi-${ST[status].name}-${ascii(result.title).slice(0, 40) || 'gorsel'}.jpg`;
 
+  // Kitap adı varsa rafa ekler; "Bitirdim" iken indir/paylaş/tasarla otomatik ekler
+  function toShelf(auto) {
+    if (!window.LIB || !result || !result.title) { if (!auto) toast('Rafa eklemek için kitap adını yaz.'); return; }
+    const st = status === 'bitirdim' ? 'read' : status === 'okuyorum' ? 'reading' : 'reading', had = window.LIB.has(result.title, st === 'read' ? 'read' : null);
+    window.LIB.addBook({ title: result.title, author: result.author, status: st, thumb: imgEl ? window.LIB.thumbFrom(imgEl) : '' });
+    if (!had || !auto) toast(st === 'read' ? 'Rafına eklendi 📚' : 'Okuyorum rafına eklendi 📚');
+  }
   $('#sout').addEventListener('click', async e => {
+    if (e.target.closest('[data-sshelf]')) return toShelf(false);
+    if (status === 'bitirdim' && e.target.closest('[data-sdl],[data-sshare],[data-sdesign]')) toShelf(true);
     if (e.target.closest('[data-sdl]') && lastBlob) {
       const a = document.createElement('a'); a.href = blobUrl; a.download = fname(); document.body.appendChild(a); a.click(); a.remove();
       toast('Görsel indiriliyor…');

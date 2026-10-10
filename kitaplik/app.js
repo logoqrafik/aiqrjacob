@@ -121,7 +121,8 @@
   function show(rec, sel = -1) {
     cur = rec;
     const cats = rec.categories.map((c, i) => ({ ...c, i })).filter(c => c.quotes.length);
-    let html = `<div class="book"><h2>${esc(rec.title)}</h2><div class="muted">${esc(rec.author)}</div></div>`;
+    const inLib = window.LIB && window.LIB.has(rec.title);
+    let html = `<div class="book"><h2>${esc(rec.title)}</h2><div class="muted">${esc(rec.author)}</div>${window.LIB ? `<div class="bkacts"><button data-bshelf="want">${inLib ? '📚 Rafında' : '📌 Okunacaklara ekle'}</button><button data-bshelf="read">✅ Okudum</button></div>` : ''}</div>`;
     if (!cats.length) {
       html += '<div class="status">Bu kitaptan alıntı çıkaramadım.</div>';
     } else {
@@ -130,7 +131,7 @@
       const pick = cats.find(c => c.i === sel);
       if (pick) {
         html += `<div class="qs" style="--g:var(--g${pick.i});--glow:var(--glow${pick.i})">${pick.quotes.map((q, k) =>
-          `<div class="q" style="--i:${k}" data-q="${esc(q)}">“${esc(q)}”<small>Kopyalamak için dokun</small></div>`).join('')}</div>` +
+          `<div class="q" style="--i:${k}" data-q="${esc(q)}">${window.LIB ? `<button class="heart ${window.LIB.isFav(q) ? 'on' : ''}" data-heart="${pick.i}:${k}" aria-label="Favorilere ekle">${window.LIB.isFav(q) ? '♥' : '♡'}</button>` : ''}“${esc(q)}”<small>Kopyalamak için dokun</small></div>`).join('')}</div>` +
           `<p class="note">Alıntılar yapay zekâ tarafından kitaptan hatırlanarak yazılıyor. Kelimesi kelimesine doğru olmayabilir, paylaşmadan önce kitaptan kontrol et. Çeviri kitaplarda ifadeler baskıya göre değişir.</p>`;
       }
     }
@@ -159,6 +160,13 @@
   $('#go').addEventListener('click', go);
   ['#title', '#author'].forEach(s => $(s).addEventListener('keydown', e => { if (e.key === 'Enter') go(); }));
   document.addEventListener('click', e => {
+    const ht = e.target.closest('[data-heart]');
+    if (ht && cur) {
+      const [ci, k] = ht.dataset.heart.split(':').map(Number), text = cur.categories[ci] && cur.categories[ci].quotes[k]; if (!text) return;
+      const on = window.LIB.toggleFav(text, cur.title, cur.author); ht.classList.toggle('on', on); ht.textContent = on ? '♥' : '♡'; toast(on ? 'Favorilere eklendi ♥' : 'Favorilerden çıkarıldı'); return;
+    }
+    const bs = e.target.closest('[data-bshelf]');
+    if (bs && cur) { window.LIB.addBook({ title: cur.title, author: cur.author, status: bs.dataset.bshelf }); bs.parentNode.firstElementChild.textContent = '📚 Rafında'; toast(bs.dataset.bshelf === 'read' ? 'Okuduklarına eklendi ✅' : 'Okunacaklara eklendi 📌'); return; }
     const q = e.target.closest('[data-q]');
     if (q) { navigator.clipboard?.writeText(q.dataset.q).then(() => toast('Kopyalandı.'), () => toast('Kopyalanamadı.')); return; }
     if (e.target.closest('[data-back]')) return clearOut();
