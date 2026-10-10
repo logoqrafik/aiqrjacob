@@ -1,6 +1,6 @@
 // Kişiselleştirme: sadece bu dosya.
 window.CONFIG = {
-  version: "19 · rafım",
+  version: "20 · gerçek kapaklar, hareketli kartlar",
   friend: "Kitap Kurdu",   // Arkadaşının adı
   giver: "Panda 🐼",       // İmza (en altta)
   // Rafım sekmesindeki sürpriz kartlar: kaç kitap bitirince hangi not çıksın (istediğini değiştir)

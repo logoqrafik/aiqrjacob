@@ -81,7 +81,7 @@
       <div class="dcard pick">
         <span class="dlabel">Günün kitabı</span>
         <div class="dbook">
-          <div class="cover cv${hash(b.t) % 5}"><b>${esc(b.t)}</b><span>${esc(b.a)}</span></div>
+          <div class="cover cv${hash(b.t) % 5}" data-ct="${esc(b.t)}" data-ca="${esc(b.a)}"><b>${esc(b.t)}</b><span>${esc(b.a)}</span></div>
           <div class="dinfo">
             <div class="dbt">${esc(b.t)}</div>
             <div class="dba">${esc(b.a)}</div>
@@ -90,6 +90,7 @@
           </div>
         </div>
       </div>`;
+    if (window.CARDS) window.CARDS.hydrate($('#daily'));
   }
 
   // ---------- çıktı alanı ----------
@@ -122,7 +123,7 @@
     cur = rec;
     const cats = rec.categories.map((c, i) => ({ ...c, i })).filter(c => c.quotes.length);
     const inLib = window.LIB && window.LIB.has(rec.title);
-    let html = `<div class="book"><h2>${esc(rec.title)}</h2><div class="muted">${esc(rec.author)}</div>${window.LIB ? `<div class="bkacts"><button data-bshelf="want">${inLib ? '📚 Rafında' : '📌 Okunacaklara ekle'}</button><button data-bshelf="read">✅ Okudum</button></div>` : ''}</div>`;
+    let html = `<div class="book"><img class="bkcv" alt="" hidden data-ct="${esc(rec.title)}" data-ca="${esc(rec.author)}"><h2>${esc(rec.title)}</h2><div class="muted">${esc(rec.author)}</div>${window.LIB ? `<div class="bkacts"><button data-bshelf="want">${inLib ? '📚 Rafında' : '📌 Okunacaklara ekle'}</button><button data-bshelf="read">✅ Okudum</button></div>` : ''}</div>`;
     if (!cats.length) {
       html += '<div class="status">Bu kitaptan alıntı çıkaramadım.</div>';
     } else {
@@ -136,6 +137,7 @@
       }
     }
     setOut(html);
+    if (window.CARDS) window.CARDS.hydrate($('#out'));
   }
 
   function renderRecent() {

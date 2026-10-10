@@ -1,7 +1,7 @@
 {
   "headers": [
     {
-      "source": "/(.*)",
+      "source": "/((?!api/).*)",
       "headers": [
         {
           "key": "Cache-Control",
@@ -13,6 +13,12 @@
   "functions": {
     "api/quotes.js": {
       "maxDuration": 60
+    },
+    "api/cover.js": {
+      "maxDuration": 20
+    },
+    "api/portrait.js": {
+      "maxDuration": 20
     }
   }
 }
