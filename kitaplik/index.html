@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Satır Arası</title>
+  <meta name="theme-color" content="#f6f2ea">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Satır Arası">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="icon" href="icon-192.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Satır Arası</h1>
+    <p id="hello" class="muted"></p>
+  </header>
+
+  <section class="card">
+    <label class="photo" id="drop">
+      <input type="file" id="file" accept="image/*" hidden>
+      <span id="photoLabel">Kitabın fotoğrafını yükle</span>
+      <img id="preview" alt="" hidden>
+    </label>
+    <div class="or">ya da</div>
+    <input id="title" placeholder="Kitap adı" autocomplete="off">
+    <input id="author" placeholder="Yazar" autocomplete="off">
+    <button id="go" class="go">Alıntıları getir</button>
+  </section>
+
+  <div id="recent" class="recent"></div>
+  <div id="out"></div>
+
+  <p class="credit"></p>
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
