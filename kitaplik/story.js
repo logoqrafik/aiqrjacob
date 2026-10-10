@@ -15,7 +15,7 @@
     bitirdim: { pill: 'Bu kitabı bitirdim', icon: '✅', stickers: ['🎉', '🤍', '✨'], accent: '#de7fa4', name: 'bitirdim' }
   };
 
-  let status = 'basladim', layout = 'safe', file = null, imgEl = null, result = null, blobUrl = '', lastBlob = null, busy = false;
+  let status = 'basladim', file = null, imgEl = null, result = null, blobUrl = '', lastBlob = null, busy = false;
   const SA = window.SA, MAXQ = 5, AUTO = 3; // en fazla 5 alıntı; otomatik seçimde 3 tane (görsel kalabalık olmasın)
   let picked = [], customs = [], pickables = [], redrawT = 0, bookRec = null;
 
@@ -76,13 +76,6 @@
     const b = e.target.closest('[data-st]'); if (!b) return;
     status = b.dataset.st;
     document.querySelectorAll('#sStatus .cchip').forEach(c => c.classList.toggle('on', c === b));
-    if (result && imgEl) draw();
-  });
-
-  $('#sLayout').addEventListener('click', e => {
-    const b = e.target.closest('[data-ly]'); if (!b) return;
-    layout = b.dataset.ly;
-    document.querySelectorAll('#sLayout .cchip').forEach(c => c.classList.toggle('on', c === b));
     if (result && imgEl) draw();
   });
 
@@ -161,19 +154,6 @@
   }
 
   // ---------- çizim yardımcıları ----------
-  function rr(c, x, y, w, h, r) {
-    c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath();
-  }
-  function wrap(c, text, maxW) {
-    const lines = []; let line = '';
-    for (const w of text.split(/\s+/)) {
-      const t = line ? line + ' ' + w : w;
-      if (c.measureText(t).width > maxW && line) { lines.push(line); line = w; } else line = t;
-    }
-    if (line) lines.push(line);
-    return lines;
-  }
-
   // Otomatik düzeltme: seviye (kontrast), gama (parlaklık), doygunluk. Gölgeler ezilmez.
   function enhance(c, w, h) {
     const id = c.getImageData(0, 0, w, h), d = id.data;
@@ -214,148 +194,59 @@
     return cv;
   }
 
-  // Bulanık arka plan (ctx.filter gerektirmez, her tarayıcıda çalışır)
-  function blurBackground(c, src) {
-    const step = (from, w, h) => { const t = document.createElement('canvas'); t.width = w; t.height = h; const x = t.getContext('2d'); x.imageSmoothingQuality = 'high'; x.drawImage(from, 0, 0, w, h); return t; };
-    const s = Math.max(24 / src.width, 43 / src.height);
-    const t1 = document.createElement('canvas'); t1.width = 24; t1.height = 43; const x1 = t1.getContext('2d');
-    x1.drawImage(src, (24 - src.width * s) / 2, (43 - src.height * s) / 2, src.width * s, src.height * s);
-    const t2 = step(t1, 96, 172), t3 = step(t2, 384, 683);
-    c.imageSmoothingQuality = 'high'; c.drawImage(t3, 0, 0, W, H);
-    c.fillStyle = 'rgba(10,10,28,.5)'; c.fillRect(0, 0, W, H);
-    const g = c.createRadialGradient(W / 2, H * 0.4, 100, W / 2, H * 0.4, H * 0.75); g.addColorStop(0, 'rgba(255,255,255,.07)'); g.addColorStop(1, 'rgba(0,0,0,.28)');
-    c.fillStyle = g; c.fillRect(0, 0, W, H);
-  }
-
-  function drawRibbon(c, th) {
-    c.save(); c.shadowColor = 'rgba(0,0,0,.4)'; c.shadowBlur = 24; c.fillStyle = th.accent; c.beginPath();
-    c.moveTo(886, 0); c.lineTo(954, 0); c.lineTo(954, 214); c.lineTo(920, 178); c.lineTo(886, 214); c.closePath(); c.fill(); c.restore();
-  }
-  function drawPill(c, th, py) {
-    c.font = `600 36px ${SANS}`;
-    const tw = c.measureText(th.pill).width, pw = 44 + 48 + 14 + tw + 44, ph = 94, px = (W - pw) / 2;
-    c.save(); c.shadowColor = th.accent; c.shadowBlur = 36; rr(c, px, py, pw, ph, ph / 2); c.fillStyle = 'rgba(14,14,32,.42)'; c.fill(); c.restore();
-    rr(c, px, py, pw, ph, ph / 2); c.strokeStyle = th.accent; c.lineWidth = 3; c.stroke();
-    c.textBaseline = 'middle'; c.textAlign = 'left';
-    c.font = `40px ${EMOJI}`; c.fillStyle = '#fff'; c.fillText(th.icon, px + 40, py + ph / 2 + 2);
-    c.font = `600 36px ${SANS}`; c.fillText(th.pill, px + 44 + 48 + 14, py + ph / 2 + 1);
-    return { x: px, y: py, w: pw, h: ph };
-  }
-
-  // Alıntı kutularını ölç (çizmeden)
-  function measureQuotes(c, qs, startSize, maxW) {
-    return qs.map(q => {
-      let size = startSize, lines;
-      c.font = `italic 400 ${size}px ${SERIF}`; lines = wrap(c, q, maxW);
-      while (lines.length > 5 && size > 26) { size -= 2; c.font = `italic 400 ${size}px ${SERIF}`; lines = wrap(c, q, maxW); }
-      const lh = size * 1.36, tw = Math.max(...lines.map(l => c.measureText(l).width));
-      return { lines, size, lh, w: 92 + tw + 36, h: 30 * 2 + lines.length * lh };
-    });
-  }
-  function drawQuoteBox(c, b, x, y, th, sticker, left) {
-    c.save(); c.shadowColor = 'rgba(0,0,0,.38)'; c.shadowBlur = 30; c.shadowOffsetY = 8; rr(c, x, y, b.w, b.h, 34); c.fillStyle = 'rgba(14,14,32,.46)'; c.fill(); c.restore();
-    const hg = c.createLinearGradient(0, y, 0, y + b.h); hg.addColorStop(0, 'rgba(255,255,255,.16)'); hg.addColorStop(1, 'rgba(255,255,255,0)');
-    rr(c, x, y, b.w, b.h, 34); c.fillStyle = hg; c.fill(); c.strokeStyle = 'rgba(255,255,255,.3)'; c.lineWidth = 2; c.stroke();
-    c.textBaseline = 'alphabetic'; c.textAlign = 'left'; c.font = `700 80px ${SERIF}`; c.fillStyle = th.accent; c.fillText('“', x + 26, y + 30 + 60);
-    c.font = `italic 400 ${b.size}px ${SERIF}`; c.fillStyle = '#fff';
-    c.save(); c.shadowColor = 'rgba(0,0,0,.4)'; c.shadowBlur = 8;
-    b.lines.forEach((l, k) => c.fillText(l, x + 92, y + 30 + b.size + k * b.lh)); c.restore();
-    c.textBaseline = 'middle'; c.textAlign = 'center'; c.font = `46px ${EMOJI}`;
-    c.save(); c.translate(left ? x + b.w - 30 : x + 30, y - 4); c.rotate(left ? 0.14 : -0.14); c.fillText(sticker, 0, 0); c.restore();
-  }
-
-  // ---- Düzen 1: "Kitap açıkta" — fotoğraf bütün, alıntılar altta; hiçbir şey kitabı kapatmaz ----
-  function drawSafe(c, res, th) {
-    const qs = (res.quotes || []).slice(0, 5), n = qs.length;
-    const hasHead = !!(res.title || res.author);
-    const GAP = n >= 4 ? 16 : 22, BOTTOM = 1716, CARD_TOP = hasHead ? 478 : 372, MIN_H = n >= 4 ? 520 : 640, SIDE = 60;
-    let size = n >= 4 ? 30 : 33, boxes = [], stackH = 0;
-    for (;;) {
-      boxes = measureQuotes(c, qs, size, 740);
-      stackH = boxes.reduce((a, b) => a + b.h, 0) + GAP * Math.max(0, n - 1);
-      if (!n || BOTTOM - stackH - 40 - CARD_TOP >= MIN_H || size <= 24) break;
-      size -= 2;
-    }
-    const stackTop = n ? BOTTOM - stackH : BOTTOM;
-    const maxH = stackTop - (n ? 44 : 0) - CARD_TOP, maxW = W - SIDE * 2;
-    const iw = imgEl.naturalWidth, ih = imgEl.naturalHeight, sc = Math.min(maxW / iw, maxH / ih);
-    const cw = Math.max(200, Math.round(iw * sc)), ch = Math.max(200, Math.round(ih * sc));
-    const photo = preparePhoto(cw, ch, false);
-    blurBackground(c, photo);
-    drawRibbon(c, th);
-    drawPill(c, th, 208);
-
-    // Kitap adı ve yazar (üstte, ortalı); ikisi de boşsa çizilmez
-    if (hasHead) {
-      c.textAlign = 'center'; c.textBaseline = 'alphabetic';
-      let ty = 384;
-      if (res.title) {
-        let ts = 52; c.font = `700 ${ts}px ${SANS}`;
-        let tl = wrap(c, res.title, 900);
-        if (tl.length > 1) { ts = 42; c.font = `700 ${ts}px ${SANS}`; tl = wrap(c, res.title, 900).slice(0, 2); }
-        c.save(); c.shadowColor = 'rgba(0,0,0,.5)'; c.shadowBlur = 14; c.fillStyle = '#fff';
-        tl.forEach((l, k) => c.fillText(l, W / 2, 384 + k * ts * 1.15)); c.restore();
-        ty = 384 + (tl.length - 1) * ts * 1.15 + 44;
-      }
-      if (res.author) { c.font = `500 30px ${SANS}`; c.fillStyle = 'rgba(255,255,255,.82)'; c.fillText(res.author, W / 2, ty); }
-    }
-
-    // Fotoğraf kartı
-    // Kart + alıntılar tek grup olarak dikeyde ortalanır (yatay fotoğrafta boşluk kalmaz)
-    const groupH = ch + (n ? 44 + stackH : 0);
-    const cx = Math.round((W - cw) / 2), cy = Math.round(CARD_TOP + Math.max(0, (BOTTOM - CARD_TOP - groupH) / 2));
-    c.save(); c.shadowColor = th.accent; c.shadowBlur = 60; rr(c, cx, cy, cw, ch, 34); c.fillStyle = '#000'; c.fill(); c.restore();
-    c.save(); rr(c, cx, cy, cw, ch, 34); c.clip(); c.drawImage(photo, cx, cy); c.restore();
-    rr(c, cx, cy, cw, ch, 34); c.strokeStyle = 'rgba(255,255,255,.35)'; c.lineWidth = 3; c.stroke();
-    // Kartın köşelerine yarım taşan iki emoji (kitabı kapatmaz)
-    c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = `58px ${EMOJI}`;
-    c.save(); c.translate(cx + 6, cy + 6); c.rotate(-0.2); c.fillText(th.stickers[0], 0, 0); c.restore();
-    c.save(); c.translate(cx + cw - 6, cy + ch - 6); c.rotate(0.2); c.fillText(th.stickers[1], 0, 0); c.restore();
-
-    // Alıntılar (kartın altında)
-    let y = cy + ch + 44; const rects = [];
-    boxes.forEach((b, i) => {
-      const left = i % 2 === 0, x = left ? SIDE : W - SIDE - b.w;
-      drawQuoteBox(c, b, x, y, th, th.stickers[(i + 2) % th.stickers.length], left);
-      rects.push({ x, y, w: b.w, h: b.h }); y += b.h + GAP;
-    });
-    c.textAlign = 'center'; c.textBaseline = 'alphabetic'; c.font = `500 22px ${SANS}`; c.fillStyle = 'rgba(255,255,255,.45)'; c.fillText('Satır Arası ile hazırlandı', W / 2, 1768);
-    return { card: { x: cx, y: cy, w: cw, h: ch }, boxes: rects };
-  }
-
-  // ---- Düzen 2: "Tam ekran" — fotoğraf tüm alanı kaplar, alıntılar üstüne biner ----
-  function drawFull(c, res, th) {
-    const photo = preparePhoto(W, H, true); c.drawImage(photo, 0, 0);
+  // ---------- tasarım: hikâye görseli = arka plan fotoğrafı + düzenlenebilir katmanlar ----------
+  // Aynı katmanlar hem burada çizilir hem de "Tasarla" ile Tasarım sekmesine aktarılır.
+  const GAPX = 84;
+  function backdrop() {
+    const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const c = cv.getContext('2d');
+    c.drawImage(preparePhoto(W, H, true), 0, 0);
     let g = c.createRadialGradient(W / 2, H / 2, H * 0.22, W / 2, H / 2, H * 0.78);
     g.addColorStop(0, 'rgba(8,8,22,0)'); g.addColorStop(1, 'rgba(8,8,22,.26)'); c.fillStyle = g; c.fillRect(0, 0, W, H);
     g = c.createLinearGradient(0, 0, 0, 520); g.addColorStop(0, 'rgba(8,8,22,.32)'); g.addColorStop(1, 'rgba(8,8,22,0)'); c.fillStyle = g; c.fillRect(0, 0, W, 520);
     g = c.createLinearGradient(0, 860, 0, H); g.addColorStop(0, 'rgba(8,8,22,0)'); g.addColorStop(1, 'rgba(8,8,22,.5)'); c.fillStyle = g; c.fillRect(0, 860, W, H - 860);
-    drawRibbon(c, th); drawPill(c, th, 262);
-    const qs = (res.quotes || []).slice(0, 5), boxes = measureQuotes(c, qs, qs.length >= 4 ? 30 : 36, 580), gap = qs.length >= 4 ? 18 : 28;
-    const total = boxes.reduce((a, b) => a + b.h, 0) + gap * Math.max(0, boxes.length - 1);
-    let y = Math.max(560, 1510 - total); const rects = [];
-    boxes.forEach((b, i) => {
-      const left = i % 2 === 0, x = left ? 84 : W - 84 - b.w;
-      drawQuoteBox(c, b, x, y, th, th.stickers[i % th.stickers.length], left); rects.push({ x, y, w: b.w, h: b.h }); y += b.h + gap;
-    });
-    c.textAlign = 'left'; c.textBaseline = 'alphabetic';
-    if (res.title || res.author) {
-      let size = 54, tl = [];
-      if (res.title) {
-        c.font = `700 ${size}px ${SANS}`; tl = wrap(c, res.title, 880);
-        if (tl.length > 1) { size = 44; c.font = `700 ${size}px ${SANS}`; tl = wrap(c, res.title, 880).slice(0, 2); }
-      }
-      const fy = 1568, blockH = (tl.length ? tl.length * size * 1.2 : 0) + 44 + 30;
-      c.fillStyle = th.accent; rr(c, 84, fy - (tl.length ? size : 34), 7, blockH, 4); c.fill();
-      c.save(); c.shadowColor = 'rgba(0,0,0,.5)'; c.shadowBlur = 14; c.fillStyle = '#fff'; c.font = `700 ${size}px ${SANS}`;
-      tl.forEach((l, k) => c.fillText(l, 114, fy + k * size * 1.2)); c.restore();
-      const ay = tl.length ? fy + (tl.length - 1) * size * 1.2 + 46 : fy;
-      if (res.author) { c.font = `500 32px ${SANS}`; c.fillStyle = 'rgba(255,255,255,.86)'; c.fillText(res.author, 114, ay); }
-      c.font = `500 24px ${SANS}`; c.fillStyle = 'rgba(255,255,255,.5)'; c.fillText('Satır Arası ile hazırlandı', 114, ay + 40);
-    } else {
-      c.font = `500 24px ${SANS}`; c.fillStyle = 'rgba(255,255,255,.55)'; c.fillText('Satır Arası ile hazırlandı', 84, 1640);
+    return cv;
+  }
+  const baseText = { type: 'text', rot: 0, italic: false, bold: false, color: '#ffffff', align: 'center', w: 80, lh: 135, box: false, boxColor: '#0e0e20', boxA: 46, boxPad: 30, shadow: true, shB: 10, font: 'Outfit' };
+  function buildDesign(res, th) {
+    const api = window.__studioApi, M = L => api.measureLayer(L), layers = [];
+    // alıntı kutuları: sığana kadar yazıyı küçült
+    const qs = (res.quotes || []).slice(0, MAXQ);
+    let size = qs.length >= 4 ? 30 : 36, qL = [], total = 0, gap = qs.length >= 4 ? 18 : 28;
+    const mk = (q, sz) => ({ ...baseText, text: q, font: 'Fraunces', italic: true, size: sz, align: 'left', w: 54, lh: 136, box: true, boxR: 34, bsh: true, brd: true, brdC: '#cfd3e6', qm: true, qmC: th.accent, shB: 8, fx: 0.5, fy: 0.5 });
+    for (;;) {
+      qL = qs.map(q => { let sz = size, L = mk(q, sz); while (M(L).lines.length > 5 && sz > 26) { sz -= 2; L = mk(q, sz); } return L; });
+      total = qL.reduce((a, L) => a + M(L).hh * 2, 0) + gap * Math.max(0, qL.length - 1);
+      if (!qL.length || total <= 940 || size <= 24) break; size -= 2;
     }
-    return { card: { x: 0, y: 0, w: W, h: H }, boxes: rects };
+    let y = Math.max(560, 1510 - total);
+    qL.forEach((L, i) => {
+      const m = M(L), left = i % 2 === 0, x0 = left ? GAPX : W - GAPX - m.hw * 2;
+      L.fx = (x0 + m.hw) / W; L.fy = (y + m.hh) / H;
+      const st = th.stickers[i % th.stickers.length];
+      layers.push(L);
+      layers.push({ ...baseText, text: st, size: 46, w: 20, shadow: false, rot: left ? 8 : -8, fx: (left ? x0 + m.hw * 2 - 30 : x0 + 30) / W, fy: (y - 4) / H });
+      y += m.hh * 2 + gap;
+    });
+    // durum etiketi
+    const pill = { ...baseText, text: `${th.icon}  ${th.pill}`, size: 34, bold: true, w: 92, box: true, boxPad: 26, boxR: 200, bsh: true, brd: true, brdC: th.accent, boxA: 42, fx: 0.5, fy: 0.5 };
+    pill.fy = 300 / H; layers.push(pill);
+    // kitap adı + yazar
+    if (res.title || res.author) {
+      let ty = 1560;
+      if (res.title) {
+        let t = { ...baseText, text: res.title, size: 54, bold: true, align: 'left', w: 82, lh: 120, fx: 0.5, fy: 0.5 };
+        if (M(t).lines.length > 1) t = { ...t, size: 44 };
+        const m = M(t); t.fx = (GAPX + m.hw) / W; t.fy = (ty + m.hh) / H; layers.push(t); ty += m.hh * 2 + 12;
+      }
+      if (res.author) {
+        const a = { ...baseText, text: res.author, size: 32, align: 'left', w: 82, color: '#e6e8f2', fx: 0.5, fy: 0.5 };
+        const m = M(a); a.fx = (GAPX + m.hw) / W; a.fy = (ty + m.hh) / H; layers.push(a);
+      }
+    }
+    // ayraç ve filigran (lotus)
+    layers.push({ type: 'ribbon', size: 68, rot: 0, color: th.accent, shadow: true, shB: 24, fx: 920 / W, fy: 107 / H });
+    layers.push({ type: 'lotus', size: 112, rot: 0, color: '#ffffff', alpha: 80, shadow: true, shB: 8, fx: 0.5, fy: 0.955 });
+    return layers;
   }
 
   async function fontsReady() {
@@ -368,11 +259,16 @@
     } catch (e) { /* yedek yazı tipi */ }
   }
 
+  let lastDesign = null;
   async function draw() {
     await fontsReady();
-    const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
-    const c = cv.getContext('2d');
-    window.__story.lastLayout = (layout === 'full' ? drawFull : drawSafe)(c, result, ST[status]);
+    const api = window.__studioApi; if (!api) throw new Error('Tasarım aracı yüklenemedi, sayfayı yenile.');
+    const bg = backdrop(), th = ST[status], layers = buildDesign(result, th);
+    await api.fontsFor(layers);
+    const layers2 = buildDesign(result, th); // yazı tipleri yüklendikten sonra ölçüleri yeniden hesapla
+    lastDesign = { bg, layers: layers2 };
+    const cv = await api.renderDesign(lastDesign);
+    window.__story.lastLayout = layers2;
     const blob = await new Promise(r => cv.toBlob(r, 'image/jpeg', 0.93));
     if (!blob) throw new Error('Görsel oluşturulamadı.');
     lastBlob = blob; if (blobUrl) URL.revokeObjectURL(blobUrl); blobUrl = URL.createObjectURL(blob);
@@ -381,10 +277,11 @@
       <div class="preview"><img src="${blobUrl}" alt="Hazırlanan hikâye görseli"></div>
       <div class="sactions">
         <button class="btn main" data-sdl>⬇️ Görseli indir</button>
+        <button class="btn design" data-sdesign>🎨 Tasarla</button>
         ${canShare ? '<button class="btn" data-sshare>📤 Paylaş</button>' : ''}
         <button class="btn" data-sedit ${canShare ? '' : 'style="grid-column:1/-1"'}>✏️ Alıntıları değiştir</button>
       </div>
-      <p class="snote">Durumu, düzeni ya da alıntıları değiştirirsen görsel anında yenilenir. iPhone'da indirme olmazsa görsele uzun basıp "Fotoğraflara Ekle"yi seç.</p>
+      <p class="snote">Durumu ya da alıntıları değiştirirsen görsel anında yenilenir. Kutuları, yazıyı ve simgeleri kendin yerleştirmek için <b>Tasarla</b>'ya bas. iPhone'da indirme olmazsa görsele uzun basıp "Fotoğraflara Ekle"yi seç.</p>
     </div>`;
   }
 
@@ -398,6 +295,13 @@
     } else if (e.target.closest('[data-sshare]') && lastBlob) {
       try { await navigator.share({ files: [new File([lastBlob], fname(), { type: 'image/jpeg' })], title: result.title }); }
       catch (err) { if (err.name !== 'AbortError') toast('Paylaşılamadı, indirmeyi dene.'); }
+    } else if (e.target.closest('[data-sdesign]') && lastDesign) {
+      const btn = e.target.closest('[data-sdesign]'); btn.disabled = true;
+      try {
+        const ok = await window.__studioImport({ photo: lastDesign.bg.toDataURL('image/jpeg', 0.9), layers: lastDesign.layers });
+        if (ok) { setTab('studio'); toast('Tasarım sekmesinde düzenleyebilirsin 🎨'); }
+      } catch (err) { toast('Tasarım açılamadı: ' + err.message); }
+      finally { btn.disabled = false; }
     } else if (e.target.closest('[data-sedit]')) $('#spick').scrollIntoView({ behavior: 'smooth', block: 'center' });
   });
 
@@ -405,5 +309,5 @@
   renderPicker(false);
 
   // Test için dışarı açılan küçük yardımcı
-  window.__story = { W, H, lastLayout: null };
+  window.__story = { W, H, lastLayout: null, get design() { return lastDesign; } };
 })();

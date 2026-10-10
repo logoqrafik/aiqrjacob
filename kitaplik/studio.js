@@ -87,7 +87,10 @@
 
   // ---------- yazı tipleri ----------
   const fontOf = id => FONTS.find(f => f.id === id) || FONTS[0];
-  const fontStr = (L, size = L.size) => `${L.italic ? 'italic ' : ''}${L.bold ? 700 : 400} ${size}px "${fontOf(L.font).id}", ${fontOf(L.font).fb}`;
+  const EMO = '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji"';
+  const fontStr = (L, size = L.size) => `${L.italic ? 'italic ' : ''}${L.bold ? 700 : 400} ${size}px "${fontOf(L.font).id}", ${fontOf(L.font).fb}, ${EMO}`;
+  const isIcon = L => L && (L.type === 'ribbon' || L.type === 'lotus');
+  const isText = L => !isIcon(L);
   function loadFont(L) {
     if (!document.fonts || !document.fonts.load) return Promise.resolve();
     return Promise.race([document.fonts.load(fontStr(L, 40), 'Aİıİşğ'), new Promise(r => setTimeout(r, 1800))]).catch(() => {});
@@ -202,20 +205,33 @@
     out.push(line);
   }
   function layout(c, L) {
+    if (isIcon(L)) { const hh = L.size * window.SH.RATIO[L.type] / 2; return { lines: [], lh: 0, tw: L.size, th: hh * 2, hw: L.size / 2, hh, ex: 0 }; }
     c.font = fontStr(L); const maxW = Math.max(80, L.w / 100 * W()), lines = [];
     String(L.text || '').split('\n').forEach(p => { if (!p.trim()) lines.push(''); else wrapInto(c, p, maxW, lines); });
     if (!lines.length) lines.push('');
-    const lh = L.size * L.lh / 100, tw = Math.max(20, ...lines.map(l => c.measureText(l).width)), th = lines.length * lh, pad = L.box ? L.boxPad : 0;
-    return { lines, lh, tw, th, hw: tw / 2 + pad, hh: th / 2 + pad };
+    const lh = L.size * L.lh / 100, tw = Math.max(20, ...lines.map(l => c.measureText(l).width)), th = lines.length * lh, pad = L.box ? L.boxPad : 0, ex = L.qm ? Math.round(L.size * 1.7) : 0;
+    return { lines, lh, tw, th, hw: tw / 2 + pad + ex / 2, hh: th / 2 + pad, ex };
   }
   function rr(c, x, y, w, h, r) { r = Math.min(r, w / 2, h / 2); c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
   function drawLayer(c, L) {
     const m = layout(c, L);
     c.save(); c.translate(L.fx * W(), L.fy * H()); c.rotate(L.rot * Math.PI / 180);
-    if (L.box) { c.fillStyle = rgba(L.boxColor, L.boxA / 100); rr(c, -m.hw, -m.hh, m.hw * 2, m.hh * 2, 28); c.fill(); }
+    if (isIcon(L)) {
+      c.globalAlpha = (L.alpha == null ? 100 : L.alpha) / 100;
+      if (L.shadow) { c.shadowColor = 'rgba(0,0,0,.4)'; c.shadowBlur = L.shB; }
+      if (L.type === 'ribbon') window.SH.ribbon(c, L.size, L.color); else window.SH.lotus(c, L.size, L.color, Math.max(1.6, L.size / 40));
+      c.restore(); return;
+    }
+    if (L.box) {
+      const r = L.boxR == null ? 28 : L.boxR;
+      c.save(); if (L.bsh) { c.shadowColor = L.brd ? rgba(L.brdC || '#ffffff', 0.55) : 'rgba(0,0,0,.4)'; c.shadowBlur = 30; c.shadowOffsetY = 8; }
+      c.fillStyle = rgba(L.boxColor, L.boxA / 100); rr(c, -m.hw, -m.hh, m.hw * 2, m.hh * 2, r); c.fill(); c.restore();
+      if (L.brd) { rr(c, -m.hw, -m.hh, m.hw * 2, m.hh * 2, r); c.strokeStyle = L.brdC || '#ffffff'; c.lineWidth = Math.max(2, L.size / 12); c.stroke(); }
+    }
+    if (L.qm) { c.save(); c.font = `700 ${Math.round(L.size * 2.3)}px "Fraunces", Georgia, serif`; c.textAlign = 'left'; c.textBaseline = 'alphabetic'; c.fillStyle = L.qmC || '#ffffff'; c.fillText('\u201C', -m.hw + L.size * 0.5, -m.hh + (L.boxPad || 0) + L.size * 1.55); c.restore(); }
     c.font = fontStr(L); c.textBaseline = 'middle'; c.textAlign = L.align; c.fillStyle = L.color;
     if (L.shadow) { c.shadowColor = hexLum(L.color) > 0.45 ? 'rgba(0,0,0,.6)' : 'rgba(255,255,255,.55)'; c.shadowBlur = L.shB; c.shadowOffsetY = L.shB * 0.2; }
-    const x = L.align === 'left' ? -m.tw / 2 : L.align === 'right' ? m.tw / 2 : 0;
+    const x = (L.align === 'left' ? -m.tw / 2 : L.align === 'right' ? m.tw / 2 : 0) + m.ex / 2;
     m.lines.forEach((ln, i) => c.fillText(ln, x, -m.th / 2 + m.lh * (i + 0.5)));
     c.restore();
   }
@@ -243,12 +259,12 @@
   // ---------- katman işlemleri ----------
   function autoSize(t) { const n = String(t).length; return n < 40 ? 84 : n < 90 ? 66 : n < 160 ? 52 : 42; }
   function addLayer(text, opt = {}) {
-    const best = PAL[0] ? PAL[0].hex : '#ffffff', n = S.layers.length;
+    const best = PAL[0] ? PAL[0].hex : '#ffffff', n = S.layers.filter(isText).length;
     const L = { id: ++S.seq, text, fx: 0.5, fy: clamp(0.5 + ((n % 5) - 2) * 0.13, 0.12, 0.88), size: autoSize(text), rot: 0, color: lastStyle.color || best, ...lastStyle, ...opt };
     if (!lastStyle.color) L.color = best;
     S.layers.push(L); S.sel = L.id; commit(); loadFont(L).then(() => render()); applyAll(); return L;
   }
-  function rememberStyle(L) { const { font, italic, bold, shadow, shB, box, boxColor, boxA, boxPad, align, w, lh, color } = L; lastStyle = { font, italic, bold, shadow, shB, box, boxColor, boxA, boxPad, align, w, lh, color }; }
+  function rememberStyle(L) { if (isIcon(L)) return; const { font, italic, bold, shadow, shB, box, boxColor, boxA, boxPad, align, w, lh, color } = L; lastStyle = { font, italic, bold, shadow, shB, box, boxColor, boxA, boxPad, align, w, lh, color }; }
 
   // ---------- panel (kontroller) ----------
   const NAMES = { solid: 'Düz renk', gradient: 'Gradyan', texture: 'Doku', photo: 'Fotoğraf' };
@@ -269,12 +285,15 @@
     box.innerHTML = PAL.map((c, i) => `<button class="sw ${L && L.color.toLowerCase() === c.hex.toLowerCase() ? 'on' : ''} ${i < 2 ? 'best' : ''}" style="background:${c.hex}" data-pc="${c.hex}" title="${esc(c.name)} · kontrast ${c.ratio.toFixed(1)}"><span style="color:${hexLum(c.hex) > 0.5 ? '#111' : '#fff'};background:none;text-shadow:none">${esc(c.name)}</span></button>`).join('');
   }
   function renderLayers() {
-    $('#stLayers').innerHTML = S.layers.map((L, i) => `<button class="${L.id === S.sel ? 'on' : ''}" data-l="${L.id}">${i + 1}. ${esc(String(L.text).replace(/\s+/g, ' ').slice(0, 14) || '…')}</button>`).join('');
+    $('#stLayers').innerHTML = S.layers.map((L, i) => `<button class="${L.id === S.sel ? 'on' : ''}" data-l="${L.id}">${i + 1}. ${L.type === 'lotus' ? '🪷 Filigran' : L.type === 'ribbon' ? '🔖 Ayraç' : esc(String(L.text).replace(/\s+/g, ' ').slice(0, 14) || '…')}</button>`).join('');
   }
   function syncCtl() {
     const L = sel(); $('#stNoSel').hidden = !!L; $('#stCtl').hidden = !L; renderLayers();
     document.querySelectorAll('#stFormat .cchip').forEach(c => c.classList.toggle('on', c.dataset.sf === S.format));
     if (!L) { renderPal(); return; }
+    const ic = isIcon(L);
+    document.querySelectorAll('#stCtl .txo, [data-al], #stBold, #stItal').forEach(el => el.hidden = ic);
+    if (ic) { const set0 = (id, v, fmt) => { $(id).value = v; $(id + 'O').textContent = fmt(v); }; set0('#stSize', Math.round(L.size), v => v + ' px'); set0('#stRot', Math.round(L.rot), v => v + '°'); $('#stColor').value = /^#[0-9a-f]{6}$/i.test(L.color) ? L.color : '#ffffff'; $('#stShadow').checked = !!L.shadow; $('#stShCtl').hidden = !L.shadow; $('#stShB').value = L.shB; $('#stShBO').textContent = L.shB; renderPal(); return; }
     if (document.activeElement !== $('#stTxt')) $('#stTxt').value = L.text;
     document.querySelectorAll('#stFonts .fbtn').forEach(b => b.classList.toggle('on', b.dataset.f === L.font));
     const set = (id, v, fmt) => { $(id).value = v; $(id + 'O').textContent = fmt ? fmt(v) : v; };
@@ -282,7 +301,8 @@
     document.querySelectorAll('[data-al]').forEach(b => b.classList.toggle('on', b.dataset.al === L.align));
     $('#stBold').classList.toggle('on', !!L.bold); $('#stItal').classList.toggle('on', !!L.italic);
     $('#stColor').value = /^#[0-9a-f]{6}$/i.test(L.color) ? L.color : '#ffffff';
-    $('#stBox').checked = !!L.box; $('#stBoxCtl').hidden = !L.box; $('#stBoxC').value = L.boxColor; set('#stBoxA', L.boxA, v => v + '%'); set('#stBoxP', L.boxPad, v => v + ' px');
+    $('#stBox').checked = !!L.box; $('#stBoxCtl').hidden = !L.box; $('#stBoxC').value = L.boxColor; set('#stBoxA', L.boxA, v => v + '%'); set('#stBoxP', L.boxPad, v => v + ' px'); set('#stBoxR', L.boxR == null ? 28 : L.boxR, v => v);
+    $('#stBoxSh').checked = !!L.bsh; $('#stBrd').checked = !!L.brd; $('#stBrdC').value = L.brdC || '#4fb8b2'; $('#stQm').checked = !!L.qm; $('#stQmC').value = L.qmC || '#4fb8b2';
     $('#stShadow').checked = !!L.shadow; $('#stShCtl').hidden = !L.shadow; set('#stShB', L.shB, v => v);
     renderPal();
   }
@@ -290,9 +310,9 @@
 
   // slider / alan bağlama
   function bindRange(id, fn) { const el = $(id); el.addEventListener('input', () => { const L = sel(); if (!L) return; fn(L, +el.value); syncOut(id, +el.value); render(); }); el.addEventListener('change', () => { const L = sel(); if (L) rememberStyle(L); commit(); }); }
-  function syncOut(id, v) { const o = $(id + 'O'); if (!o) return; const m = { '#stSize': v + ' px', '#stRot': v + '°', '#stW': v + '%', '#stLh': (v / 100).toFixed(2), '#stBoxA': v + '%', '#stBoxP': v + ' px', '#stShB': v }; o.textContent = m[id] ?? v; }
+  function syncOut(id, v) { const o = $(id + 'O'); if (!o) return; const m = { '#stSize': v + ' px', '#stRot': v + '°', '#stW': v + '%', '#stLh': (v / 100).toFixed(2), '#stBoxA': v + '%', '#stBoxP': v + ' px', '#stBoxR': v, '#stShB': v }; o.textContent = m[id] ?? v; }
   bindRange('#stSize', (L, v) => L.size = v); bindRange('#stRot', (L, v) => L.rot = v); bindRange('#stW', (L, v) => L.w = v); bindRange('#stLh', (L, v) => L.lh = v);
-  bindRange('#stBoxA', (L, v) => L.boxA = v); bindRange('#stBoxP', (L, v) => L.boxPad = v); bindRange('#stShB', (L, v) => L.shB = v);
+  bindRange('#stBoxR', (L, v) => L.boxR = v); bindRange('#stBoxA', (L, v) => L.boxA = v); bindRange('#stBoxP', (L, v) => L.boxPad = v); bindRange('#stShB', (L, v) => L.shB = v);
   $('#stTxt').addEventListener('input', e => { const L = sel(); if (!L) return; L.text = e.target.value; renderLayers(); render(); });
   $('#stTxt').addEventListener('change', () => commit());
   $('#stColor').addEventListener('input', e => { const L = sel(); if (!L) return; L.color = e.target.value; rememberStyle(L); renderPal(); render(); });
@@ -301,13 +321,17 @@
   $('#stBoxC').addEventListener('change', () => commit());
   $('#stBox').addEventListener('change', e => { const L = sel(); if (!L) return; L.box = e.target.checked; rememberStyle(L); commit(); syncCtl(); render(); });
   $('#stShadow').addEventListener('change', e => { const L = sel(); if (!L) return; L.shadow = e.target.checked; rememberStyle(L); commit(); syncCtl(); render(); });
+  const chk = (id, key) => $(id).addEventListener('change', e => { const L = sel(); if (!L) return; L[key] = e.target.checked; commit(); render(); });
+  chk('#stBoxSh', 'bsh'); chk('#stBrd', 'brd'); chk('#stQm', 'qm');
+  const colr = (id, key) => { $(id).addEventListener('input', e => { const L = sel(); if (!L) return; L[key] = e.target.value; render(); }); $(id).addEventListener('change', () => commit()); };
+  colr('#stBrdC', 'brdC'); colr('#stQmC', 'qmC');
   $('#stBold').addEventListener('click', () => { const L = sel(); if (!L) return; L.bold = !L.bold; rememberStyle(L); loadFont(L).then(() => render()); commit(); syncCtl(); render(); });
   $('#stItal').addEventListener('click', () => { const L = sel(); if (!L) return; L.italic = !L.italic; rememberStyle(L); loadFont(L).then(() => render()); commit(); syncCtl(); render(); });
   $('#stCenH').addEventListener('click', () => { const L = sel(); if (!L) return; L.fx = 0.5; commit(); render(); });
   $('#stCenV').addEventListener('click', () => { const L = sel(); if (!L) return; L.fy = 0.5; commit(); render(); });
   $('#stDup').addEventListener('click', () => { const L = sel(); if (!L) return; const c = { ...L, id: ++S.seq, fx: clamp(L.fx + 0.05, 0, 1), fy: clamp(L.fy + 0.06, 0, 1) }; S.layers.push(c); S.sel = c.id; commit(); applyAll(); });
   $('#stDel').addEventListener('click', delSel);
-  $('#stAll').addEventListener('click', () => { const L = sel(); if (!L) return; S.layers.forEach(o => Object.assign(o, { font: L.font, italic: L.italic, bold: L.bold, color: L.color, shadow: L.shadow, shB: L.shB, box: L.box, boxColor: L.boxColor, boxA: L.boxA, boxPad: L.boxPad, align: L.align, lh: L.lh })); commit(); Promise.all(S.layers.map(loadFont)).then(() => render()); applyAll(); toast('Stil tüm yazılara uygulandı.'); });
+  $('#stAll').addEventListener('click', () => { const L = sel(); if (!L) return; S.layers.filter(isText).forEach(o => Object.assign(o, { boxR: L.boxR, bsh: L.bsh, brd: L.brd, brdC: L.brdC, qm: L.qm, qmC: L.qmC, font: L.font, italic: L.italic, bold: L.bold, color: L.color, shadow: L.shadow, shB: L.shB, box: L.box, boxColor: L.boxColor, boxA: L.boxA, boxPad: L.boxPad, align: L.align, lh: L.lh })); commit(); Promise.all(S.layers.map(loadFont)).then(() => render()); applyAll(); toast('Stil tüm yazılara uygulandı.'); });
   function delSel() { const L = sel(); if (!L) return; S.layers = S.layers.filter(x => x.id !== L.id); S.sel = null; commit(); applyAll(); }
   $('#stUndo').addEventListener('click', undo);
   $('#stAdd').addEventListener('click', () => { addLayer('Alıntını buraya yaz ✍️'); setTimeout(() => { $('#stText').scrollIntoView({ behavior: 'smooth', block: 'start' }); $('#stTxt').focus(); $('#stTxt').select(); }, 150); });
@@ -344,7 +368,7 @@
   const ptrs = new Map(); let gest = null;
   const posOf = e => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) * cv.width / r.width, y: (e.clientY - r.top) * cv.height / r.height }; };
   const toLocal = (L, p) => { const dx = p.x - L.fx * W(), dy = p.y - L.fy * H(), r = -L.rot * Math.PI / 180; return { x: dx * Math.cos(r) - dy * Math.sin(r), y: dx * Math.sin(r) + dy * Math.cos(r) }; };
-  const hitL = (L, p) => { const m = layout(mc, L), q = toLocal(L, p), t = 14 * uiScale(); return Math.abs(q.x) <= m.hw + t && Math.abs(q.y) <= m.hh + t; };
+  const hitL = (L, p, tol = 14 * uiScale()) => { const m = layout(mc, L), q = toLocal(L, p), t = tol; return Math.abs(q.x) <= m.hw + t && Math.abs(q.y) <= m.hh + t; };
   const onHandle = (L, p) => { const m = layout(mc, L), q = toLocal(L, p), h = handleLocal(m); return Math.hypot(q.x - h.x, q.y - h.y) <= 34 * uiScale(); };
   const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y), ang = (a, b) => Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
   const normDeg = d => { d = ((d + 180) % 360 + 360) % 360 - 180; return d; };
@@ -353,7 +377,7 @@
     const p = posOf(e); ptrs.set(e.pointerId, p); const L = sel();
     if (ptrs.size === 2 && L) { const [a, b] = [...ptrs.values()]; gest = { type: 'pinch', d0: dist(a, b), a0: ang(a, b), size0: L.size, rot0: L.rot, mid0: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, fx0: L.fx, fy0: L.fy, moved: false }; return; }
     if (L && onHandle(L, p)) { const c = { x: L.fx * W(), y: L.fy * H() }; gest = { type: 'handle', c, d0: dist(c, p), a0: ang(c, p), size0: L.size, rot0: L.rot, moved: false }; return; }
-    const hit = [...S.layers].reverse().find(l => hitL(l, p));
+    const hit = [...S.layers].reverse().find(l => hitL(l, p, 0)) || [...S.layers].reverse().find(l => hitL(l, p));
     if (hit) { S.sel = hit.id; gest = { type: 'drag', dx: p.x - hit.fx * W(), dy: p.y - hit.fy * H(), moved: false }; syncCtl(); } else { S.sel = null; gest = null; syncCtl(); }
     render();
   });
@@ -390,7 +414,7 @@
   }
   const stamp = () => { const d = new Date(), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}`; };
   async function download(type) {
-    if (!S.layers.length) return toast('Önce bir yazı ekle.');
+    if (!S.layers.some(isText)) return toast('Önce bir yazı ekle.');
     const c = await exportCanvas(), mime = type === 'jpg' ? 'image/jpeg' : 'image/png';
     c.toBlob(b => { if (!b) return toast('Görsel oluşturulamadı.'); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `satir-arasi-${S.format}-${stamp()}.${type}`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); toast('Görsel indiriliyor…'); }, mime, 0.93);
   }
@@ -420,7 +444,7 @@
     $('#stSaved').innerHTML = list.length ? list.map(d => `<div class="sd ${d.id === curId ? 'cur' : ''}"><img src="${d.thumb}" alt="" data-open="${d.id}"><div class="meta">${esc(d.name)}<small>${fmtDate(d.at)}</small></div><div class="acts"><button data-open="${d.id}" aria-label="Aç">✏️</button><button data-copy="${d.id}" aria-label="Çoğalt">⧉</button><button data-ren="${d.id}" aria-label="Adını değiştir">Aa</button><button data-rm="${d.id}" aria-label="Sil">🗑️</button></div></div>`).join('') : '<div class="none">Henüz kayıtlı tasarım yok. Bir tasarım yapıp 💾 Kaydet\'e bas.</div>';
   }
   async function save() {
-    if (!S.layers.length) return toast('Önce bir yazı ekle.');
+    if (!S.layers.some(isText)) return toast('Önce bir yazı ekle.');
     const id = curId || 'd' + Date.now().toString(36), name = curName || `Tasarım ${fmtDate(Date.now())}`;
     const snap = JSON.parse(JSON.stringify(S)); snap.sel = null;
     try { await DB.put({ id, name, at: Date.now(), thumb: await thumb(), state: snap, photo: S.bg.kind === 'photo' || photoData ? photoData : '' }); }
@@ -435,7 +459,7 @@
   }
   async function newDesign() {
     if (dirty && S.layers.length && !confirm('Kaydedilmemiş değişiklikler silinsin mi?')) return;
-    S = fresh(); photoData = ''; photoImg = null; photoVer++; curId = null; curName = ''; history = []; base = JSON.stringify(S); dirty = false; applyAll(); addLayer('Alıntını buraya yaz ✍️'); dirty = false; renderSaved();
+    S = fresh(); photoData = ''; photoImg = null; photoVer++; curId = null; curName = ''; history = []; base = JSON.stringify(S); dirty = false; applyAll(); addLayer('Alıntını buraya yaz ✍️'); addMark(false); S.sel = S.layers.find(isText).id; applyAll(); dirty = false; renderSaved();
   }
   $('#stSave').addEventListener('click', save); $('#stNew').addEventListener('click', newDesign);
   $('#stSaved').addEventListener('click', async e => {
@@ -469,10 +493,35 @@
     const bq = e.target.closest('[data-bq]'); if (bq && bookRec) { const [c, k] = bq.dataset.bq.split(':').map(Number); addLayer(bookRec.categories[c].quotes[k]); toast('Tasarıma eklendi ✓'); }
   });
 
+  // ---------- filigran (lotus) ve hikâyeden içe aktarma ----------
+  const markLayer = () => ({ id: ++S.seq, type: 'lotus', fx: 0.5, fy: S.format === 'story' ? 0.955 : 0.93, size: 112, rot: 0, color: '#ffffff', alpha: 80, shadow: true, shB: 8 });
+  function hasMark() { return S.layers.some(l => l.type === 'lotus'); }
+  function addMark(select) { if (hasMark()) { const m = S.layers.find(l => l.type === 'lotus'); S.sel = m.id; applyAll(); return toast('Filigran zaten var, istersen sürükleyebilirsin.'); } const L = markLayer(); S.layers.push(L); if (select) S.sel = L.id; commit(); applyAll(); }
+  $('#stMark').addEventListener('click', () => { addMark(true); });
+
+  // Hikâye sekmesinin hazırladığı görseli (arka plan fotoğrafı + katmanlar) düzenlenebilir tasarım olarak aç
+  async function importDesign(d) {
+    if (dirty && S.layers.some(isText) && !confirm('Kaydedilmemiş tasarımın var. Hikâye görseli onun yerine açılsın mı?')) return false;
+    S = fresh(); S.bg.kind = 'photo'; S.bg.fit = 'cover'; photoData = d.photo; await loadPhoto();
+    S.layers = d.layers.map(l => ({ ...l, id: ++S.seq })); S.sel = null; curId = null; curName = '';
+    await Promise.all(S.layers.map(loadFont)); history = []; base = JSON.stringify(S); dirty = true;
+    $('#stFileLabel').textContent = 'Başka fotoğraf seç'; applyAll(); renderSaved(); return true;
+  }
+  // Çevrimdışı çizim (hikâye önizlemesi için): arka plan tuvali + katmanlar, stüdyonun kendi çizicisiyle
+  async function renderDesign(d) {
+    await Promise.all(d.layers.map(loadFont));
+    const prev = S; S = { format: 'story', bg: prev.bg, layers: [], sel: null, seq: 0 };
+    try { const c = document.createElement('canvas'); c.width = 1080; c.height = 1920; const x = c.getContext('2d'); x.drawImage(d.bg, 0, 0); d.layers.forEach(L => drawLayer(x, L)); return c; }
+    finally { S = prev; }
+  }
+  function measureLayer(L) { const prev = S; S = { format: 'story' }; try { return layout(mc, L); } finally { S = prev; } }
+
   // ---------- başlangıç ----------
   function init() {
-    renderFonts(); renderBgGrid(); render(); addLayer('Alıntını buraya yaz ✍️'); dirty = false; history = []; base = JSON.stringify(S); renderSaved(); preloadFonts();
+    renderFonts(); renderBgGrid(); render(); addLayer('Alıntını buraya yaz ✍️'); addMark(false); S.sel = S.layers.find(isText).id; applyAll(); dirty = false; history = []; base = JSON.stringify(S); renderSaved(); preloadFonts();
   }
   init();
+  window.__studioImport = importDesign;
+  window.__studioApi = { renderDesign, measureLayer, loadFont, fontsFor: ls => Promise.all(ls.map(loadFont)) };
   window.__studio = { get S() { return S; }, get PAL() { return PAL; }, FORMATS, FONTS, render, exportCanvas, layout: L => layout(mc, L) };
 })();

@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;1,9..144,400;1,9..144,500&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Cormorant+Garamond:ital,wght@0,500;0,700;1,500;1,700&family=EB+Garamond:ital,wght@0,400;0,700;1,400;1,700&family=Lora:ital,wght@0,400;0,700;1,400;1,700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Crimson+Pro:ital,wght@0,400;0,700;1,400;1,700&family=DM+Serif+Display:ital@0;1&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Dancing+Script:wght@400;700&family=Caveat:wght@400;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=17">
+  <link rel="stylesheet" href="style.css?v=18">
 </head>
 <body>
   <div class="bg" aria-hidden="true"><i class="blob b1"></i><i class="blob b2"></i><i class="blob b3"></i></div>
@@ -68,11 +68,6 @@
           <button class="cchip c4" data-st="okuyorum">📖 Okuyorum</button>
           <button class="cchip c0" data-st="bitirdim">✅ Bitirdim</button>
         </div>
-        <div class="ask2">Düzen</div>
-        <div class="cats" id="sLayout">
-          <button class="cchip c1 on" data-ly="safe">🖼️ Kitap açıkta</button>
-          <button class="cchip c2" data-ly="full">🌄 Tam ekran</button>
-        </div>
         <div class="ask2">Hangi kitap? <span class="muted2">(isteğe bağlı)</span></div>
         <input id="stitle" placeholder="Kitap adı" autocomplete="off">
         <input id="sauthor" placeholder="Yazar" autocomplete="off">
@@ -95,12 +90,13 @@
           <button class="cchip c3" data-sf="portrait">🖼️ Gönderi 4:5</button>
         </div>
         <div class="st-stage"><canvas id="stCanvas" width="1080" height="1920" aria-label="Tasarım alanı"></canvas></div>
-        <p class="hint">Yazıya dokun ve sürükle. İki parmakla büyüt, küçült, döndür. Köşedeki yuvarlak tutamaç da büyütür ve döndürür.</p>
+        <p class="hint">Yazıya, kutuya ya da simgeye dokun ve sürükle. İki parmakla büyüt, küçült, döndür. Köşedeki yuvarlak tutamaç da büyütür ve döndürür.</p>
         <div id="stLayers" class="chips2"></div>
         <div class="st-bar">
           <button class="btn2" id="stUndo">↩️ Geri al</button>
           <button class="btn2" id="stAdd">➕ Alıntı ekle</button>
           <button class="btn2" id="stBook">✨ Kitaptan getir</button>
+          <button class="btn2" id="stMark">🪷 Filigran ekle</button>
         </div>
       </section>
 
@@ -133,15 +129,15 @@
 
       <section class="card st" id="stText">
         <h3 class="st-h">Seçili yazı</h3>
-        <div id="stNoSel" class="none">Düzenlemek için tasarımdaki bir yazıya dokun ya da yukarıdan <b>➕ Alıntı ekle</b>'ye bas.</div>
+        <div id="stNoSel" class="none">Düzenlemek için tasarımdaki bir yazıya veya simgeye dokun, ya da yukarıdan <b>➕ Alıntı ekle</b>'ye bas.</div>
         <div id="stCtl" hidden>
-          <textarea id="stTxt" placeholder="Alıntını buraya yaz"></textarea>
-          <div class="ask2">Yazı tipi</div>
-          <div id="stFonts" class="fonts"></div>
+          <textarea class="txo" id="stTxt" placeholder="Alıntını buraya yaz"></textarea>
+          <div class="ask2 txo">Yazı tipi</div>
+          <div id="stFonts" class="fonts txo"></div>
           <label class="sl"><span>Boyut</span><input type="range" id="stSize" min="20" max="280" value="64"><output id="stSizeO"></output></label>
           <label class="sl"><span>Döndür</span><input type="range" id="stRot" min="-180" max="180" value="0"><output id="stRotO"></output></label>
-          <label class="sl"><span>Genişlik</span><input type="range" id="stW" min="25" max="100" value="80"><output id="stWO"></output></label>
-          <label class="sl"><span>Satır aralığı</span><input type="range" id="stLh" min="100" max="220" value="135"><output id="stLhO"></output></label>
+          <label class="sl txo"><span>Genişlik</span><input type="range" id="stW" min="25" max="100" value="80"><output id="stWO"></output></label>
+          <label class="sl txo"><span>Satır aralığı</span><input type="range" id="stLh" min="100" max="220" value="135"><output id="stLhO"></output></label>
           <div class="st-row">
             <button class="btn2 sq" data-al="left" aria-label="Sola">⬅︎</button><button class="btn2 sq" data-al="center" aria-label="Ortala">↔︎</button><button class="btn2 sq" data-al="right" aria-label="Sağa">➡︎</button>
             <button class="btn2 sq" id="stBold"><b>B</b></button><button class="btn2 sq" id="stItal"><i>I</i></button>
@@ -150,12 +146,16 @@
           <div class="ask2">Renk <span class="muted2" id="stPalLabel"></span></div>
           <div id="stPal" class="swatches"></div>
           <div class="st-row"><label class="colorpick">Özel renk <input type="color" id="stColor" value="#ffffff"></label></div>
-          <div class="st-sec">
+          <div class="st-sec txo">
             <label class="tg"><input type="checkbox" id="stBox"> Arkasına yarı saydam kutu</label>
             <div id="stBoxCtl">
               <label class="sl"><span>Kutu rengi</span><input type="color" id="stBoxC" value="#000000"></label>
               <label class="sl"><span>Saydamlık</span><input type="range" id="stBoxA" min="5" max="95" value="40"><output id="stBoxAO"></output></label>
               <label class="sl"><span>Kutu boşluğu</span><input type="range" id="stBoxP" min="10" max="120" value="36"><output id="stBoxPO"></output></label>
+              <label class="sl"><span>Köşe yuvarlaklığı</span><input type="range" id="stBoxR" min="0" max="120" value="28"><output id="stBoxRO"></output></label>
+              <label class="tg"><input type="checkbox" id="stBoxSh"> Kutu gölgesi</label>
+              <label class="tg"><input type="checkbox" id="stBrd"> Çerçeve <input type="color" id="stBrdC" value="#4fb8b2" style="margin-left:8px"></label>
+              <label class="tg"><input type="checkbox" id="stQm"> Tırnak işareti <input type="color" id="stQmC" value="#4fb8b2" style="margin-left:8px"></label>
             </div>
           </div>
           <div class="st-sec">
@@ -190,10 +190,11 @@
   </main>
   <div id="toast" class="toast" hidden></div>
 
-  <script src="config.js?v=17"></script>
-  <script src="daily.js?v=17"></script>
-  <script src="app.js?v=17"></script>
-  <script src="story.js?v=17"></script>
-  <script src="studio.js?v=17"></script>
+  <script src="config.js?v=18"></script>
+  <script src="daily.js?v=18"></script>
+  <script src="app.js?v=18"></script>
+  <script src="shapes.js?v=18"></script>
+  <script src="story.js?v=18"></script>
+  <script src="studio.js?v=18"></script>
 </body>
 </html>
