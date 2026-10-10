@@ -15,6 +15,7 @@
   let lib = (() => { try { const d = JSON.parse(localStorage.getItem(KEY)); return d && typeof d === 'object' ? { ...blank(), ...d } : blank(); } catch (e) { return blank(); } })();
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(lib)); } catch (e) { toast('Kaydedilemedi, depolama dolu olabilir.'); } document.dispatchEvent(new CustomEvent('sa-lib')); };
   const uid = p => p + Date.now().toString(36) + Math.floor(Math.random() * 1e4).toString(36);
+  const CVP = [['#5f63d6', '#8d63cc'], ['#8d63cc', '#c4678c'], ['#c4678c', '#d99a52'], ['#3f9d98', '#5f63d6'], ['#d99a52', '#3f9d98']];
   const hash = s => [...String(s)].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7);
   const ymOf = ts => { const d = new Date(ts); return d.getFullYear() * 12 + d.getMonth(); };
   const fmtDay = ts => new Date(ts).toLocaleDateString('tr', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -82,10 +83,9 @@
     return c;
   }
 
-  // ---------- çizim yardımcıları (kartlar) ----------
+  // ---------- çizim yardımcıları (alıntı tasarımı) ----------
   const W = 1080, H = 1920;
   const PALS = [['#12142b', '#251c4a', '#3d2250'], ['#0f1f2a', '#12384a', '#1f5d62'], ['#1c1316', '#3a1f2b', '#5a2a3a'], ['#14110f', '#2b2118', '#4a3524']];
-  const CVP = [['#5f63d6', '#8d63cc'], ['#8d63cc', '#c4678c'], ['#c4678c', '#d99a52'], ['#3f9d98', '#5f63d6'], ['#d99a52', '#3f9d98']];
   const mkCanvas = () => { const c = document.createElement('canvas'); c.width = W; c.height = H; return c; };
   function bgCanvas(i = 0) {
     const c = mkCanvas(), x = c.getContext('2d'), p = PALS[i % PALS.length], g = x.createLinearGradient(0, 0, W * 0.6, H);
@@ -95,70 +95,11 @@
     });
     return c;
   }
-  const loadImg = src => new Promise(ok => { if (!src) return ok(null); const i = new Image(); i.onload = () => ok(i); i.onerror = () => ok(null); i.src = src; });
-  function rrect(x, px, py, w, h, r) { x.beginPath(); x.moveTo(px + r, py); x.arcTo(px + w, py, px + w, py + h, r); x.arcTo(px + w, py + h, px, py + h, r); x.arcTo(px, py + h, px, py, r); x.arcTo(px, py, px + w, py, r); x.closePath(); }
-  function drawCover(x, b, img, cx, cy, w, h) {
-    const px = cx - w / 2, py = cy - h / 2, r = Math.max(8, w * 0.045);
-    x.save(); x.shadowColor = 'rgba(0,0,0,.55)'; x.shadowBlur = 36; x.shadowOffsetY = 12; rrect(x, px, py, w, h, r); x.fillStyle = '#000'; x.fill(); x.restore();
-    x.save(); rrect(x, px, py, w, h, r); x.clip();
-    if (img) { const s = Math.max(w / img.naturalWidth, h / img.naturalHeight); x.drawImage(img, cx - img.naturalWidth * s / 2, cy - img.naturalHeight * s / 2, img.naturalWidth * s, img.naturalHeight * s); }
-    else {
-      const p = CVP[hash(b.title) % 5], g = x.createLinearGradient(px, py, px + w, py + h); g.addColorStop(0, p[0]); g.addColorStop(1, p[1]); x.fillStyle = g; x.fillRect(px, py, w, h);
-      x.fillStyle = '#fff'; x.textAlign = 'center'; x.textBaseline = 'middle'; const fs = Math.round(w * 0.12); x.font = `700 ${fs}px Outfit, system-ui, sans-serif`;
-      const words = b.title.split(/\s+/), lines = []; let ln = '';
-      words.forEach(wd => { const t = ln ? ln + ' ' + wd : wd; if (x.measureText(t).width > w * 0.78 && ln) { lines.push(ln); ln = wd; } else ln = t; }); lines.push(ln);
-      lines.slice(0, 5).forEach((l, i, a) => x.fillText(l, cx, cy - ((a.length - 1) * fs * 1.2) / 2 + i * fs * 1.2));
-    }
-    x.restore(); rrect(x, px, py, w, h, r); x.strokeStyle = 'rgba(255,255,255,.28)'; x.lineWidth = 2; x.stroke();
-  }
   const base = { type: 'text', rot: 0, italic: false, bold: false, color: '#ffffff', align: 'center', w: 80, lh: 130, box: false, boxColor: '#0e0e20', boxA: 46, boxPad: 30, shadow: true, shB: 10, font: 'Outfit', fx: 0.5, fy: 0.5 };
   const T = (text, size, o = {}) => ({ ...base, text, size, ...o });
-  const stars = n => '★'.repeat(n) + '☆'.repeat(5 - n);
   const api = () => window.__studioApi;
   const meas = L => api().measureLayer(L);
-  function stackCenter(items, top, gap) { let y = top; items.forEach(L => { const m = meas(L); L.fx = 0.5; L.fy = (y + m.hh) / H; y += m.hh * 2 + gap; }); return y; }
-  function stackLeft(items, x, centerY, gap) {
-    const ms = items.map(meas), total = ms.reduce((a, m) => a + m.hh * 2, 0) + gap * (items.length - 1); let y = centerY - total / 2;
-    items.forEach((L, i) => { L.align = 'left'; L.fx = (x + ms[i].hw) / W; L.fy = (y + ms[i].hh) / H; y += ms[i].hh * 2 + gap; });
-  }
-  const ACC = '#e8ae66';
 
-  async function monthlyDesign(y, m) {
-    const bs = doneIn(y, m).sort((a, b) => a.done - b.done); if (!bs.length) return null;
-    const c = bgCanvas(0), x = c.getContext('2d'), n = Math.min(bs.length, 6), imgs = await Promise.all(bs.slice(0, n).map(b => loadImg(b.thumb)));
-    const cols = n <= 3 ? n : 3, rows = Math.ceil(n / cols), cw = n === 1 ? 460 : n === 2 ? 380 : 290, ch = Math.round(cw * 1.5), gap = 44;
-    const totalH = rows * ch + (rows - 1) * gap, top = Math.max(520, 960 - totalH / 2);
-    for (let i = 0; i < n; i++) {
-      const r = Math.floor(i / cols), inRow = r === rows - 1 ? n - r * cols : cols, col = i - r * cols, rowW = inRow * cw + (inRow - 1) * gap;
-      drawCover(x, bs[i], imgs[i], W / 2 - rowW / 2 + col * (cw + gap) + cw / 2, top + r * (ch + gap) + ch / 2, cw, ch);
-    }
-    const layers = [T('AYLIK OKUMA ÖZETİ', 34, { bold: true, color: ACC, fy: 230 / H }), T(`${MONTHS[m]} ${y}`, 118, { font: 'Playfair Display', bold: true, fy: 340 / H, w: 90 })];
-    const foot = [T(`${bs.length} kitap${bs.length > 6 ? ` · +${bs.length - 6} daha` : ''}`, 46, { color: '#e6e8f2' })];
-    const best = bs.filter(b => b.rating >= 4).sort((a, b) => b.rating - a.rating)[0];
-    if (best) foot.push(T(`En çok sevdiğim: ${best.title}`, 34, { color: '#cfd3e6', w: 86 }));
-    layers.push(...foot); await api().fontsFor(layers); stackCenter(foot, Math.max(top + totalH + 50, 1520), 14);
-    layers.push(markLayer(0.955)); return { bg: c, layers };
-  }
-  async function yearDesign(y) {
-    const bs = doneInYear(y).sort((a, b) => (b.rating - a.rating) || (a.done - b.done)).slice(0, 5); if (!bs.length) return null;
-    const c = bgCanvas(1), x = c.getContext('2d'), imgs = await Promise.all(bs.map(b => loadImg(b.thumb))), total = doneInYear(y).length;
-    const layers = [T('YILIN KİTAPLARI', 34, { bold: true, color: ACC, fy: 230 / H }), T(String(y), 130, { font: 'Playfair Display', bold: true, fy: 350 / H }), T(`${total} kitap okudum${total > 5 ? ' · en sevdiklerim' : ''}`, 38, { color: '#cfd3e6', fy: 470 / H })];
-    const rowsT = bs.map((b, i) => { const it = [T(b.title, 40, { bold: true, w: 56 }), ...(b.author ? [T(b.author, 30, { color: '#cfd3e6', w: 56, shadow: false })] : []), ...(b.rating ? [T(stars(b.rating), 34, { color: ACC, w: 56, shadow: false })] : [])]; layers.push(...it); return it; });
-    await api().fontsFor(layers);
-    bs.forEach((b, i) => { const cy = 640 + i * 262; drawCover(x, b, imgs[i], 190, cy, 150, 225); stackLeft(rowsT[i], 300, cy, 8); });
-    layers.push(markLayer(0.955)); return { bg: c, layers };
-  }
-  async function doneDesign(b) {
-    const c = bgCanvas(hash(b.title)), x = c.getContext('2d'), img = await loadImg(b.thumb);
-    drawCover(x, b, img, W / 2, 710, 440, 660);
-    const head = T('BİTİRDİM ✅', 38, { bold: true, color: '#f6b3cc', fy: 245 / H });
-    const body = [T(b.title, 70, { font: 'Playfair Display', bold: true, w: 86, lh: 118 })];
-    if (b.author) body.push(T(b.author, 40, { color: '#cfd3e6', shadow: false }));
-    if (b.rating) body.push(T(stars(b.rating), 48, { color: ACC, shadow: false }));
-    if (b.note) body.push(T(`“${b.note.slice(0, 160)}”`, 38, { font: 'Fraunces', italic: true, w: 80, color: '#e6e8f2' }));
-    const layers = [head, ...body]; await api().fontsFor(layers); stackCenter(body, 1090, 16);
-    layers.push(markLayer(0.955)); return { bg: c, layers };
-  }
   async function quoteDesign(text, src) {
     const c = bgCanvas(hash(text)), n = text.length, size = n < 60 ? 80 : n < 120 ? 66 : n < 200 ? 54 : 44;
     const mark = T('“', 220, { font: 'Playfair Display', bold: true, color: '#c4678c', shadow: false, fy: 0.27 });
@@ -193,7 +134,7 @@
   function bookRow(b) {
     const open = view.open === b.id, p = CVP[hash(b.title) % 5];
     const th = b.thumb ? `<img src="${b.thumb}" alt="">` : `<span>${esc(b.title.slice(0, 2))}</span>`;
-    let h = `<div class="bk ${open ? 'open' : ''}"><button class="bkh" data-open="${b.id}"><div class="bth" style="background:linear-gradient(150deg,${p[0]},${p[1]})">${th}</div><div class="bki"><b>${esc(b.title)}</b><span>${esc(b.author || '—')}</span><small>${STATUS[b.status]}${b.done ? ' · ' + fmtDay(b.done) : ''} ${ratingStr(b.rating)}</small></div></button>`;
+    let h = `<div class="bk ${open ? 'open' : ''}"><button class="bkh" data-open="${b.id}"><div class="bth" data-ct="${esc(b.title)}" data-ca="${esc(b.author)}" style="background:linear-gradient(150deg,${p[0]},${p[1]})">${th}</div><div class="bki"><b>${esc(b.title)}</b><span>${esc(b.author || '—')}</span><small>${STATUS[b.status]}${b.done ? ' · ' + fmtDay(b.done) : ''} ${ratingStr(b.rating)}</small></div></button>`;
     if (open) {
       h += `<div class="bkx">`;
       h += `<div class="stars" aria-label="Puan">${[1, 2, 3, 4, 5].map(i => `<button class="${i <= b.rating ? 'on' : ''}" data-star="${i}" aria-label="${i} yıldız">★</button>`).join('')}</div>`;
@@ -237,15 +178,15 @@
     const kinds = [['done', 'c3', '✅ Bitirdim kartı'], ['month', 'c1', '🗓️ Aylık özet'], ['year', 'c4', '🏆 Yılın kitapları']];
     const opts = cardOptions();
     let res = '';
-    if (view.card) res = `<div class="sresult"><div class="preview"><img src="${view.card.url}" alt="Hazırlanan kart"></div><div class="sactions"><button class="btn main" data-cdl>⬇️ İndir</button><button class="btn design" data-cdesign>🎨 Tasarla</button>${view.card.canShare ? '<button class="btn" data-cshare style="grid-column:1/-1">📤 Paylaş</button>' : ''}</div></div>`;
-    return `<section class="card st"><h3 class="st-h">Paylaşım kartları</h3><p class="hint" style="margin:0 0 12px;text-align:left">Raftaki kitaplarından hazır 9:16 kartlar. <b>Tasarla</b> ile yazıları ve yerleri değiştirebilirsin.</p>
+    if (view.card) res = `<div class="sresult"><div class="preview"><canvas id="cardCv" width="540" height="960" aria-label="Kart önizlemesi"></canvas></div><div class="sactions"><button class="btn main" data-cdl>⬇️ Görseli indir</button><button class="btn design" data-cdesign>🎨 Tasarla</button>${window.CARDS && window.CARDS.videoMime() ? '<button class="btn" data-cvid>🎬 Video indir</button>' : ''}<button class="btn" data-creplay>↻ Tekrar oynat</button><button class="btn" data-cshare style="grid-column:1/-1">📤 Paylaş</button></div><p class="snote" id="cardNote">Kart hareketli önizleniyor. İndirdiğin görsel sabit, video ise 6 saniyelik hareketli halidir.</p></div>`;
+    return `<section class="card st"><h3 class="st-h">Paylaşım kartları</h3><p class="hint" style="margin:0 0 12px;text-align:left">Gerçek kapaklar ve yazar portreleriyle hareketli 9:16 kartlar. <b>Tasarla</b> ile yazıları ve yerleri değiştirebilirsin.</p>
       <div class="cats" style="margin-bottom:12px">${kinds.map(([k, c, l]) => `<button class="cchip ${c} ${view.kind === k ? 'on' : ''}" data-kind="${k}">${l}</button>`).join('')}</div>
       ${opts ? `<select id="shSel" aria-label="Seçim">${opts}</select><button class="btn2 main wide" data-cmake style="margin:12px 0 0">✨ Kartı hazırla</button>` : '<div class="none">Önce rafına "Okudum" olarak bir kitap ekle.</div>'}${res}</section>`;
   }
   function secPicks() {
     const P = C.picks || []; if (!P.length) return '';
     return `<section class="card st"><h3 class="st-h">${esc((C.giver || '').replace(/\s*\S*$/, '') || 'Önerilerim')} önerileri</h3><p class="hint" style="margin:0 0 10px;text-align:left">Elle seçilmiş. Beğendiğin olursa okunacaklara ekle.</p>
-      ${P.map((p, i) => `<div class="pick"><div><b>${esc(p.t)}</b><span>${esc(p.a)}</span>${p.n ? `<small>${esc(p.n)}</small>` : ''}</div>${find(p.t) ? '<em>rafında</em>' : `<button class="btn2" data-pick="${i}">📌 Ekle</button>`}</div>`).join('')}</section>`;
+      ${P.map((p, i) => `<div class="pick"><div class="pcv" data-ct="${esc(p.t)}" data-ca="${esc(p.a)}"></div><div class="ptx"><b>${esc(p.t)}</b><span>${esc(p.a)}</span>${p.n ? `<small>${esc(p.n)}</small>` : ''}</div>${find(p.t) ? '<em>rafında</em>' : `<button class="btn2" data-pick="${i}">📌 Ekle</button>`}</div>`).join('')}</section>`;
   }
   function secSettings() {
     const w = lib.wm || {}, standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
@@ -260,7 +201,12 @@
       <p class="hint" style="margin:8px 0 0;text-align:left">Raf, alıntılar, notlar ve kayıtlı tasarımlar bu telefonda duruyor. Telefon değiştirirsen ya da tarayıcı verisini silersen kaybolmaması için ara sıra yedek al.</p>
       ${standalone ? '' : `<div class="ask2">Ana ekrana ekle</div>${ios ? '<p class="hint" style="margin:0;text-align:left">Safari\'de <b>Paylaş</b> düğmesine, sonra <b>Ana Ekrana Ekle</b>\'ye dokun. Uygulama gibi açılır.</p>' : '<button class="btn2 wide" data-install hidden>📲 Ana ekrana ekle</button><p class="hint" id="shInstHint" style="margin:0;text-align:left">Tarayıcı menüsünden <b>Ana ekrana ekle</b>\'yi seç. Uygulama gibi açılır.</p>'}`}</section>`;
   }
-  function render() { const r = root(); if (r) r.innerHTML = secGoal() + secShelf() + secFavs() + secNotes() + secCards() + secPicks() + secSettings(); }
+  function render() {
+    const r = root(); if (!r) return; stopPlayer();
+    r.innerHTML = secGoal() + secShelf() + secFavs() + secNotes() + secCards() + secPicks() + secSettings();
+    if (window.CARDS) window.CARDS.hydrate(r);
+    const cv = $('#cardCv'); if (cv && view.card) player = window.CARDS.play(view.card.scene, cv);
+  }
 
   // ---------- olaylar ----------
   const pool = () => [...lib.favs.map(f => ({ t: f.q, s: [f.title, f.author].filter(Boolean).join(' · ') })), ...lib.notes.map(n => ({ t: n.q, s: n.title || '' }))];
@@ -269,25 +215,25 @@
   let deferred = null;
   window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferred = e; const b = $('[data-install]'); if (b) { b.hidden = false; const h = $('#shInstHint'); if (h) h.hidden = true; } });
 
+  let player = null;
+  const stopPlayer = () => { if (player) { player.stop(); player = null; } };
   async function makeCard() {
-    const v = $('#shSel') && $('#shSel').value, btn = $('[data-cmake]'); if (!v) return;
-    btn.disabled = true; btn.textContent = 'Hazırlanıyor…';
+    const v = $('#shSel') && $('#shSel').value, btn = $('[data-cmake]'); if (!v || !window.CARDS) return;
+    btn.disabled = true; btn.textContent = 'Kapaklar ve görseller hazırlanıyor…';
     try {
-      let d = null;
-      if (view.kind === 'done') d = await doneDesign(lib.books.find(b => b.id === v));
-      else if (view.kind === 'month') d = await monthlyDesign(Math.floor(+v / 12), +v % 12);
-      else d = await yearDesign(+v);
-      if (!d) { toast('Bu dönemde okunmuş kitap yok.'); return; }
-      await api().fontsFor(d.layers);
-      const cv = await api().renderDesign(d), blob = await new Promise(r => cv.toBlob(r, 'image/jpeg', 0.93));
-      if (!blob) throw new Error('Görsel oluşturulamadı.');
-      if (view.card) URL.revokeObjectURL(view.card.url);
-      const canShare = !!(navigator.canShare && navigator.canShare({ files: [new File([blob], 'x.jpg', { type: 'image/jpeg' })] }));
-      view.card = { d, blob, url: URL.createObjectURL(blob), canShare, name: `satir-arasi-${view.kind}-${Date.now().toString(36)}.jpg` };
-      render(); const s = $('#tab-shelf .sresult'); if (s) s.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      let scene;
+      if (view.kind === 'done') scene = await window.CARDS.build('done', lib.books.find(b => b.id === v));
+      else if (view.kind === 'month') scene = await window.CARDS.build('month', { y: Math.floor(+v / 12), m: +v % 12, books: doneIn(Math.floor(+v / 12), +v % 12) });
+      else scene = await window.CARDS.build('year', { y: +v, books: doneInYear(+v) });
+      stopPlayer(); view.card = { scene, name: `satir-arasi-${view.kind}-${Date.now().toString(36)}` };
+      render();
     } catch (e) { toast(e.message || 'Kart hazırlanamadı.'); }
     finally { const b2 = $('[data-cmake]'); if (b2) { b2.disabled = false; b2.textContent = '✨ Kartı hazırla'; } }
   }
+  async function shareBlob(blob, name, type) {
+    try { await navigator.share({ files: [new File([blob], name, { type })], title: 'Satır Arası' }); } catch (err) { if (err.name !== 'AbortError') toast('Paylaşılamadı, indirmeyi dene.'); }
+  }
+  function saveBlob(blob, name) { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); }
 
   async function exportBackup() {
     let designs = []; try { designs = window.__studioDB ? await window.__studioDB.all() : []; } catch (e) { /* önemsiz */ }
@@ -336,9 +282,20 @@
     }
     if ((el = g('[data-kind]'))) { view.kind = el.dataset.kind; view.card = null; return render(); }
     if (g('[data-cmake]')) return makeCard();
-    if (g('[data-cdl]') && view.card) { const a = document.createElement('a'); a.href = view.card.url; a.download = view.card.name; document.body.appendChild(a); a.click(); a.remove(); return toast('Görsel indiriliyor…'); }
-    if (g('[data-cdesign]') && view.card) return toStudio(view.card.d);
-    if (g('[data-cshare]') && view.card) { try { await navigator.share({ files: [new File([view.card.blob], view.card.name, { type: 'image/jpeg' })], title: 'Satır Arası' }); } catch (err) { if (err.name !== 'AbortError') toast('Paylaşılamadı, indirmeyi dene.'); } return; }
+    if (g('[data-creplay]') && player) return player.replay();
+    if (g('[data-cdl]') && view.card) { try { saveBlob(await window.CARDS.still(view.card.scene), view.card.name + '.jpg'); toast('Görsel indiriliyor…'); } catch (err) { toast(err.message); } return; }
+    if (g('[data-cdesign]') && view.card) { const sc = view.card.scene; return toStudio({ bg: sc.bgFinal(), layers: sc.layers }); }
+    if (g('[data-cshare]') && view.card) { try { return shareBlob(await window.CARDS.still(view.card.scene), view.card.name + '.jpg', 'image/jpeg'); } catch (err) { return toast(err.message); } }
+    if ((el = g('[data-cvid]')) && view.card) {
+      const note = $('#cardNote'); el.disabled = true; const old = el.textContent;
+      try {
+        const r = await window.CARDS.record(view.card.scene, p => { el.textContent = '🎬 Kaydediliyor %' + Math.round(p * 100); });
+        saveBlob(r.blob, view.card.name + '.' + r.ext); toast('Video indiriliyor…');
+        if (note && r.ext === 'webm') note.textContent = 'Bu tarayıcı WebM üretti. iPhone ve bazı uygulamalar bunu açmayabilir; orada Safari ile MP4 alabilirsin ya da sabit görseli kullan.';
+      } catch (err) { toast(err.message || 'Video hazırlanamadı.'); }
+      finally { el.disabled = false; el.textContent = old; }
+      return;
+    }
     if ((el = g('[data-pick]'))) { const p = (C.picks || [])[+el.dataset.pick]; if (p) { addBook({ title: p.t, author: p.a, status: 'want' }); view.shelf = 'want'; render(); toast('Okunacaklara eklendi 📌'); } return; }
     if ((el = g('[data-wm]'))) { lib.wm = { ...(lib.wm || {}), mode: el.dataset.wm }; save(); render(); const i = $('#shWm'); if (i && !i.hidden) i.focus(); return; }
     if (g('[data-export]')) return exportBackup();

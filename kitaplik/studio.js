@@ -523,6 +523,7 @@
   }
   init();
   window.__studioImport = importDesign; window.__studioDB = DB;
-  window.__studioApi = { renderDesign, measureLayer, loadFont, fontsFor: ls => Promise.all(ls.map(loadFont)) };
+  function paint(c, layers) { const prev = S; S = { format: 'story', bg: prev.bg, layers: [], sel: null, seq: 0 }; try { layers.forEach(L => drawLayer(c, L)); } finally { S = prev; } }
+  window.__studioApi = { paint, renderDesign, measureLayer, loadFont, fontsFor: ls => Promise.all(ls.map(loadFont)) };
   window.__studio = { get S() { return S; }, get PAL() { return PAL; }, FORMATS, FONTS, render, exportCanvas, layout: L => layout(mc, L) };
 })();
