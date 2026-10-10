@@ -27,6 +27,12 @@
       <p id="hello" class="hello"></p>
     </header>
 
+    <nav class="tabs" role="tablist">
+      <button class="tab on" role="tab" data-tab="quotes">💬 Alıntılar</button>
+      <button class="tab" role="tab" data-tab="story">🎞️ Hikâye</button>
+    </nav>
+
+    <div id="tab-quotes">
     <section class="card search">
       <label class="photo" id="drop">
         <input type="file" id="file" accept="image/*" hidden>
@@ -43,6 +49,30 @@
     <section id="daily" class="daily"></section>
     <div id="recent" class="recent"></div>
     <div id="out"></div>
+    </div>
+
+    <div id="tab-story" hidden>
+      <section class="card">
+        <label class="photo" id="sdrop">
+          <input type="file" id="sfile" accept="image/*" hidden>
+          <span class="photo-ico" aria-hidden="true">📸</span>
+          <span id="sLabel">Kitabın fotoğrafını yükle</span>
+          <img id="spreview" alt="" hidden>
+        </label>
+        <div class="ask2">Ne durumdasın?</div>
+        <div class="cats" id="sStatus">
+          <button class="cchip c3 on" data-st="basladim">🌱 Başladım</button>
+          <button class="cchip c4" data-st="okuyorum">📖 Okuyorum</button>
+          <button class="cchip c0" data-st="bitirdim">✅ Bitirdim</button>
+        </div>
+        <div class="or"><span>kitap adı (isteğe bağlı)</span></div>
+        <input id="stitle" placeholder="Kitap adı" autocomplete="off">
+        <input id="sauthor" placeholder="Yazar" autocomplete="off">
+        <button id="sgo" class="go"><span>Görseli hazırla</span></button>
+        <p class="hint">Fotoğraftaki kitabı otomatik tanıyoruz. Tanıyamazsa adını yazman yeterli.</p>
+      </section>
+      <div id="sout"></div>
+    </div>
 
     <p class="credit"></p>
   </main>
@@ -51,5 +81,6 @@
   <script src="config.js"></script>
   <script src="daily.js"></script>
   <script src="app.js"></script>
+  <script src="story.js"></script>
 </body>
 </html>

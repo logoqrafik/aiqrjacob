@@ -14,6 +14,17 @@ Kurallar:
 {"found":true,"title":"...","author":"...","categories":[{"name":"Motivasyon","quotes":["..."]}, ...]}
 - Kategori adları aynen şunlar olsun, bu sırayla: ${CATEGORIES.join(', ')}.`;
 
+const SYSTEM_STORY = `Sen titiz bir kitap editörüsün. Kullanıcı bir kitabı fotoğrafla ya da ad/yazar ile verir.
+Görev: kitabı belirle ve sosyal medya görseline konacak, bu kitaptan 3 alıntı seç: kitabın en ünlü, en duygusal ya da en dikkat çekici cümleleri.
+
+Kurallar:
+- Alıntılar gerçekten BU kitaptan olmalı. Emin olmadığın cümleyi asla uydurma; emin olduğun kadarını ver (1-3 arası), hiç yoksa boş liste ver.
+- Her alıntı tek ve kısa bir cümle olsun (en fazla 140 karakter). Türkçe yaz. Kitap Türkçeye çeviriyse Türkçe çeviriyi hatırladığın kadarıyla ver.
+- "Önceki alıntılar" verilirse onları tekrar etme, farklı cümleler seç.
+- Kitabı tanıyamazsan found:false döndür.
+- Yalnızca geçerli JSON döndür, başka metin yazma. Şema:
+{"found":true,"title":"...","author":"...","quotes":["...","..."]}`;
+
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST gerekli' });
   if (process.env.ACCESS_CODE && req.headers['x-access-code'] !== process.env.ACCESS_CODE) {
@@ -21,18 +32,21 @@ module.exports = async (req, res) => {
   }
   if (!process.env.GEMINI_API_KEY) return res.status(500).json({ error: 'Sunucuda API anahtarı tanımlı değil' });
 
-  const { title = '', author = '', image = '' } = req.body || {};
+  const { title = '', author = '', image = '', mode = '', exclude = [] } = req.body || {};
+  const story = mode === 'story';
+  const avoid = (Array.isArray(exclude) ? exclude : []).filter(x => typeof x === 'string').slice(0, 6).map(x => x.slice(0, 200));
   const content = [];
   if (image) {
     const m = /^data:(image\/(?:jpeg|png|webp));base64,(.+)$/.exec(image);
     if (!m) return res.status(400).json({ error: 'Geçersiz görsel' });
     content.push({ inlineData: { mimeType: m[1], data: m[2] } });
-    content.push({ text: 'Bu kitabın kapağı. Kitabı belirle ve alıntıları çıkar.' });
+    content.push({ text: story ? 'Bu fotoğraftaki kitabı belirle (kapağından ya da görünen yazılarından) ve alıntıları seç.' : 'Bu kitabın kapağı. Kitabı belirle ve alıntıları çıkar.' });
   } else if (String(title).trim()) {
     content.push({ text: `Kitap: ${String(title).slice(0, 200)}\nYazar: ${String(author).slice(0, 200) || '(belirtilmedi)'}` });
   } else {
     return res.status(400).json({ error: 'Fotoğraf ya da kitap adı gerekli' });
   }
+  if (story && avoid.length) content.push({ text: 'Önceki alıntılar (tekrar etme):\n- ' + avoid.join('\n- ') });
 
   // Google model adlarını sık değiştiriyor. Sırayla dener, çalışan ilk modeli kullanır.
   const models = [process.env.MODEL, 'gemini-3.8-flash', 'gemini-flash-latest', 'gemini-flash-lite-latest', 'gemini-2.5-flash-lite']
@@ -44,7 +58,7 @@ module.exports = async (req, res) => {
         method: 'POST',
         headers: { 'content-type': 'application/json', 'x-goog-api-key': process.env.GEMINI_API_KEY },
         body: JSON.stringify({
-          systemInstruction: { parts: [{ text: SYSTEM }] },
+          systemInstruction: { parts: [{ text: story ? SYSTEM_STORY : SYSTEM }] },
           contents: [{ role: 'user', parts: content }],
           generationConfig: { responseMimeType: 'application/json', temperature: 0.4, maxOutputTokens: 8000 }
         })
@@ -65,6 +79,10 @@ module.exports = async (req, res) => {
   }
   try {
     if (!data.found) return res.status(200).json({ found: false });
+    if (story) {
+      const quotes = (Array.isArray(data.quotes) ? data.quotes : []).filter(q => typeof q === 'string' && q.trim()).map(q => q.trim().slice(0, 200)).slice(0, 3);
+      return res.status(200).json({ found: true, title: String(data.title || ''), author: String(data.author || ''), quotes });
+    }
     const cats = CATEGORIES.map(name => {
       const c = (data.categories || []).find(x => x.name === name);
       return { name, quotes: ((c && c.quotes) || []).filter(q => typeof q === 'string' && q.trim()).slice(0, 3) };
