@@ -15,8 +15,8 @@
   <link rel="apple-touch-icon" href="icon-180.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@1,9..144,400;1,9..144,500&family=Cormorant+Garamond:wght@500;600&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=16">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;1,9..144,400;1,9..144,500&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Cormorant+Garamond:ital,wght@0,500;0,700;1,500;1,700&family=EB+Garamond:ital,wght@0,400;0,700;1,400;1,700&family=Lora:ital,wght@0,400;0,700;1,400;1,700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Crimson+Pro:ital,wght@0,400;0,700;1,400;1,700&family=DM+Serif+Display:ital@0;1&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Dancing+Script:wght@400;700&family=Caveat:wght@400;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=17">
 </head>
 <body>
   <div class="bg" aria-hidden="true"><i class="blob b1"></i><i class="blob b2"></i><i class="blob b3"></i></div>
@@ -32,6 +32,7 @@
     <nav class="tabs" role="tablist">
       <button class="tab on" role="tab" data-tab="quotes">💬 Alıntılar</button>
       <button class="tab" role="tab" data-tab="story">🎞️ Hikâye</button>
+      <button class="tab" role="tab" data-tab="studio">🎨 Tasarım</button>
     </nav>
 
     <div id="tab-quotes">
@@ -76,7 +77,7 @@
         <input id="stitle" placeholder="Kitap adı" autocomplete="off">
         <input id="sauthor" placeholder="Yazar" autocomplete="off">
         <button class="btn2 wide" id="sfetch">✨ Bu kitaptan alıntıları getir</button>
-        <div class="ask2">Görselde hangi alıntılar olsun? <span class="muted2">(en fazla 3)</span></div>
+        <div class="ask2">Görselde hangi alıntılar olsun? <span class="muted2">(en fazla 5)</span></div>
         <div id="spick" class="spick"></div>
         <textarea id="scustom" placeholder="Ya da kendi cümleni yaz"></textarea>
         <button class="btn2 wide" id="saddc">➕ Bu cümleyi ekle</button>
@@ -85,13 +86,114 @@
       <div id="sout"></div>
     </div>
 
+    <div id="tab-studio" hidden>
+      <section class="card st">
+        <div class="ask2" style="margin-top:0">Boyut</div>
+        <div class="cats" id="stFormat">
+          <button class="cchip c1 on" data-sf="story">📱 Story 9:16</button>
+          <button class="cchip c2" data-sf="post">⬜ Gönderi 1:1</button>
+          <button class="cchip c3" data-sf="portrait">🖼️ Gönderi 4:5</button>
+        </div>
+        <div class="st-stage"><canvas id="stCanvas" width="1080" height="1920" aria-label="Tasarım alanı"></canvas></div>
+        <p class="hint">Yazıya dokun ve sürükle. İki parmakla büyüt, küçült, döndür. Köşedeki yuvarlak tutamaç da büyütür ve döndürür.</p>
+        <div id="stLayers" class="chips2"></div>
+        <div class="st-bar">
+          <button class="btn2" id="stUndo">↩️ Geri al</button>
+          <button class="btn2" id="stAdd">➕ Alıntı ekle</button>
+          <button class="btn2" id="stBook">✨ Kitaptan getir</button>
+        </div>
+      </section>
+
+      <section class="card st" id="stBookBox" hidden>
+        <h3 class="st-h">Kitaptan alıntı getir</h3>
+        <input id="stBt" placeholder="Kitap adı" autocomplete="off">
+        <input id="stBa" placeholder="Yazar (isteğe bağlı)" autocomplete="off">
+        <button class="btn2 wide" id="stBgo">✨ Alıntıları getir</button>
+        <div id="stBres"></div>
+      </section>
+
+      <section class="card st">
+        <h3 class="st-h">Arka plan</h3>
+        <div class="cats" id="stBgKind">
+          <button class="cchip c0" data-bk="solid">Düz renk</button>
+          <button class="cchip c1 on" data-bk="gradient">Gradyan</button>
+          <button class="cchip c2" data-bk="texture">Doku</button>
+          <button class="cchip c3" data-bk="photo">Fotoğraf</button>
+        </div>
+        <div id="stBgGrid" class="swatches"></div>
+        <div id="stPhotoBox" hidden>
+          <label class="photo mini"><input type="file" id="stFile" accept="image/*" hidden><span class="photo-ico" aria-hidden="true">🖼️</span><span id="stFileLabel">Fotoğraf ya da kitap kapağı yükle</span></label>
+          <div class="cats" id="stFit" style="margin-top:10px">
+            <button class="cchip c4 on" data-fit="cover">Kırp ve kapla</button>
+            <button class="cchip c3" data-fit="contain">Bütün göster</button>
+          </div>
+        </div>
+        <label class="sl"><span>Karartma</span><input type="range" id="stDim" min="0" max="80" value="0"><output id="stDimO">0</output></label>
+      </section>
+
+      <section class="card st" id="stText">
+        <h3 class="st-h">Seçili yazı</h3>
+        <div id="stNoSel" class="none">Düzenlemek için tasarımdaki bir yazıya dokun ya da yukarıdan <b>➕ Alıntı ekle</b>'ye bas.</div>
+        <div id="stCtl" hidden>
+          <textarea id="stTxt" placeholder="Alıntını buraya yaz"></textarea>
+          <div class="ask2">Yazı tipi</div>
+          <div id="stFonts" class="fonts"></div>
+          <label class="sl"><span>Boyut</span><input type="range" id="stSize" min="20" max="280" value="64"><output id="stSizeO"></output></label>
+          <label class="sl"><span>Döndür</span><input type="range" id="stRot" min="-180" max="180" value="0"><output id="stRotO"></output></label>
+          <label class="sl"><span>Genişlik</span><input type="range" id="stW" min="25" max="100" value="80"><output id="stWO"></output></label>
+          <label class="sl"><span>Satır aralığı</span><input type="range" id="stLh" min="100" max="220" value="135"><output id="stLhO"></output></label>
+          <div class="st-row">
+            <button class="btn2 sq" data-al="left" aria-label="Sola">⬅︎</button><button class="btn2 sq" data-al="center" aria-label="Ortala">↔︎</button><button class="btn2 sq" data-al="right" aria-label="Sağa">➡︎</button>
+            <button class="btn2 sq" id="stBold"><b>B</b></button><button class="btn2 sq" id="stItal"><i>I</i></button>
+            <button class="btn2" id="stCenH">Yatay ortala</button><button class="btn2" id="stCenV">Dikey ortala</button>
+          </div>
+          <div class="ask2">Renk <span class="muted2" id="stPalLabel"></span></div>
+          <div id="stPal" class="swatches"></div>
+          <div class="st-row"><label class="colorpick">Özel renk <input type="color" id="stColor" value="#ffffff"></label></div>
+          <div class="st-sec">
+            <label class="tg"><input type="checkbox" id="stBox"> Arkasına yarı saydam kutu</label>
+            <div id="stBoxCtl">
+              <label class="sl"><span>Kutu rengi</span><input type="color" id="stBoxC" value="#000000"></label>
+              <label class="sl"><span>Saydamlık</span><input type="range" id="stBoxA" min="5" max="95" value="40"><output id="stBoxAO"></output></label>
+              <label class="sl"><span>Kutu boşluğu</span><input type="range" id="stBoxP" min="10" max="120" value="36"><output id="stBoxPO"></output></label>
+            </div>
+          </div>
+          <div class="st-sec">
+            <label class="tg"><input type="checkbox" id="stShadow"> Gölge</label>
+            <div id="stShCtl"><label class="sl"><span>Gölge gücü</span><input type="range" id="stShB" min="2" max="60" value="18"><output id="stShBO"></output></label></div>
+          </div>
+          <div class="btns2">
+            <button class="btn2" id="stDup">⧉ Çoğalt</button>
+            <button class="btn2" id="stAll">Stili tümüne uygula</button>
+            <button class="btn2 danger" id="stDel">🗑️ Sil</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="card st">
+        <h3 class="st-h">Kaydet ve indir</h3>
+        <div class="btns2" style="margin-bottom:10px">
+          <button class="btn2" id="stSave">💾 Kaydet</button>
+          <button class="btn2" id="stNew">➕ Yeni tasarım</button>
+        </div>
+        <div class="btns2">
+          <button class="btn2 main" id="stPng">⬇️ PNG indir</button>
+          <button class="btn2" id="stJpg">⬇️ JPG indir</button>
+          <button class="btn2" id="stShare" hidden>📤 Paylaş</button>
+        </div>
+        <h3 class="st-h" style="margin-top:22px">Kayıtlı tasarımlarım</h3>
+        <div id="stSaved" class="saved"></div>
+      </section>
+    </div>
+
     <p class="credit"></p>
   </main>
   <div id="toast" class="toast" hidden></div>
 
-  <script src="config.js?v=16"></script>
-  <script src="daily.js?v=16"></script>
-  <script src="app.js?v=16"></script>
-  <script src="story.js?v=16"></script>
+  <script src="config.js?v=17"></script>
+  <script src="daily.js?v=17"></script>
+  <script src="app.js?v=17"></script>
+  <script src="story.js?v=17"></script>
+  <script src="studio.js?v=17"></script>
 </body>
 </html>

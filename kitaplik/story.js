@@ -16,7 +16,7 @@
   };
 
   let status = 'basladim', layout = 'safe', file = null, imgEl = null, result = null, blobUrl = '', lastBlob = null, busy = false;
-  const SA = window.SA, MAXQ = 3;
+  const SA = window.SA, MAXQ = 5, AUTO = 3; // en fazla 5 alıntı; otomatik seçimde 3 tane (görsel kalabalık olmasın)
   let picked = [], customs = [], pickables = [], redrawT = 0, bookRec = null;
 
   const toast = m => { const t = $('#toast'); t.textContent = m; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 2200); };
@@ -25,12 +25,13 @@
   function setTab(name) {
     $('#tab-quotes').hidden = name !== 'quotes';
     $('#tab-story').hidden = name !== 'story';
+    $('#tab-studio').hidden = name !== 'studio';
     document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === name));
-    try { history.replaceState(null, '', name === 'story' ? '#hikaye' : location.pathname); } catch (e) { /* önemsiz */ }
+    try { history.replaceState(null, '', name === 'story' ? '#hikaye' : name === 'studio' ? '#tasarim' : location.pathname); } catch (e) { /* önemsiz */ }
     scrollTo({ top: 0 });
   }
   document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
-  if (location.hash === '#hikaye') setTab('story');
+  if (location.hash === '#hikaye') setTab('story'); else if (location.hash === '#tasarim') setTab('studio');
 
   // ---------- fotoğraf ----------
   function loadImage(f) {
@@ -94,8 +95,8 @@
     picked = picked.filter(q => valid.has(q));
     if (autoSelect && !picked.length) { // her kategoriden birer alıntı, en fazla 3
       const seen = new Set();
-      for (const p of pickables) { if (picked.length >= MAXQ) break; if (!seen.has(p.cat)) { seen.add(p.cat); picked.push(p.q); } }
-      for (const p of pickables) { if (picked.length >= MAXQ) break; if (!picked.includes(p.q)) picked.push(p.q); }
+      for (const p of pickables) { if (picked.length >= AUTO) break; if (!seen.has(p.cat)) { seen.add(p.cat); picked.push(p.q); } }
+      for (const p of pickables) { if (picked.length >= AUTO) break; if (!picked.includes(p.q)) picked.push(p.q); }
     }
     let html = '';
     if (!pickables.length && !customs.length) html = '<div class="none">Fotoğraf yüklersen kitabı kendim tanırım. Ya da kitap adını yazıp "Bu kitaptan alıntıları getir"e bas. Kendi cümleni de yazabilirsin. Hepsi isteğe bağlı.</div>';
@@ -112,7 +113,7 @@
   function togglePick(q) {
     const i = picked.indexOf(q);
     if (i >= 0) picked.splice(i, 1);
-    else { if (picked.length >= MAXQ) return toast('En fazla 3 alıntı seçebilirsin.'); picked.push(q); }
+    else { if (picked.length >= MAXQ) return toast('En fazla 5 alıntı seçebilirsin.'); picked.push(q); }
     renderPicker(false); queueRedraw();
   }
 
@@ -265,14 +266,14 @@
 
   // ---- Düzen 1: "Kitap açıkta" — fotoğraf bütün, alıntılar altta; hiçbir şey kitabı kapatmaz ----
   function drawSafe(c, res, th) {
-    const qs = (res.quotes || []).slice(0, 3), n = qs.length;
+    const qs = (res.quotes || []).slice(0, 5), n = qs.length;
     const hasHead = !!(res.title || res.author);
-    const GAP = 22, BOTTOM = 1716, CARD_TOP = hasHead ? 478 : 372, MIN_H = 640, SIDE = 60;
-    let size = 33, boxes = [], stackH = 0;
+    const GAP = n >= 4 ? 16 : 22, BOTTOM = 1716, CARD_TOP = hasHead ? 478 : 372, MIN_H = n >= 4 ? 520 : 640, SIDE = 60;
+    let size = n >= 4 ? 30 : 33, boxes = [], stackH = 0;
     for (;;) {
       boxes = measureQuotes(c, qs, size, 740);
       stackH = boxes.reduce((a, b) => a + b.h, 0) + GAP * Math.max(0, n - 1);
-      if (!n || BOTTOM - stackH - 40 - CARD_TOP >= MIN_H || size <= 26) break;
+      if (!n || BOTTOM - stackH - 40 - CARD_TOP >= MIN_H || size <= 24) break;
       size -= 2;
     }
     const stackTop = n ? BOTTOM - stackH : BOTTOM;
@@ -330,7 +331,7 @@
     g = c.createLinearGradient(0, 0, 0, 520); g.addColorStop(0, 'rgba(8,8,22,.32)'); g.addColorStop(1, 'rgba(8,8,22,0)'); c.fillStyle = g; c.fillRect(0, 0, W, 520);
     g = c.createLinearGradient(0, 860, 0, H); g.addColorStop(0, 'rgba(8,8,22,0)'); g.addColorStop(1, 'rgba(8,8,22,.5)'); c.fillStyle = g; c.fillRect(0, 860, W, H - 860);
     drawRibbon(c, th); drawPill(c, th, 262);
-    const qs = (res.quotes || []).slice(0, 3), boxes = measureQuotes(c, qs, 36, 580), gap = 28;
+    const qs = (res.quotes || []).slice(0, 5), boxes = measureQuotes(c, qs, qs.length >= 4 ? 30 : 36, 580), gap = qs.length >= 4 ? 18 : 28;
     const total = boxes.reduce((a, b) => a + b.h, 0) + gap * Math.max(0, boxes.length - 1);
     let y = Math.max(560, 1510 - total); const rects = [];
     boxes.forEach((b, i) => {
