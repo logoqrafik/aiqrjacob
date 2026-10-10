@@ -91,7 +91,7 @@
         if (c) { try { localStorage.setItem('sa.code', JSON.stringify(c)); } catch (e) { /* önemsiz */ } busy = false; $('#sgo').disabled = false; return generate(reroll); }
         throw new Error('Erişim kodu gerekli.');
       }
-      const d = await r.json();
+      const d = await r.json().catch(() => { throw new Error('Sunucu şu an yanıt vermiyor. Biraz sonra tekrar dene.'); });
       if (!r.ok) throw new Error(d.error || 'Bir şey ters gitti.');
       if (!d.found) {
         $('#sout').innerHTML = '<div class="status">Fotoğraftaki kitabı tanıyamadım.<br>Kitap adını ve yazarı yazıp tekrar dene.</div>';
