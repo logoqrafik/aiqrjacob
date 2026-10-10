@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Raf</title>
+  <meta name="theme-color" content="#f6f2ea">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Raf">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="icon" href="icon-192.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">Raf</div>
+    <div id="hello" class="hello"></div>
+  </header>
+
+  <main id="main"></main>
+
+  <button class="fab" data-act="add" aria-label="Kitap ekle">+</button>
+
+  <nav class="nav" id="nav">
+    <button data-view="raf">Raf</button>
+    <button data-view="alinti">Alıntılar</button>
+    <button data-view="odunc">Ödünçte</button>
+    <button data-view="yil">Yıl</button>
+  </nav>
+
+  <div id="sheet" class="sheet" hidden></div>
+  <div id="scan" class="scan" hidden></div>
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
