@@ -15,7 +15,9 @@
     bitirdim: { pill: 'Bu kitabı bitirdim', icon: '✅', stickers: ['🎉', '🤍', '✨'], accent: '#de7fa4', name: 'bitirdim' }
   };
 
-  let status = 'basladim', layout = 'safe', file = null, imgEl = null, apiImg = '', result = null, blobUrl = '', lastBlob = null, busy = false;
+  let status = 'basladim', layout = 'safe', file = null, imgEl = null, result = null, blobUrl = '', lastBlob = null, busy = false;
+  const SA = window.SA, MAXQ = 3;
+  let picked = [], customs = [], pickables = [], redrawT = 0;
 
   const toast = m => { const t = $('#toast'); t.textContent = m; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 2200); };
 
@@ -38,21 +40,13 @@
       i.src = u;
     });
   }
-  function shrinkTo(i, max) {
-    const k = Math.min(1, max / Math.max(i.naturalWidth, i.naturalHeight));
-    const cv = document.createElement('canvas'); cv.width = Math.round(i.naturalWidth * k); cv.height = Math.round(i.naturalHeight * k);
-    cv.getContext('2d').drawImage(i, 0, 0, cv.width, cv.height);
-    return cv.toDataURL('image/jpeg', 0.85);
-  }
-
   $('#sfile').addEventListener('change', async e => {
     const f = e.target.files[0]; if (!f) return;
     try {
       const { i, u } = await loadImage(f);
-      file = f; imgEl = i; apiImg = shrinkTo(i, 1024);
+      file = f; imgEl = i; result = null; lastBlob = null;
       $('#spreview').src = u; $('#spreview').hidden = false;
       $('#sLabel').textContent = 'Başka fotoğraf seç';
-      $('#stitle').value = ''; $('#sauthor').value = ''; result = null;
       $('#sout').innerHTML = '';
     } catch (err) { toast(err.message); }
   });
@@ -71,39 +65,89 @@
     if (result && imgEl) draw();
   });
 
-  // ---------- istek ----------
-  async function generate(reroll) {
-    if (busy) return;
-    if (!file || !imgEl) return toast('Önce kitabın fotoğrafını yükle.');
-    const title = (reroll && result ? result.title : $('#stitle').value).trim();
-    const author = (reroll && result ? result.author : $('#sauthor').value).trim();
-    const body = { mode: 'story' };
-    if (title) { body.title = title; body.author = author; } else body.image = apiImg;
-    if (reroll && result) body.exclude = result.quotes;
+  // ---------- kitap ve alıntı seçimi (yapay zekâ yok, havuzdan) ----------
+  const cleanQ = q => String(q).replace(/\s*\n\s*/g, ' / ').trim();
+  function matchedBook() {
+    const t = SA.norm($('#stitle').value); if (!t) return null; const a = SA.norm($('#sauthor').value);
+    return SA.library().find(b => SA.norm(b.t) === t && (!a || SA.norm(b.a) === a)) || null;
+  }
+  function renderPicker(autoSelect) {
+    const b = matchedBook(), title = $('#stitle').value.trim();
+    pickables = [];
+    if (b) b.cats.forEach((arr, i) => arr.forEach(x => pickables.push({ q: cleanQ(x.q), cat: i })));
+    const valid = new Set([...pickables.map(p => p.q), ...customs]);
+    picked = picked.filter(q => valid.has(q));
+    if (autoSelect && !picked.length) { // her kategoriden birer alıntı, en fazla 3
+      const seen = new Set();
+      for (const p of pickables) { if (picked.length >= MAXQ) break; if (!seen.has(p.cat)) { seen.add(p.cat); picked.push(p.q); } }
+      for (const p of pickables) { if (picked.length >= MAXQ) break; if (!picked.includes(p.q)) picked.push(p.q); }
+    }
+    let html = '';
+    if (!title) html = '<div class="none">Önce kitabı yaz ya da yukarıdaki listeden seç.</div>';
+    else if (!pickables.length) html = '<div class="none">Bu kitap havuzda yok. Aşağıya kitaptan bir cümle yazıp ekleyebilirsin.</div>';
+    SA.CATS.forEach((name, ci) => {
+      const items = pickables.map((p, idx) => ({ ...p, idx })).filter(p => p.cat === ci);
+      if (!items.length) return;
+      html += `<div class="pcat c${ci}">${esc(name)}</div>` + items.map(p => `<button class="pq ${picked.includes(p.q) ? 'on' : ''}" data-pq="${p.idx}"><i></i><span>${esc(p.q)}</span></button>`).join('');
+    });
+    if (customs.length) html += '<div class="pcat">Senin cümlelerin</div>' + customs.map((q, k) => `<div class="pqrow"><button class="pq ${picked.includes(q) ? 'on' : ''}" data-pc="${k}"><i></i><span>${esc(q)}</span></button><button class="pqx" data-pcx="${k}" aria-label="Sil">✕</button></div>`).join('');
+    $('#spick').innerHTML = html;
+    $('#spick').dataset.n = picked.length;
+  }
+  function queueRedraw() { clearTimeout(redrawT); if (result && imgEl) redrawT = setTimeout(() => { buildResult(); if (result) draw(); }, 250); }
+  function togglePick(q) {
+    const i = picked.indexOf(q);
+    if (i >= 0) picked.splice(i, 1);
+    else { if (picked.length >= MAXQ) return toast('En fazla 3 alıntı seçebilirsin.'); picked.push(q); }
+    renderPicker(false); queueRedraw();
+  }
 
+  $('#spick').addEventListener('click', e => {
+    const pq = e.target.closest('[data-pq]'), pc = e.target.closest('[data-pc]'), px = e.target.closest('[data-pcx]');
+    if (pq) togglePick(pickables[+pq.dataset.pq].q);
+    else if (pc) togglePick(customs[+pc.dataset.pc]);
+    else if (px) { const q = customs.splice(+px.dataset.pcx, 1)[0]; picked = picked.filter(x => x !== q); renderPicker(false); queueRedraw(); }
+  });
+  $('#saddc').addEventListener('click', () => {
+    const q = cleanQ($('#scustom').value).slice(0, 220); if (!q) return toast('Önce cümleyi yaz.');
+    if (!customs.includes(q)) customs.push(q);
+    if (picked.length < MAXQ && !picked.includes(q)) picked.push(q);
+    $('#scustom').value = ''; renderPicker(false); queueRedraw(); toast('Eklendi ✓');
+  });
+
+  // Kitap adı önerileri
+  $('#stitle').addEventListener('input', () => {
+    const text = $('#stitle').value.trim();
+    const list = text ? SA.find(text).filter(b => SA.norm(b.t) !== SA.norm(text)).slice(0, 5) : [];
+    $('#ssug').innerHTML = list.map(b => `<button class="srow" data-spk="${esc(b.key)}"><b>${esc(b.t)}</b><small>${esc(b.a)}${b.a ? ' · ' : ''}${SA.count(b)} alıntı</small></button>`).join('');
+    const exact = SA.library().filter(b => SA.norm(b.t) === SA.norm(text));
+    if (exact.length === 1 && !$('#sauthor').value.trim()) $('#sauthor').value = exact[0].a;
+    renderPicker(true); queueRedraw();
+  });
+  $('#sauthor').addEventListener('input', () => { renderPicker(true); queueRedraw(); });
+  $('#ssug').addEventListener('click', e => {
+    const b = e.target.closest('[data-spk]'); if (!b) return;
+    const bk = SA.library().find(x => x.key === b.dataset.spk); if (!bk) return;
+    $('#stitle').value = bk.t; $('#sauthor').value = bk.a; $('#ssug').innerHTML = '';
+    picked = []; renderPicker(true); queueRedraw();
+  });
+
+  // sonucu oluştur (hazırla düğmesi ve yeniden çizim için ortak)
+  function buildResult() {
+    const b = matchedBook(), title = $('#stitle').value.trim();
+    if (!imgEl) { toast('Önce kitabın fotoğrafını yükle.'); return null; }
+    if (!title) { toast('Kitap adını yaz.'); return null; }
+    if (!picked.length) { toast('En az bir alıntı seç ya da kendi cümleni ekle.'); return null; }
+    result = { title: b ? b.t : title, author: b ? b.a : $('#sauthor').value.trim(), quotes: picked.slice() };
+    return result;
+  }
+  async function generate() {
+    if (busy) return;
+    if (!buildResult()) { result = null; return; }
     busy = true; $('#sgo').disabled = true;
-    $('#sout').innerHTML = '<div class="status"><div class="dots"><i></i><i></i><i></i></div><div>Görsel hazırlanıyor…</div></div>';
-    try {
-      let code = ''; try { code = JSON.parse(localStorage.getItem('sa.code')) || ''; } catch (e) { /* yok */ }
-      const r = await fetch('/api/quotes', { method: 'POST', headers: { 'content-type': 'application/json', 'x-access-code': code }, body: JSON.stringify(body) });
-      if (r.status === 401) {
-        const c = prompt('Erişim kodu?');
-        if (c) { try { localStorage.setItem('sa.code', JSON.stringify(c)); } catch (e) { /* önemsiz */ } busy = false; $('#sgo').disabled = false; return generate(reroll); }
-        throw new Error('Erişim kodu gerekli.');
-      }
-      const d = await r.json().catch(() => { throw new Error('Sunucu şu an yanıt vermiyor. Biraz sonra tekrar dene.'); });
-      if (!r.ok) throw new Error(d.error || 'Bir şey ters gitti.');
-      if (!d.found) {
-        $('#sout').innerHTML = '<div class="status">Fotoğraftaki kitabı tanıyamadım.<br>Kitap adını ve yazarı yazıp tekrar dene.</div>';
-        $('#stitle').focus(); return;
-      }
-      result = d;
-      if (!$('#stitle').value) { $('#stitle').value = d.title; $('#sauthor').value = d.author; }
-      await draw();
-      if (!d.quotes.length) toast('Bu kitaptan güvenle hatırladığım alıntı yok.');
-    } catch (e) {
-      $('#sout').innerHTML = `<div class="status">${esc(e.message)}</div>`;
-    } finally { busy = false; $('#sgo').disabled = false; }
+    try { await draw(); $('#sout').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    catch (e) { $('#sout').innerHTML = `<div class="status">${esc(e.message)}</div>`; }
+    finally { busy = false; $('#sgo').disabled = false; }
   }
 
   // ---------- çizim yardımcıları ----------
@@ -314,9 +358,9 @@
       <div class="sactions">
         <button class="btn main" data-sdl>⬇️ Görseli indir</button>
         ${canShare ? '<button class="btn" data-sshare>📤 Paylaş</button>' : ''}
-        <button class="btn" data-sre ${canShare ? '' : 'style="grid-column:1/-1"'}>🔄 Başka alıntılar</button>
+        <button class="btn" data-sedit ${canShare ? '' : 'style="grid-column:1/-1"'}>✏️ Alıntıları değiştir</button>
       </div>
-      <p class="snote">Alıntılar yapay zekâ ile kitaptan hatırlanıyor, paylaşmadan önce kontrol et. Durumu ve düzeni yukarıdan değiştirirsen görsel anında yenilenir. iPhone'da indirme olmazsa görsele uzun basıp "Fotoğraflara Ekle"yi seç.</p>
+      <p class="snote">Durumu, düzeni ya da alıntıları değiştirirsen görsel anında yenilenir. iPhone'da indirme olmazsa görsele uzun basıp "Fotoğraflara Ekle"yi seç.</p>
     </div>`;
   }
 
@@ -330,10 +374,11 @@
     } else if (e.target.closest('[data-sshare]') && lastBlob) {
       try { await navigator.share({ files: [new File([lastBlob], fname(), { type: 'image/jpeg' })], title: result.title }); }
       catch (err) { if (err.name !== 'AbortError') toast('Paylaşılamadı, indirmeyi dene.'); }
-    } else if (e.target.closest('[data-sre]')) generate(true);
+    } else if (e.target.closest('[data-sedit]')) $('#spick').scrollIntoView({ behavior: 'smooth', block: 'center' });
   });
 
-  $('#sgo').addEventListener('click', () => generate(false));
+  $('#sgo').addEventListener('click', () => generate());
+  renderPicker(false);
 
   // Test için dışarı açılan küçük yardımcı
   window.__story = { W, H, lastLayout: null };
