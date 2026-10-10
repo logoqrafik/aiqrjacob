@@ -1,7 +1,7 @@
 {
-  "name": "Raf",
-  "short_name": "Raf",
-  "description": "Kişisel kitaplık",
+  "name": "Satır Arası",
+  "short_name": "Satır Arası",
+  "description": "Kitaptan alıntılar",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
