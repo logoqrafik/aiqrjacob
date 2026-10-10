@@ -48,8 +48,20 @@
       $('#spreview').src = u; $('#spreview').hidden = false;
       $('#sLabel').textContent = 'Başka fotoğraf seç';
       $('#sout').innerHTML = '';
+      await generate(); // fotoğraf yeterli: görsel hemen hazırlanır
+      autoIdentify(f);  // arka planda kitabı tanı; tanırsa kitap adı ve havuz alıntıları otomatik eklenir
     } catch (err) { toast(err.message); }
   });
+
+  async function autoIdentify(f) {
+    if ($('#stitle').value.trim() || !SA.identifyFile) return;
+    try {
+      const r = await SA.identifyFile(f);
+      if (!r || file !== f || $('#stitle').value.trim()) return; // başka fotoğraf seçildi ya da kullanıcı kendi yazdı
+      $('#stitle').value = r.title; $('#sauthor').value = r.author || '';
+      picked = []; renderPicker(true); queueRedraw(); toast('Kitap tanındı: ' + r.title);
+    } catch (e) { /* sessiz: kullanıcı kitap adını elle yazabilir */ }
+  }
 
   $('#sStatus').addEventListener('click', e => {
     const b = e.target.closest('[data-st]'); if (!b) return;
@@ -83,8 +95,8 @@
       for (const p of pickables) { if (picked.length >= MAXQ) break; if (!picked.includes(p.q)) picked.push(p.q); }
     }
     let html = '';
-    if (!title) html = '<div class="none">Önce kitabı yaz ya da yukarıdaki listeden seç.</div>';
-    else if (!pickables.length) html = '<div class="none">Bu kitap havuzda yok. Aşağıya kitaptan bir cümle yazıp ekleyebilirsin.</div>';
+    if (!title) html = '<div class="none">İstersen kitap adını yaz, havuzdaki alıntılar burada listelensin. Ya da aşağıya kendi cümleni yaz. İkisi de isteğe bağlı.</div>';
+    else if (!pickables.length) html = '<div class="none">Bu kitap havuzda yok. İstersen aşağıya kitaptan bir cümle yazıp ekleyebilirsin.</div>';
     SA.CATS.forEach((name, ci) => {
       const items = pickables.map((p, idx) => ({ ...p, idx })).filter(p => p.cat === ci);
       if (!items.length) return;
@@ -136,8 +148,7 @@
   function buildResult() {
     const b = matchedBook(), title = $('#stitle').value.trim();
     if (!imgEl) { toast('Önce kitabın fotoğrafını yükle.'); return null; }
-    if (!title) { toast('Kitap adını yaz.'); return null; }
-    if (!picked.length) { toast('En az bir alıntı seç ya da kendi cümleni ekle.'); return null; }
+    // Kitap adı ve alıntı isteğe bağlı: yoksa yalnızca fotoğraf + durum etiketi çizilir
     result = { title: b ? b.t : title, author: b ? b.a : $('#sauthor').value.trim(), quotes: picked.slice() };
     return result;
   }
@@ -257,7 +268,8 @@
   // ---- Düzen 1: "Kitap açıkta" — fotoğraf bütün, alıntılar altta; hiçbir şey kitabı kapatmaz ----
   function drawSafe(c, res, th) {
     const qs = (res.quotes || []).slice(0, 3), n = qs.length;
-    const GAP = 22, BOTTOM = 1716, CARD_TOP = 478, MIN_H = 640, SIDE = 60;
+    const hasHead = !!(res.title || res.author);
+    const GAP = 22, BOTTOM = 1716, CARD_TOP = hasHead ? 478 : 372, MIN_H = 640, SIDE = 60;
     let size = 33, boxes = [], stackH = 0;
     for (;;) {
       boxes = measureQuotes(c, qs, size, 740);
@@ -274,14 +286,20 @@
     drawRibbon(c, th);
     drawPill(c, th, 208);
 
-    // Kitap adı ve yazar (üstte, ortalı)
-    c.textAlign = 'center'; c.textBaseline = 'alphabetic';
-    let ts = 52; c.font = `700 ${ts}px ${SANS}`;
-    let tl = wrap(c, res.title, 900);
-    if (tl.length > 1) { ts = 42; c.font = `700 ${ts}px ${SANS}`; tl = wrap(c, res.title, 900).slice(0, 2); }
-    c.save(); c.shadowColor = 'rgba(0,0,0,.5)'; c.shadowBlur = 14; c.fillStyle = '#fff';
-    tl.forEach((l, k) => c.fillText(l, W / 2, 384 + k * ts * 1.15)); c.restore();
-    c.font = `500 30px ${SANS}`; c.fillStyle = 'rgba(255,255,255,.82)'; c.fillText(res.author, W / 2, 384 + (tl.length - 1) * ts * 1.15 + 44);
+    // Kitap adı ve yazar (üstte, ortalı); ikisi de boşsa çizilmez
+    if (hasHead) {
+      c.textAlign = 'center'; c.textBaseline = 'alphabetic';
+      let ty = 384;
+      if (res.title) {
+        let ts = 52; c.font = `700 ${ts}px ${SANS}`;
+        let tl = wrap(c, res.title, 900);
+        if (tl.length > 1) { ts = 42; c.font = `700 ${ts}px ${SANS}`; tl = wrap(c, res.title, 900).slice(0, 2); }
+        c.save(); c.shadowColor = 'rgba(0,0,0,.5)'; c.shadowBlur = 14; c.fillStyle = '#fff';
+        tl.forEach((l, k) => c.fillText(l, W / 2, 384 + k * ts * 1.15)); c.restore();
+        ty = 384 + (tl.length - 1) * ts * 1.15 + 44;
+      }
+      if (res.author) { c.font = `500 30px ${SANS}`; c.fillStyle = 'rgba(255,255,255,.82)'; c.fillText(res.author, W / 2, ty); }
+    }
 
     // Fotoğraf kartı
     // Kart + alıntılar tek grup olarak dikeyde ortalanır (yatay fotoğrafta boşluk kalmaz)
@@ -322,15 +340,22 @@
       drawQuoteBox(c, b, x, y, th, th.stickers[i % th.stickers.length], left); rects.push({ x, y, w: b.w, h: b.h }); y += b.h + gap;
     });
     c.textAlign = 'left'; c.textBaseline = 'alphabetic';
-    let size = 54; c.font = `700 ${size}px ${SANS}`; let tl = wrap(c, res.title, 880);
-    if (tl.length > 1) { size = 44; c.font = `700 ${size}px ${SANS}`; tl = wrap(c, res.title, 880).slice(0, 2); }
-    const fy = 1568, blockH = tl.length * size * 1.2 + 44 + 30;
-    c.fillStyle = th.accent; rr(c, 84, fy - size, 7, blockH, 4); c.fill();
-    c.save(); c.shadowColor = 'rgba(0,0,0,.5)'; c.shadowBlur = 14; c.fillStyle = '#fff'; c.font = `700 ${size}px ${SANS}`;
-    tl.forEach((l, k) => c.fillText(l, 114, fy + k * size * 1.2)); c.restore();
-    const ay = fy + (tl.length - 1) * size * 1.2 + 46;
-    c.font = `500 32px ${SANS}`; c.fillStyle = 'rgba(255,255,255,.86)'; c.fillText(res.author, 114, ay);
-    c.font = `500 24px ${SANS}`; c.fillStyle = 'rgba(255,255,255,.5)'; c.fillText('Satır Arası ile hazırlandı', 114, ay + 40);
+    if (res.title || res.author) {
+      let size = 54, tl = [];
+      if (res.title) {
+        c.font = `700 ${size}px ${SANS}`; tl = wrap(c, res.title, 880);
+        if (tl.length > 1) { size = 44; c.font = `700 ${size}px ${SANS}`; tl = wrap(c, res.title, 880).slice(0, 2); }
+      }
+      const fy = 1568, blockH = (tl.length ? tl.length * size * 1.2 : 0) + 44 + 30;
+      c.fillStyle = th.accent; rr(c, 84, fy - (tl.length ? size : 34), 7, blockH, 4); c.fill();
+      c.save(); c.shadowColor = 'rgba(0,0,0,.5)'; c.shadowBlur = 14; c.fillStyle = '#fff'; c.font = `700 ${size}px ${SANS}`;
+      tl.forEach((l, k) => c.fillText(l, 114, fy + k * size * 1.2)); c.restore();
+      const ay = tl.length ? fy + (tl.length - 1) * size * 1.2 + 46 : fy;
+      if (res.author) { c.font = `500 32px ${SANS}`; c.fillStyle = 'rgba(255,255,255,.86)'; c.fillText(res.author, 114, ay); }
+      c.font = `500 24px ${SANS}`; c.fillStyle = 'rgba(255,255,255,.5)'; c.fillText('Satır Arası ile hazırlandı', 114, ay + 40);
+    } else {
+      c.font = `500 24px ${SANS}`; c.fillStyle = 'rgba(255,255,255,.55)'; c.fillText('Satır Arası ile hazırlandı', 84, 1640);
+    }
     return { card: { x: 0, y: 0, w: W, h: H }, boxes: rects };
   }
 
@@ -365,7 +390,7 @@
   }
 
   const ascii = t => String(t || '').toLocaleLowerCase('tr').replace(/[ığüşöç]/g, ch => ({ 'ı': 'i', 'ğ': 'g', 'ü': 'u', 'ş': 's', 'ö': 'o', 'ç': 'c' }[ch])).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-  const fname = () => `satir-arasi-${ST[status].name}-${ascii(result.title).slice(0, 40) || 'kitap'}.jpg`;
+  const fname = () => `satir-arasi-${ST[status].name}-${ascii(result.title).slice(0, 40) || 'gorsel'}.jpg`;
 
   $('#sout').addEventListener('click', async e => {
     if (e.target.closest('[data-sdl]') && lastBlob) {

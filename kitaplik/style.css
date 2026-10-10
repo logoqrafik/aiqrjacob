@@ -206,3 +206,6 @@ input[type=search] { -webkit-appearance:none; appearance:none; }
 .wq .btn2 { min-height:42px; padding:8px 14px; font-size:14px; }
 .vsum { margin:14px 0 4px; padding:12px 14px; border-radius:14px; background:rgba(63,157,152,.12); border:1px solid rgba(63,157,152,.35); font:500 13.5px/1.5 var(--ui); }
 .vb.ok { color:#6fd1b6; font-weight:700; } .vb.no { color:var(--mute); }
+
+.photo.mini { min-height:92px; font-size:15px; margin-bottom:0; }
+.photo.mini .photo-ico { font-size:26px; }

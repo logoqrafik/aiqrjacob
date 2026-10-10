@@ -9,5 +9,10 @@
         }
       ]
     }
-  ]
+  ],
+  "functions": {
+    "api/identify.js": {
+      "maxDuration": 40
+    }
+  }
 }

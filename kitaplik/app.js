@@ -167,11 +167,11 @@
   // ---------- internet araması (Wikiquote) ----------
   let webList = [], webCtx = null;
   const loadingHTML = t => `<div class="status"><div class="dots"><i></i><i></i><i></i></div><div>${esc(t)}</div></div>`;
-  async function doWeb(text, key) {
+  async function doWeb(text, key, hint) {
     const book = key ? byKey(key) : null;
     const query = book ? (book.a || book.t) : text;      // doğrulamada yazara göre ara (kitap adı sayfada geçmeyebilir)
-    webCtx = { book, text };
-    if (!book) setOut(`<div class="ask">“${esc(text)}” internette aranıyor</div><div id="webres"></div>`);
+    webCtx = { book, text, hint };
+    if (!book && !hint) setOut(`<div class="ask">“${esc(text)}” internette aranıyor</div><div id="webres"></div>`);
     const box = $('#webres'); if (!box) return;
     box.innerHTML = loadingHTML('Wikiquote taranıyor…');
     let res;
@@ -203,9 +203,49 @@
   function addFromWeb(i) {
     const w = webList[i]; if (!w) return;
     const ctx = webCtx || {};
-    const t = ctx.book ? ctx.book.t : (w.work || ctx.text || w.page), au = ctx.book ? ctx.book.a : (w.work ? w.page : '');
+    const t = ctx.book ? ctx.book.t : (ctx.hint ? ctx.hint.t : (w.work || ctx.text || w.page)), au = ctx.book ? ctx.book.a : (ctx.hint ? ctx.hint.a : (w.work ? w.page : ''));
     openAdd(t, au, w.q);
   }
+
+
+  // ---------- fotoğraftan kitap tanıma (yalnızca ad/yazar; alıntı havuzdan ya da Wikiquote'tan gelir) ----------
+  function shrinkFile(file, max = 1024) {
+    return new Promise((ok, no) => {
+      const img = new Image(), url = URL.createObjectURL(file);
+      img.onload = () => {
+        const k = Math.min(1, max / Math.max(img.width, img.height));
+        const cv = document.createElement('canvas'); cv.width = Math.round(img.width * k); cv.height = Math.round(img.height * k);
+        cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+        URL.revokeObjectURL(url); ok(cv.toDataURL('image/jpeg', 0.85));
+      };
+      img.onerror = () => no(new Error('Fotoğraf okunamadı'));
+      img.src = url;
+    });
+  }
+  async function identifyFile(file) {
+    const image = await shrinkFile(file);
+    const r = await fetch('/api/identify', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ image }) });
+    const d = await r.json().catch(() => { throw new Error('Sunucu şu an yanıt vermiyor. Kitap adını yazarak arayabilirsin.'); });
+    if (!r.ok) throw new Error(d.error || 'Kitap tanınamadı. Kitap adını yazarak arayabilirsin.');
+    return d.found ? { title: d.title, author: d.author || '' } : null;
+  }
+  const sameAuthor = (x, y) => { const p = norm(x), q = norm(y); return !p || !q || p.includes(q) || q.includes(p); };
+  window.SA.identifyFile = identifyFile;
+
+  $('#qfile').addEventListener('change', async e => {
+    const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+    setOut(loadingHTML('Kitap tanınıyor…'));
+    try {
+      const r = await identifyFile(f);
+      if (!r) { setOut('<div class="status">Fotoğraftaki kitabı tanıyamadım.<br>Kitap adını yazarak arayabilirsin.</div>'); $('#q').focus(); return; }
+      const b = library().find(x => norm(x.t) === norm(r.title) && sameAuthor(x.a, r.author) && count(x) > 0);
+      if (b) { show(b.key); return; }
+      setOut(`<div class="book"><h2>${esc(r.title)}</h2><div class="muted">${esc(r.author)}</div></div><div id="webres"></div>`);
+      doWeb(r.title, null, { t: r.title, a: r.author });
+    } catch (err) {
+      setOut(`<div class="status">${esc(err.message)}</div>`); $('#q').focus();
+    }
+  });
 
   // ---------- yedek ----------
   function exportOwn() {
