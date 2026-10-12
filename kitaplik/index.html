@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;1,9..144,400;1,9..144,500&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Cormorant+Garamond:ital,wght@0,500;0,700;1,500;1,700&family=EB+Garamond:ital,wght@0,400;0,700;1,400;1,700&family=Lora:ital,wght@0,400;0,700;1,400;1,700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Crimson+Pro:ital,wght@0,400;0,700;1,400;1,700&family=DM+Serif+Display:ital@0;1&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Dancing+Script:wght@400;700&family=Caveat:wght@400;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=20">
+  <link rel="stylesheet" href="style.css?v=21">
 </head>
 <body>
   <div class="bg" aria-hidden="true"><i class="blob b1"></i><i class="blob b2"></i><i class="blob b3"></i></div>
@@ -98,6 +98,13 @@
           <button class="btn2" id="stAdd">➕ Alıntı ekle</button>
           <button class="btn2" id="stBook">✨ Kitaptan getir</button>
           <button class="btn2" id="stMark">🪷 Filigran ekle</button>
+        </div>
+        <div id="stQuick" class="st-quick" hidden>
+          <span id="stQName"></span>
+          <button id="stQEdit" aria-label="Metni düzenle">✏️ Düzenle</button>
+          <button id="stQDup" aria-label="Çoğalt">⧉</button>
+          <button id="stQUndo" aria-label="Geri al">↩️</button>
+          <button id="stQDel" class="danger" aria-label="Sil">🗑️ Sil</button>
         </div>
       </section>
 
@@ -191,15 +198,21 @@
 
     <p class="credit"></p>
   </main>
+  <div id="stEditor" class="st-editor" hidden>
+    <div class="st-ed-card" role="dialog" aria-label="Metni düzenle">
+      <textarea id="stEdTxt" placeholder="Metni yaz" maxlength="600"></textarea>
+      <div class="st-ed-row"><button class="btn2" id="stEdCancel">Vazgeç</button><button class="btn2 danger" id="stEdDel">🗑️ Sil</button><button class="btn2 main" id="stEdOk">Tamam</button></div>
+    </div>
+  </div>
   <div id="toast" class="toast" hidden></div>
 
-  <script src="config.js?v=20"></script>
-  <script src="daily.js?v=20"></script>
-  <script src="app.js?v=20"></script>
-  <script src="cards.js?v=20"></script>
-  <script src="shelf.js?v=20"></script>
-  <script src="shapes.js?v=20"></script>
-  <script src="story.js?v=20"></script>
-  <script src="studio.js?v=20"></script>
+  <script src="config.js?v=21"></script>
+  <script src="daily.js?v=21"></script>
+  <script src="app.js?v=21"></script>
+  <script src="cards.js?v=21"></script>
+  <script src="shelf.js?v=21"></script>
+  <script src="shapes.js?v=21"></script>
+  <script src="story.js?v=21"></script>
+  <script src="studio.js?v=21"></script>
 </body>
 </html>
