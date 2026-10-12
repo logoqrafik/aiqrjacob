@@ -289,7 +289,7 @@
     $('#stLayers').innerHTML = S.layers.map((L, i) => `<button class="${L.id === S.sel ? 'on' : ''}" data-l="${L.id}">${i + 1}. ${isMark(L) ? '🪷 Filigran' : L.type === 'ribbon' ? '🔖 Ayraç' : esc(String(L.text).replace(/\s+/g, ' ').slice(0, 14) || '…')}</button>`).join('');
   }
   function syncCtl() {
-    const L = sel(); $('#stNoSel').hidden = !!L; $('#stCtl').hidden = !L; renderLayers();
+    const L = sel(); $('#stNoSel').hidden = !!L; $('#stCtl').hidden = !L; renderLayers(); syncQuick();
     document.querySelectorAll('#stFormat .cchip').forEach(c => c.classList.toggle('on', c.dataset.sf === S.format));
     if (!L) { renderPal(); return; }
     const ic = isIcon(L);
@@ -307,6 +307,32 @@
     $('#stShadow').checked = !!L.shadow; $('#stShCtl').hidden = !L.shadow; set('#stShB', L.shB, v => v);
     renderPal();
   }
+  // Telefonda kolay erişim: seçili öğenin altında yapışkan düzenle / sil çubuğu
+  function layerName(L) { return L.type === 'lotus' || L.wm ? (L.type === 'lotus' ? '🪷 Filigran' : '✍️ Filigran') : L.type === 'ribbon' ? '🔖 Ayraç' : '“' + (String(L.text).replace(/\s+/g, ' ').slice(0, 16) || '…') + '”'; }
+  function syncQuick() {
+    const L = sel(), q = $('#stQuick'); if (!q) return; q.hidden = !L; if (!L) return;
+    $('#stQName').textContent = layerName(L); $('#stQEdit').hidden = isIcon(L);
+  }
+  let edOrig = null, edAt = 0;
+  function openEditor() {
+    const L = sel(); if (!L || isIcon(L)) return; edOrig = L.text; edAt = Date.now(); const t = $('#stEdTxt'); t.value = L.text; $('#stEditor').hidden = false;
+    setTimeout(() => { t.focus(); t.setSelectionRange(t.value.length, t.value.length); }, 60);
+  }
+  function closeEditor(keep) {
+    const L = sel(); if (L && !keep && edOrig != null) { L.text = edOrig; render(); renderLayers(); }
+    $('#stEditor').hidden = true; edOrig = null; if (keep) commit(); syncCtl();
+  }
+  // Çift dokunmayla açılınca parmağın altında kalan düğmeye gelen artçı tıklamayı yut
+  $('#stEditor').addEventListener('click', e => { if (Date.now() - edAt < 450) { e.stopPropagation(); e.preventDefault(); } }, true);
+  $('#stQEdit').addEventListener('click', openEditor);
+  $('#stQDup').addEventListener('click', () => $('#stDup').click());
+  $('#stQUndo').addEventListener('click', undo);
+  $('#stQDel').addEventListener('click', () => { const L = sel(); if (!L) return; delSel(); toast('Silindi. Geri almak için ↩️'); });
+  $('#stEdTxt').addEventListener('input', e => { const L = sel(); if (!L) return; L.text = e.target.value; render(); renderLayers(); });
+  $('#stEdOk').addEventListener('click', () => closeEditor(true));
+  $('#stEdCancel').addEventListener('click', () => closeEditor(false));
+  $('#stEdDel').addEventListener('click', () => { $('#stEditor').hidden = true; edOrig = null; delSel(); toast('Silindi. Geri almak için ↩️'); });
+  $('#stEditor').addEventListener('click', e => { if (e.target.id === 'stEditor' && Date.now() - edAt > 500) closeEditor(true); });
   function applyAll() { renderBgGrid(); syncCtl(); render(); }
 
   // slider / alan bağlama
@@ -377,7 +403,7 @@
     try { cv.setPointerCapture(e.pointerId); } catch (err) { /* önemsiz */ }
     const p = posOf(e); ptrs.set(e.pointerId, p); const L = sel();
     if (ptrs.size === 2 && L) { const [a, b] = [...ptrs.values()]; gest = { type: 'pinch', d0: dist(a, b), a0: ang(a, b), size0: L.size, rot0: L.rot, mid0: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, fx0: L.fx, fy0: L.fy, moved: false }; return; }
-    if (L && onHandle(L, p)) { const c = { x: L.fx * W(), y: L.fy * H() }; gest = { type: 'handle', c, d0: dist(c, p), a0: ang(c, p), size0: L.size, rot0: L.rot, moved: false }; return; }
+    if (L && !hitL(L, p, 0) && onHandle(L, p)) { const c = { x: L.fx * W(), y: L.fy * H() }; gest = { type: 'handle', c, d0: dist(c, p), a0: ang(c, p), size0: L.size, rot0: L.rot, moved: false }; return; }
     const hit = [...S.layers].reverse().find(l => hitL(l, p, 0)) || [...S.layers].reverse().find(l => hitL(l, p));
     if (hit) { S.sel = hit.id; gest = { type: 'drag', dx: p.x - hit.fx * W(), dy: p.y - hit.fy * H(), moved: false }; syncCtl(); } else { S.sel = null; gest = null; syncCtl(); }
     render();
@@ -396,14 +422,17 @@
     syncOutOnly(L); render();
   });
   function syncOutOnly(L) { $('#stSize').value = Math.round(L.size); $('#stSizeO').textContent = Math.round(L.size) + ' px'; $('#stRot').value = Math.round(L.rot); $('#stRotO').textContent = Math.round(L.rot) + '°'; }
+  let lastTap = { id: 0, t: 0 };
   const endPtr = e => {
     ptrs.delete(e.pointerId);
+    if (ptrs.size === 0 && gest && gest.type === 'drag' && !gest.moved && sel() && !isIcon(sel())) { const now = Date.now(); if (lastTap.id === S.sel && now - lastTap.t < 380) { lastTap = { id: 0, t: 0 }; openEditor(); } else lastTap = { id: S.sel, t: now }; }
     if (ptrs.size === 0) { if (gest && gest.moved) { const L = sel(); if (L) rememberStyle(L); commit(); } gest = null; guide = { v: false, h: false }; render(); }
     else if (gest && gest.type === 'pinch') { if (gest.moved) commit(); gest = null; }
   };
   cv.addEventListener('pointerup', endPtr); cv.addEventListener('pointercancel', endPtr);
   document.addEventListener('keydown', e => {
     if ($('#tab-studio').hidden || /INPUT|TEXTAREA|SELECT/.test((document.activeElement || {}).tagName)) return; const L = sel(); if (!L) return;
+    if (!$('#stEditor').hidden) return;
     if (e.key === 'Delete' || e.key === 'Backspace') { delSel(); e.preventDefault(); }
     const d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key]; if (d) { L.fx += d[0] * 0.01; L.fy += d[1] * 0.01; commit(); render(); e.preventDefault(); }
   });
