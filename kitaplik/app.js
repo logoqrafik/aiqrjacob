@@ -32,10 +32,12 @@
     const qn = [...new Set([norm(query), norm(rec.title), norm(rec.title + ' ' + rec.author)].filter(Boolean))];
     const list = recs().filter(r => norm(r.title) !== norm(rec.title));
     list.unshift({ title: rec.title, author: rec.author, categories: rec.categories, qn });
-    set(BOOKS, list.slice(0, 40));
+    set(BOOKS, list.slice(0, 40)); window.dispatchEvent(new Event('sa-books'));
   }
   async function post(body) {
-    const r = await fetch('/api/quotes', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+    const headers = { 'content-type': 'application/json' };
+    if (window.ACCOUNT) { const t = await window.ACCOUNT.token(); if (t) headers.authorization = 'Bearer ' + t; }
+    const r = await fetch('/api/quotes', { method: 'POST', headers, body: JSON.stringify(body) });
     const d = await r.json().catch(() => { throw new Error('Sunucu şu an yanıt vermiyor. Biraz sonra tekrar dene.'); });
     if (!r.ok) throw new Error(d.error || 'Bir şey ters gitti.');
     return d;

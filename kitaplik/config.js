@@ -1,6 +1,9 @@
 // Kişiselleştirme: sadece bu dosya.
 window.CONFIG = {
-  version: "21 · kolay düzenle ve sil",
+  version: "22 · hesaplar",
+  // Hesap sistemi (Supabase). İkisi de boşsa uygulama girişsiz, eski yerel modda çalışır.
+  // Kurulum: docs/HESAP-KURULUMU.md. Bu iki değer herkese açık olabilir (anon anahtar), gizli değildir.
+  supabase: { url: "", anonKey: "" },
   friend: "Kitap Kurdu",   // Arkadaşının adı
   giver: "Panda 🐼",       // İmza (en altta)
   // Rafım sekmesindeki sürpriz kartlar: kaç kitap bitirince hangi not çıksın (istediğini değiştir)
