@@ -14,12 +14,8 @@ Kurallar:
 {"found":true,"title":"...","author":"...","categories":[{"name":"Motivasyon","quotes":["..."]}, ...]}
 - Kategori adları aynen şunlar ve bu sırada olsun: ${CATEGORIES.join(', ')}.`;
 
-const { requireMember } = require('./_auth');
-
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST gerekli' });
-  const who = await requireMember(req);
-  if (!who.ok) return res.status(who.status).json({ error: who.error });
   if (!process.env.GEMINI_API_KEY) return res.status(500).json({ error: 'Alıntı üretimi şu an kapalı.' });
   const b = req.body || {};
   const query = String(b.query || [b.title, b.author].filter(Boolean).join(' - ')).trim().slice(0, 240);
