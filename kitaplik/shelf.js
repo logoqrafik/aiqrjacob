@@ -188,19 +188,11 @@
     return `<section class="card st"><h3 class="st-h">${esc((C.giver || '').replace(/\s*\S*$/, '') || 'Önerilerim')} önerileri</h3><p class="hint" style="margin:0 0 10px;text-align:left">Elle seçilmiş. Beğendiğin olursa okunacaklara ekle.</p>
       ${P.map((p, i) => `<div class="pick"><div class="pcv" data-ct="${esc(p.t)}" data-ca="${esc(p.a)}"></div><div class="ptx"><b>${esc(p.t)}</b><span>${esc(p.a)}</span>${p.n ? `<small>${esc(p.n)}</small>` : ''}</div>${find(p.t) ? '<em>rafında</em>' : `<button class="btn2" data-pick="${i}">📌 Ekle</button>`}</div>`).join('')}</section>`;
   }
-  function secAccount() {
-    const A = window.ACCOUNT; if (!A) return '';
-    const plan = A.free ? 'Ücretsiz üyelik (davet)' : A.active ? 'Aktif üyelik' : A.billing ? 'Üyelik yok' : 'Açık erişim (deneme)';
-    return `<div class="acc"><div class="acc-h"><b>${esc(A.email || 'Hesabım')}</b><span>${plan}</span></div>
-      ${A.free ? '' : '<div class="two" style="grid-template-columns:1fr auto"><input id="accCode" placeholder="Davet kodun varsa gir" autocomplete="off" autocapitalize="characters"><button class="btn2" data-acc-redeem style="margin-bottom:12px">Kullan</button></div>'}
-      <div class="btns2"><button class="btn2" data-acc-out>↪ Çıkış yap</button><button class="btn2 danger" data-acc-del>🗑️ Hesabımı ve verilerimi sil</button></div>
-      <p class="hint" style="margin:8px 0 0;text-align:left">Verilerin hesabına bağlı saklanır ve yalnızca sen görebilirsin. Başka cihazda giriş yapınca aynen gelir.</p></div>`;
-  }
   function secSettings() {
     const w = lib.wm || {}, standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
     const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
-    return `<section class="card st"><h3 class="st-h">Ayarlar</h3>${secAccount()}
-      <div class="ask2" style="margin-top:${window.ACCOUNT ? 18 : 0}px">Tasarımlardaki filigran</div>
+    return `<section class="card st"><h3 class="st-h">Ayarlar</h3>
+      <div class="ask2" style="margin-top:0">Tasarımlardaki filigran</div>
       <div class="cats" style="margin-bottom:10px"><button class="cchip c1 ${w.mode !== 'text' ? 'on' : ''}" data-wm="lotus">🪷 Lotus</button><button class="cchip c3 ${w.mode === 'text' ? 'on' : ''}" data-wm="text">✍️ Adım</button></div>
       <input id="shWm" placeholder="Filigranda görünecek ad (örn. @adin)" value="${esc(w.text || '')}" maxlength="30" ${w.mode === 'text' ? '' : 'hidden'}>
       <p class="hint" style="margin:0;text-align:left">Yeni hazırlanan görsellerde kullanılır. Tasarım sekmesinde yerini değiştirebilirsin.</p>
@@ -306,9 +298,6 @@
     }
     if ((el = g('[data-pick]'))) { const p = (C.picks || [])[+el.dataset.pick]; if (p) { addBook({ title: p.t, author: p.a, status: 'want' }); view.shelf = 'want'; render(); toast('Okunacaklara eklendi 📌'); } return; }
     if ((el = g('[data-wm]'))) { lib.wm = { ...(lib.wm || {}), mode: el.dataset.wm }; save(); render(); const i = $('#shWm'); if (i && !i.hidden) i.focus(); return; }
-    if (g('[data-acc-out]')) { toast('Çıkış yapılıyor…'); return window.ACCOUNT.signOut(); }
-    if (g('[data-acc-redeem]')) { const c = $('#accCode').value.trim(); if (!c) return toast('Önce kodu yaz.'); if (await window.ACCOUNT.redeem(c)) { toast('Kod kabul edildi ✓'); setTimeout(() => location.reload(), 700); } else toast('Bu kod geçersiz ya da kullanılmış.'); return; }
-    if (g('[data-acc-del]')) { if (confirm('Hesabındaki tüm raf, alıntı, not ve tasarımlar kalıcı olarak silinsin mi? Bu geri alınamaz.')) { toast('Siliniyor…'); await window.ACCOUNT.deleteMe(); } return; }
     if (g('[data-export]')) return exportBackup();
     if (g('[data-install]') && deferred) { deferred.prompt(); deferred = null; return; }
   });
