@@ -463,8 +463,8 @@
     const lsSet = a => { try { localStorage.setItem(LS, JSON.stringify(a)); } catch (e) { throw new Error('Depolama dolu'); } };
     return {
       all: () => tx('readonly', s => s.getAll()).catch(() => lsGet()),
-      put: d => tx('readwrite', s => s.put(d)).catch(() => { const a = lsGet().filter(x => x.id !== d.id); a.push({ ...d, photo: '' }); lsSet(a); }),
-      del: id => tx('readwrite', s => s.delete(id)).catch(() => lsSet(lsGet().filter(x => x.id !== id)))
+      put: d => tx('readwrite', s => s.put(d)).catch(() => { const a = lsGet().filter(x => x.id !== d.id); a.push({ ...d, photo: '' }); lsSet(a); }).then(r => { document.dispatchEvent(new CustomEvent('sa-design', { detail: { op: 'put', d } })); return r; }),
+      del: id => tx('readwrite', s => s.delete(id)).catch(() => lsSet(lsGet().filter(x => x.id !== id))).then(r => { document.dispatchEvent(new CustomEvent('sa-design', { detail: { op: 'del', d: { id } } })); return r; })
     };
   })();
   async function thumb() { const c = await exportCanvas(), t = document.createElement('canvas'); t.width = 270; t.height = Math.round(270 * c.height / c.width); t.getContext('2d').drawImage(c, 0, 0, t.width, t.height); return t.toDataURL('image/jpeg', 0.75); }
