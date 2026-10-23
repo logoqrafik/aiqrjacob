@@ -8,7 +8,7 @@ Kaydı sessiz ortamda, telefon ağza 15 cm uzaklıkta al. Kaydı tek parça yap,
 - 5,3–8 sn  "Kat kat koruma…"
 - 14,7–17 sn "…streç film, toza ve neme karşı…"
 - 20,7–23 sn "…ve koruyucu battaniye. Çizilmeden, darbe almadan."
-- 23–27 sn "Cevap: koltuk. Taşınıyorsanız ambalajı bize bırakın."
+- 23–27 sn "Cevap: TV ünitesi. Taşınıyorsanız ambalajı bize bırakın."
 
 
 
