@@ -1,0 +1,9 @@
+{
+  "name": "satir-arasi",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Satır Arası: kitap severler için alıntı ve tasarım uygulaması",
+  "dependencies": {
+    "web-push": "3.6.7"
+  }
+}
