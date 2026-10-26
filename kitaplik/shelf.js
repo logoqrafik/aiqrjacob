@@ -188,11 +188,21 @@
     return `<section class="card st"><h3 class="st-h">${esc((C.giver || '').replace(/\s*\S*$/, '') || 'Önerilerim')} önerileri</h3><p class="hint" style="margin:0 0 10px;text-align:left">Elle seçilmiş. Beğendiğin olursa okunacaklara ekle.</p>
       ${P.map((p, i) => `<div class="pick"><div class="pcv" data-ct="${esc(p.t)}" data-ca="${esc(p.a)}"></div><div class="ptx"><b>${esc(p.t)}</b><span>${esc(p.a)}</span>${p.n ? `<small>${esc(p.n)}</small>` : ''}</div>${find(p.t) ? '<em>rafında</em>' : `<button class="btn2" data-pick="${i}">📌 Ekle</button>`}</div>`).join('')}</section>`;
   }
+  function secPush() { return window.PUSH && window.PUSH.configured ? '<div class="ask2">Bildirimler</div><div id="pushBox" class="pushbox"><div class="none">Yükleniyor…</div></div>' : ''; }
+  async function fillPush() {
+    const box = $('#pushBox'); if (!box || !window.PUSH) return;
+    const st = await window.PUSH.state(); if (!$('#pushBox')) return;
+    const msg = { 'ios-ekle': 'iPhone\'da bildirim için önce uygulamayı Ana Ekrana ekle: Safari\'de <b>Paylaş</b> → <b>Ana Ekrana Ekle</b>. Sonra buradan aç.', desteklenmiyor: 'Bu tarayıcı bildirimleri desteklemiyor.', engelli: 'Bildirimler tarayıcı ayarlarından engellenmiş. Site ayarlarından izin verirsen burada açabilirsin.' }[st];
+    box.innerHTML = msg ? `<p class="hint" style="margin:0;text-align:left">${msg}</p>` : st === 'acik'
+      ? '<p class="hint" style="margin:0 0 8px;text-align:left">🔔 Haftalık bildirimler açık.</p><button class="btn2" data-push-off>Bildirimleri kapat</button>'
+      : '<p class="hint" style="margin:0 0 8px;text-align:left">Ara sıra (haftada bir kadar) küçük bir mesaj gelir. İstediğin an kapatabilirsin.</p><button class="btn2 main" data-push-on>🔔 Bildirimleri aç</button>';
+  }
   function secSettings() {
     const w = lib.wm || {}, standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
     const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
     return `<section class="card st"><h3 class="st-h">Ayarlar</h3>
-      <div class="ask2" style="margin-top:0">Tasarımlardaki filigran</div>
+      ${secPush()}
+      <div class="ask2" style="${secPush() ? '' : 'margin-top:0'}">Tasarımlardaki filigran</div>
       <div class="cats" style="margin-bottom:10px"><button class="cchip c1 ${w.mode !== 'text' ? 'on' : ''}" data-wm="lotus">🪷 Lotus</button><button class="cchip c3 ${w.mode === 'text' ? 'on' : ''}" data-wm="text">✍️ Adım</button></div>
       <input id="shWm" placeholder="Filigranda görünecek ad (örn. @adin)" value="${esc(w.text || '')}" maxlength="30" ${w.mode === 'text' ? '' : 'hidden'}>
       <p class="hint" style="margin:0;text-align:left">Yeni hazırlanan görsellerde kullanılır. Tasarım sekmesinde yerini değiştirebilirsin.</p>
@@ -205,6 +215,7 @@
     const r = root(); if (!r) return; stopPlayer();
     r.innerHTML = secGoal() + secShelf() + secFavs() + secNotes() + secCards() + secPicks() + secSettings();
     if (window.CARDS) window.CARDS.hydrate(r);
+    fillPush();
     const cv = $('#cardCv'); if (cv && view.card) player = window.CARDS.play(view.card.scene, cv);
   }
 
@@ -298,6 +309,8 @@
     }
     if ((el = g('[data-pick]'))) { const p = (C.picks || [])[+el.dataset.pick]; if (p) { addBook({ title: p.t, author: p.a, status: 'want' }); view.shelf = 'want'; render(); toast('Okunacaklara eklendi 📌'); } return; }
     if ((el = g('[data-wm]'))) { lib.wm = { ...(lib.wm || {}), mode: el.dataset.wm }; save(); render(); const i = $('#shWm'); if (i && !i.hidden) i.focus(); return; }
+    if (g('[data-push-on]')) { try { await window.PUSH.enable(); toast('Bildirimler açıldı 🔔'); } catch (err) { toast(err.message); } return fillPush(); }
+    if (g('[data-push-off]')) { await window.PUSH.disable(); toast('Bildirimler kapatıldı'); return fillPush(); }
     if (g('[data-export]')) return exportBackup();
     if (g('[data-install]') && deferred) { deferred.prompt(); deferred = null; return; }
   });
