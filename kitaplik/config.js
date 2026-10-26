@@ -1,8 +1,8 @@
 // Kişiselleştirme: sadece bu dosya.
 window.CONFIG = {
-  version: "22 · bildirimler",
+  version: "23 · bildirimler açık",
   // Haftalık bildirimler (VAPID public anahtarı). Boşsa bildirim düğmesi görünmez. Kurulum: docs/BILDIRIM-KURULUMU.md
-  push: { publicKey: "" },
+  push: { publicKey: "BP_WeXOmKNCep1Tn7VTEHTEL6SfjqThGthnphW3EOV7303u21xcGYPOjImA35j-3-msOktU64ENI33gXouRqNBc" },
   friend: "Kitap Kurdu",   // Arkadaşının adı
   giver: "Panda 🐼",       // İmza (en altta)
   // Rafım sekmesindeki sürpriz kartlar: kaç kitap bitirince hangi not çıksın (istediğini değiştir)
