@@ -29,3 +29,15 @@ Kullanıcı bu tarzı "tam istediğim animasyon" diye onayladı. Yeni videolar a
 - Harf aralığı Inter'de hafif sıkı (≈ -1,4%; harfler birbirine değmeyecek kadar). El yazısında aralık değiştirilmez.
 - 3 satırlı metin bloklarında **son satır el yazısı** (Amatic SC, `pip install font-amatic-sc`), üst satıra yakın, hafif eğik.
 - Küçük etiketler (HATA 05, DOĞRUSU) Inter Black, harf aralığı açık.
+
+## Onaylı referans video
+- `uceller-5-hata-kinetik-v3.mp4` ("Taşınırken 5 hata", 39,6 sn) kullanıcının beğendiği, **referans alınacak** son sürümdür.
+- Eski sürümler (v1, v2) referans değildir.
+
+## Bekleyen revize notları (kullanıcı: "şimdi revize yapma, aklında tut")
+Bunlar sonraki videolarda ve v3 yeniden yapılırken uygulanacak:
+1. El yazısı fontu Amatic SC **değil**, başka bir el yazısı font olacak (Caveat benzeri, daha yumuşak/modern). Ortamda indirilemediği için kullanıcıdan `.ttf` istenebilir.
+2. El yazısı metinlerde **cümle düzeni**: yalnızca ilk harf büyük, diğerleri küçük ("Her şey yerini bulur.", "Yoruma yaz"). Hepsi büyük harf olmayacak.
+3. El yazısı **alt metinlerde kullanılmaz**; yalnızca **slogan / önemli vurgu** metinlerinde kullanılır. Alt metinler Inter Regular kalır.
+   - Yani v3'teki "çizilme, ezilme, toz yok." ve "fiyat teklifi için hemen yaz" gibi alt metinler Inter Regular olmalı.
+   - El yazısı adayları: "Yoruma yaz", "Her şey yerini bulur" gibi slogan/vurgu satırları.
