@@ -33,11 +33,15 @@ def lerp(a,b,u): return a+(b-a)*u
 _f={}
 def font(n,s):
     k=(n,int(s))
-    if k not in _f: _f[k]=ImageFont.truetype("/usr/share/fonts/opentype/inter/"+n,int(s))
+    if k not in _f: _f[k]=ImageFont.truetype(n if n.startswith("/") else "/usr/share/fonts/opentype/inter/"+n,int(s))
     return _f[k]
-BLK="InterDisplay-Black.otf"; BLD="InterDisplay-Bold.otf"
-def fitsz(txt,maxw,size,name=BLK):
-    while size>20 and font(name,size).getlength(txt)>maxw: size-=4
+BLK="Inter-Black.otf"; REG="Inter-Regular.otf"; BLD=REG
+HAND="/usr/local/lib/python3.13/dist-packages/font_amatic_sc/files/AmaticSC-Bold.ttf"
+def twidth(txt,f,tr):
+    return f.getlength(txt)+tr*f.size*(len(txt)-1)
+def fitsz(txt,maxw,size,name=BLK,tr=None):
+    if tr is None: tr=0 if name==HAND else -0.014
+    while size>20 and twidth(txt,font(name,size),tr)>maxw: size-=4
     return size
 
 # ---------------- paste helpers
@@ -46,16 +50,20 @@ def paste(im,lay,x,y,alpha=1.0):
     a=lay.getchannel("A")
     if alpha<1: a=a.point(lambda v:int(v*alpha))
     im.paste(lay.convert("RGB"),(int(x),int(y)),a)
-def T(im,txt,cx,cy,size,col,ta,t0,name=BLK,maxw=None,alpha=1.0,pop=True,shake=0.0,pd=0.35,rot=0):
+def T(im,txt,cx,cy,size,col,ta,t0,name=BLK,maxw=None,alpha=1.0,pop=True,shake=0.0,pd=0.35,rot=0,track=None):
     if ta<t0: return
     p=(ta-t0)/pd
-    if maxw: size=fitsz(txt,maxw,size,name)
+    tr=0 if name==HAND else (-0.014 if track is None else track)
+    if maxw: size=fitsz(txt,maxw,size,name,tr)
     sz=size*(0.4+0.6*back(p)) if pop else size
     f=font(name,sz); a=ease(p*2.2)*alpha
     if a<=0: return
-    pad=20; lw=int(f.getlength(txt))+2*pad; lh=int(f.size*1.4)+2*pad
+    pad=20; width=twidth(txt,f,tr); lw=int(width)+2*pad; lh=int(f.size*1.4)+2*pad
     lay=Image.new("RGBA",(lw,lh),(0,0,0,0)); d=ImageDraw.Draw(lay)
-    d.text((lw/2+3,lh/2+5),txt,font=f,fill=(0,0,0,110),anchor="mm"); d.text((lw/2,lh/2),txt,font=f,fill=col+(255,),anchor="mm")
+    if tr==0: d.text((lw/2,lh/2),txt,font=f,fill=col+(255,),anchor="mm")
+    else:
+        x0=(lw-width)/2
+        for i,ch in enumerate(txt): d.text((x0+f.getlength(txt[:i])+i*tr*f.size,lh/2),ch,font=f,fill=col+(255,),anchor="lm")
     if rot: lay=lay.rotate(rot,resample=Image.BICUBIC,expand=True); lw,lh=lay.size
     dx=shake*math.sin((ta-t0)*95)*math.exp(-(ta-t0)*7) if shake else 0
     dy=shake*0.6*math.cos((ta-t0)*83)*math.exp(-(ta-t0)*7) if shake else 0
@@ -254,7 +262,7 @@ def ill_right(k,ta,cx,cy,al):
         for i,(lab,dx) in enumerate((("MUTFAK",-250),("SALON",0),("YATAK",250))):
             p=back((ph-i*0.12)/0.4); y=cy+40-(1-p)*160
             spr(im_,"crate",cx+dx,y,220,alpha=al*ease((ph-i*0.12)/0.2),gcol=BLUE,gal=0.4)
-            T(im_,lab,cx+dx,y+34,30,(20,60,150),ta,t0+i*0.12+0.1,name=BLD,pop=False,alpha=al)
+            T(im_,lab,cx+dx,y+34,26,(20,60,150),ta,t0+i*0.12+0.1,name=BLK,pop=False,alpha=al,track=0.02)
             disc(im_,cx+dx,y-95,34*min(1,p),ORANGE,al); T(im_,str(i+1),cx+dx,y-95,40,WHITE,ta,t0+i*0.12+0.05,pop=False,alpha=al)
     if k==1:
         spr(im_,"box",cx,cy+30,230,alpha=al)
@@ -325,7 +333,7 @@ def sc_tip(k,ta):
     im=background(acc,ta); im_=im
     T(im,num,820,380,560,acc,ta,t0,alpha=0.10,pop=False)
     pa=back(ph/0.4); rr(im,(72,250,72+int(380*min(1,pa)),345),48,RED,min(1,pa*1.5))
-    if ph>0.2: spr(im,"crossb",72+56,298,64,alpha=ease((ph-0.2)/0.2)); T(im,"HATA "+num,72+245,300,44,WHITE,ta,t0+0.2,name=BLD,pop=False)
+    if ph>0.2: spr(im,"crossb",72+56,298,64,alpha=ease((ph-0.2)/0.2)); T(im,"HATA "+num,72+245,300,38,WHITE,ta,t0+0.2,name=BLK,pop=False,track=0.06)
     cy=640; 
     wrong_a=ease((e['card']-0.15-ta)/0.25)*ease((ta-(t0+0.25))/0.3)
     if wrong_a>0: ill_wrong(k,ta,540,cy,wrong_a)
@@ -335,7 +343,7 @@ def sc_tip(k,ta):
             for i in range(10):
                 a=i*0.63; r=40+330*ease(sp); spr(im,"spark",540+r*math.cos(a),cy+r*math.sin(a)*0.8,36*(1-sp),rot=ta*90,alpha=1-sp,gcol=acc,gal=0.4)
         ill_right(k,ta,540,cy,ease((ta-e['card'])/0.25))
-    T(im,l1,540,880,100,(190,200,210),ta,e['l1'],name=BLD,maxw=940)
+    T(im,l1,540,880,100,(200,208,216),ta,e['l1'],name=REG,maxw=940)
     dim=1.0-0.55*ease((ta-(e['strike']+0.3))/0.3)
     T(im,l2,540,1000,165,WHITE,ta,e['l2'],maxw=940,alpha=dim)
     if ta>e['strike']:
@@ -347,9 +355,9 @@ def sc_tip(k,ta):
         rr(im,(60,y-10,1020,y+250),52,acc,a*0.35)
         rr(im,(72,y,1008,y+240),48,WHITE,a); rr(im,(72,y,98,y+240),13,acc,a)
         spr(im,"checkb",72+120,y+120,100,alpha=a)
-        T(im,"DOĞRUSU",600,y+48,30,acc if acc!=YELLOW else (170,120,0),ta,e['card'],name=BLD,pop=False,pd=0.2)
-        T(im,sol[0],600,y+108,48,INK,ta,e['s1'],name=BLD,maxw=730,pop=False,pd=0.25)
-        T(im,sol[1],600,y+174,48,INK,ta,e['s2'],name=BLD,maxw=730,pop=False,pd=0.25)
+        T(im,"DOĞRUSU",600,y+46,28,acc if acc!=YELLOW else (170,120,0),ta,e['card'],name=BLK,pop=False,pd=0.2,track=0.10)
+        T(im,sol[0],600,y+104,46,INK,ta,e['s1'],name=REG,maxw=730,pop=False,pd=0.25)
+        T(im,sol[1],600,y+168,90,(acc if acc!=YELLOW else (176,120,0)) if acc!=GREEN else (22,150,70),ta,e['s2'],name=HAND,maxw=730,pop=False,pd=0.25,rot=-1.5)
     for i in range(5):
         x=540+(i-2)*54; on=i<=k; disc(im,x,1555,13 if i==k else 8,acc if on else (110,120,130),1.0 if on else 0.5)
     return im
@@ -366,13 +374,13 @@ def sc_eng(ta):
         ch=(i==2)
         rr(im,(x-80,y-80+(1-p)*80,x+80,y+80+(1-p)*80),34,(26,34,48),clamp(p),outline=(ACC[4-i] if (ch and sel>0.5) else (70,84,108)),ow=(7 if (ch and sel>0.5) else 3))
         if p>0.05: spr(im,nm,x,y+(1-p)*80,100*clamp(p),alpha=clamp(p))
-        if p>0.05: T(im,"0"+str(5-i),x,y+105+(1-p)*80,34,ACC[4-i],ta,t0,name=BLD,pop=False)
+        if p>0.05: T(im,"0"+str(5-i),x,y+105+(1-p)*80,32,ACC[4-i],ta,t0,name=BLK,pop=False,track=0.04)
     if ta>33.5:
         p=back((ta-33.5)/0.4); y=1170
         rr(im,(160,y-90*p,920,y+90*p),90,WHITE,clamp(p))
         for i in range(3):
             b=0.5+0.5*math.sin(ta*9-i*0.9); disc(im,330+i*110,y-12*b,22,(110,120,130) if b<0.5 else VIOLET)
-    T(im,"Yoruma yaz",540,1400,92,WHITE,ta,33.5,name=BLD)
+    T(im,"Yoruma yaz",540,1385,170,WHITE,ta,33.5,name=HAND,rot=-4)
     for i in range(7):
         u=((ta-33.5)*0.55+i*0.14)%1.0
         if ta>33.5: spr(im,"heart",200+i*120+30*math.sin(ta*3+i),1540-u*600,50+14*(i%3),alpha=clamp(1-u)*0.9)
@@ -391,7 +399,7 @@ def sc_cta(ta):
         p=back((ta-35.3)/0.5); spr(im,"medal",300,880,200*clamp(p),alpha=clamp(p),gcol=YELLOW,gal=0.5)
         spr(im,"spark",300,900,70*clamp(p),rot=ta*50,alpha=clamp(p))
         T(im,"1990'DAN BERİ",690,860,84,WHITE,ta,35.4,maxw=600)
-        T(im,"güvenli taşıma",680,960,52,(190,235,205),ta,35.7,name=BLD,maxw=620)
+        T(im,"güvenli taşıma",690,950,50,(200,240,214),ta,35.7,name=REG,maxw=600)
         for i in range(4): spr(im,"spark",120+i*270+(i%2)*40,1060-(i%2)*30,40+8*math.sin(ta*6+i),rot=ta*80,alpha=0.8*ease((ta-35.6-i*0.1)/0.2))
     if ta>36.7:
         pul=1+0.035*math.sin(ta*7); p=back((ta-36.7)/0.45); bw=int(900*pul*min(1,p)); bh=int(170*pul*min(1,p)); cx,cy=540,1210
@@ -400,9 +408,9 @@ def sc_cta(ta):
         rr(im,(cx-bw/2,cy-bh/2+12,cx+bw/2,cy+bh/2+12),85,(0,40,20),0.4)
         rr(im,(cx-bw/2,cy-bh/2,cx+bw/2,cy+bh/2),85,(37,211,102))
         spr(im,"phone",cx-bw/2+95,cy,120*clamp(p),alpha=1.0,rot=8*math.sin(ta*10)*(1 if ta<38.2 else 0))
-        T(im,"WhatsApp'tan Yaz",cx+50,cy-2,58,WHITE,ta,36.9,name=BLD,pop=False,pd=0.2,maxw=560)
+        T(im,"WhatsApp'tan Yaz",cx+50,cy-2,56,WHITE,ta,36.9,name=BLK,pop=False,pd=0.2,maxw=560)
         T(im,"0542 526 34 36",540,1420,84,WHITE,ta,37.2,maxw=940)
-        T(im,"Fiyat teklifi için hemen yaz",540,1505,40,(190,235,205),ta,37.5,name=BLD,pop=False,pd=0.3)
+        T(im,"fiyat teklifi için hemen yaz",540,1515,100,(200,240,214),ta,37.5,name=HAND,pop=False,pd=0.3,rot=-2)
     if ta>38.2:
         u=ta-38.2
         for i in range(26):

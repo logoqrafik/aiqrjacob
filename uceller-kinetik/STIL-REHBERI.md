@@ -22,3 +22,10 @@ Kullanıcı bu tarzı "tam istediğim animasyon" diye onayladı. Yeni videolar a
 ## Bilinen eksikler
 - Nakliyat sitesi ve Instagram adresi bilinmiyor (ağ erişimi yok); kullanıcı verirse kapanışa eklenecek.
 - Depolama işi (ucellerdepolama.com) ayrı bir marka/iş kolu; videolar ona göre ayrı yapılmalı.
+
+## Tipografi kuralları (v3'te kullanıcı revizesiyle kesinleşti)
+- Metinlerde **gölge yok**.
+- Normal metin: **Inter Regular**. Önemli/vurgulu metin: **Inter Black**. İnce font yok.
+- Harf aralığı Inter'de hafif sıkı (≈ -1,4%; harfler birbirine değmeyecek kadar). El yazısında aralık değiştirilmez.
+- 3 satırlı metin bloklarında **son satır el yazısı** (Amatic SC, `pip install font-amatic-sc`), üst satıra yakın, hafif eğik.
+- Küçük etiketler (HATA 05, DOĞRUSU) Inter Black, harf aralığı açık.
