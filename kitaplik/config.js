@@ -1,6 +1,6 @@
 // Kişiselleştirme: sadece bu dosya.
 window.CONFIG = {
-  version: "23 · bildirimler açık",
+  version: "24 · istatistik",
   // Haftalık bildirimler (VAPID public anahtarı). Boşsa bildirim düğmesi görünmez. Kurulum: docs/BILDIRIM-KURULUMU.md
   push: { publicKey: "BP_WeXOmKNCep1Tn7VTEHTEL6SfjqThGthnphW3EOV7303u21xcGYPOjImA35j-3-msOktU64ENI33gXouRqNBc" },
   friend: "Kitap Kurdu",   // Arkadaşının adı
