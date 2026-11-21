@@ -17,6 +17,8 @@ button.alt{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14
 <label for="pw">Yönetici şifresi</label><input id="pw" type="password" autocomplete="current-password">
 <button class="alt" id="cnt">Kaç kişi abone?</button>
 <div class="box" id="info" hidden></div>
+<button class="alt" id="stats">📊 Kullanım özeti</button>
+<div class="box" id="stat" hidden style="white-space:pre-line"></div>
 <label for="t">Başlık <small>(en çok 80 karakter)</small></label><input id="t" maxlength="80" placeholder="Bu haftanın alıntısı 📖">
 <label for="b">Mesaj <small>(en çok 240 karakter)</small></label><textarea id="b" maxlength="240" placeholder="Kısa ve sıcak bir mesaj yaz"></textarea>
 <label for="u">Açılacak sayfa</label><input id="u" value="/" placeholder="/ ya da /#raf">
@@ -27,7 +29,16 @@ button.alt{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14
 const $ = s => document.querySelector(s), out = (el, t) => { el.hidden = false; el.textContent = t; };
 $('#pw').value = sessionStorage.getItem('ypw') || '';
 const prev = () => { $('#pt').textContent = $('#t').value || 'Başlık'; $('#pb').textContent = $('#b').value || 'Mesaj'; }; ['#t', '#b'].forEach(s => $(s).addEventListener('input', prev));
-async function call(body) { sessionStorage.setItem('ypw', $('#pw').value); const r = await fetch('/api/push-send', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ password: $('#pw').value, ...body }) }); const d = await r.json().catch(() => ({})); if (!r.ok) throw new Error(d.error || 'Hata (' + r.status + ')'); return d; }
+async function call(body, path = '/api/push-send') { sessionStorage.setItem('ypw', $('#pw').value); const r = await fetch(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ password: $('#pw').value, ...body }) }); const d = await r.json().catch(() => ({})); if (!r.ok) throw new Error(d.error || 'Hata (' + r.status + ')'); return d; }
+$('#stats').onclick = async () => {
+  const L = { quotes_text: 'Kitap adıyla alıntı', quotes_photo: 'Fotoğrafla alıntı', story_made: 'Hikâye görseli hazırlandı', story_download: 'Hikâye indirildi', design_saved: 'Tasarım kaydedildi', design_export: 'Tasarım indirildi', card_made: 'Paylaşım kartı', book_added: 'Rafa kitap eklendi', push_on: 'Bildirim açıldı' };
+  try {
+    const d = await call({}, '/api/stats'), when = t => t ? new Date(t).toLocaleString('tr', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) : '–';
+    const ev = Object.entries(d.events).sort((a, b) => b[1].last.localeCompare(a[1].last)).map(([k, v]) => `${L[k] || k}: son 7 gün ${v.d7}, 31 gün ${v.d31}, son kullanım ${when(v.last)}`).join('\n');
+    const ct = Object.entries(d.countries).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${v}`).join(', ');
+    out($('#stat'), d.last ? `Son kullanım: ${when(d.last)}\n\n${ev}\n\nÜlkeler: ${ct}` : 'Henüz kayıtlı kullanım yok (sayaç yeni başladı).');
+  } catch (e) { out($('#stat'), e.message); }
+};
 $('#cnt').onclick = async () => { try { const d = await call({ action: 'count' }); out($('#info'), d.count + ' abone'); } catch (e) { out($('#info'), e.message); } };
 $('#go').onclick = async () => {
   const t = $('#t').value.trim(), b = $('#b').value.trim(); if (!t || !b) return out($('#res'), 'Başlık ve mesaj yaz.');

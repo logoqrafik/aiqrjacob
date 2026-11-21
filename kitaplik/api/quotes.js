@@ -1,5 +1,6 @@
 // Vercel fonksiyonu: kitap adı (ve/veya yazar) için 5 kategoride alıntılar. Google Gemini (ücretsiz kota).
 // GEMINI_API_KEY gerekir. Hızlı model önce denenir; her denemenin süre sınırı vardır.
+const { track } = require('./_events');
 const CATEGORIES = ['Motivasyon', 'Güçlü Kal', 'Duygusal', 'Düşündüren', 'Umut'];
 
 const SYSTEM = `Sen titiz bir kitap editörüsün. Kullanıcı bir kitabı fotoğrafla ya da ad/yazar ile verir.
@@ -27,6 +28,7 @@ module.exports = async (req, res) => {
   } else if (query) parts.push({ text: 'Kitap: ' + query });
   else return res.status(400).json({ error: 'Fotoğraf ya da kitap adı gerekli' });
 
+  await track(req, !query && b.image ? 'quotes_photo' : 'quotes_text'); // adsız sayaç
   const models = [process.env.MODEL, 'gemini-flash-lite-latest', 'gemini-3.8-flash'].filter((m, i, a) => m && a.indexOf(m) === i);
   const deadline = Date.now() + 52000;
   let data = null, quota = false, lastErr = '';
