@@ -25,6 +25,7 @@
     const s = (await r.pushManager.getSubscription()) || await r.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(KEY) });
     const resp = await post({ subscription: s.toJSON() });
     if (!resp.ok) { const d = await resp.json().catch(() => ({})); throw new Error(d.error || 'Abonelik kaydedilemedi.'); }
+    if (window.track) window.track('push_on');
     return true;
   }
   async function disable() {

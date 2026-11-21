@@ -149,7 +149,7 @@
     if (busy) return;
     if (!buildResult()) { result = null; return; }
     busy = true; $('#sgo').disabled = true;
-    try { await draw(); $('#sout').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    try { await draw(); if (window.track) window.track('story_made'); $('#sout').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
     catch (e) { $('#sout').innerHTML = `<div class="status">${esc(e.message)}</div>`; }
     finally { busy = false; $('#sgo').disabled = false; }
   }
@@ -301,6 +301,7 @@
     if (e.target.closest('[data-sshelf]')) return toShelf(false);
     if (status === 'bitirdim' && e.target.closest('[data-sdl],[data-sshare],[data-sdesign]')) toShelf(true);
     if (e.target.closest('[data-sdl]') && lastBlob) {
+      if (window.track) window.track('story_download');
       const a = document.createElement('a'); a.href = blobUrl; a.download = fname(); document.body.appendChild(a); a.click(); a.remove();
       toast('Görsel indiriliyor…');
     } else if (e.target.closest('[data-sshare]') && lastBlob) {

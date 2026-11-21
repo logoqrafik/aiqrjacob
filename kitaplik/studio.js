@@ -445,6 +445,7 @@
   const stamp = () => { const d = new Date(), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}`; };
   async function download(type) {
     if (!S.layers.some(isText)) return toast('Önce bir yazı ekle.');
+    if (window.track) window.track('design_export');
     const c = await exportCanvas(), mime = type === 'jpg' ? 'image/jpeg' : 'image/png';
     c.toBlob(b => { if (!b) return toast('Görsel oluşturulamadı.'); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `satir-arasi-${S.format}-${stamp()}.${type}`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); toast('Görsel indiriliyor…'); }, mime, 0.93);
   }
@@ -479,7 +480,7 @@
     const snap = JSON.parse(JSON.stringify(S)); snap.sel = null;
     try { await DB.put({ id, name, at: Date.now(), thumb: await thumb(), state: snap, photo: S.bg.kind === 'photo' || photoData ? photoData : '' }); }
     catch (e) { return toast('Kaydedilemedi: ' + e.message); }
-    curId = id; curName = name; dirty = false; toast('Kaydedildi ✓'); renderSaved();
+    curId = id; curName = name; dirty = false; toast('Kaydedildi ✓'); renderSaved(); if (window.track) window.track('design_saved');
   }
   async function openDesign(id) {
     const d = (await DB.all()).find(x => x.id === id); if (!d) return;

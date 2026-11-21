@@ -35,7 +35,7 @@
   function addBook(b) {
     const t = String(b.title || '').trim(); if (!t) return null;
     let x = find(t); const wasRead = !!x && x.status === 'read';
-    if (!x) { x = { id: uid('b'), title: t.slice(0, 120), author: String(b.author || '').trim().slice(0, 80), status: b.status || 'want', at: Date.now(), rating: 0, note: '', thumb: b.thumb || '' }; lib.books.unshift(x); }
+    if (!x) { x = { id: uid('b'), title: t.slice(0, 120), author: String(b.author || '').trim().slice(0, 80), status: b.status || 'want', at: Date.now(), rating: 0, note: '', thumb: b.thumb || '' }; lib.books.unshift(x); if (window.track) window.track('book_added'); }
     else {
       if (b.author && !x.author) x.author = String(b.author).trim().slice(0, 80);
       if (b.thumb && !x.thumb) x.thumb = b.thumb;
@@ -236,6 +236,7 @@
       if (view.kind === 'done') scene = await window.CARDS.build('done', lib.books.find(b => b.id === v));
       else if (view.kind === 'month') scene = await window.CARDS.build('month', { y: Math.floor(+v / 12), m: +v % 12, books: doneIn(Math.floor(+v / 12), +v % 12) });
       else scene = await window.CARDS.build('year', { y: +v, books: doneInYear(+v) });
+      if (window.track) window.track('card_made');
       stopPlayer(); view.card = { scene, name: `satir-arasi-${view.kind}-${Date.now().toString(36)}` };
       render();
     } catch (e) { toast(e.message || 'Kart hazırlanamadı.'); }
