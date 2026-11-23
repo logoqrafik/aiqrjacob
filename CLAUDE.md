@@ -10,3 +10,6 @@ Bu işlerde **önce `uceller-kinetik/STIL-REHBERI.md` dosyasını oku**: onaylı
 - Seslendirme: kullanıcının kendi (ElevenLabs) kaydı kullanılır; yapay ses üretme. Higgsfield kredisi kullanma.
 - Nakliyat ve **depolama (ucellerdepolama.com)** ayrı iş kolları; depolama videolarında nakliyat görseli kullanma.
 - Videolarda logo yalnızca kapanışta; telefon/WhatsApp: 0542 526 34 36 (teyit gerekir).
+
+## Üçeller Depolama (ayrı marka)
+Marka bilgileri, fiyatlar, renkler ve görseller: `uceller-depolama-marka/MARKA-NOTLARI.md`. Depolama videolarını bu bilgilere ve `uceller-kinetik/STIL-REHBERI.md` stiline göre yap.
